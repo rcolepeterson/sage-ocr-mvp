@@ -1,0 +1,13 @@
+{
+    "type": "service_account",
+    "project_id": "ai-sandbox-d-vml-ai-env-283d",
+    "private_key_id": "1369bf526d089b6368322d8f88066ae23a9f33a0",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDZ8Wn4mS612WCY\n3kjLY4GyjBJKpxizmtT9izZTzC6x4NWThj+QWCV9sdqtbp4pTGUdYD3eksk87Whx\nzoUobybc80MkpHyzdsMumxUN6yaVUWtx4q6FpSjAyCH8rUmtdtb5nvyNs2UQdRF2\noiLtiXn9pP8N1q0wD8P+yRMPedPUwqyUyTYgSpnMYs2ez4JFzTQuFA1IW4fHjG5C\nuDXnrSKtQ+Rn3ZxIS4YKtOG2/kzyqjw7wzJhZjCiYWuq5KD02huej1z0G6DdCyDv\nJ6rWhNup41MBuMzvTbPq6XWsfkTQNt5Pl/cJSCJtrAJigFGnpeioSJzRECnG9SLY\nck1ieOmLAgMBAAECggEADByz95WG/tY8EK+lB6Cmr//DpUbdQyxv39nHxPQMOEu3\nGU7IFsNY7T/5vjlVxhSX0TOGQxz3Q1D4xMv/ouKignvTStfVXyGF8WYiNZ029LkL\nEDY5d4+ManWOf5afb9BMXDniVHtLoS5QY4s/oHt+cYLYJeW8+qnPPUhH33+1Lq+H\n6Fp6/vCyb3fTCvA6ANMA/zrP+D7+rDRfM+aHl5YpR/XIcQgZH/Xe7DMWDjRBKh/i\ndDZkUAbIyeIef6VAB9t9VHfSt3I8aY+yeyCQ7uSi2wi7xKO6XzgM6f73agsvYEEE\nKfQ2woJIXBLwmY0BnV//LDpw9ljYD6k98qM5Oz5fKQKBgQD68TXutV8d56VVUlWp\nvdszwjCHKg0FHaJVGntX+q2uU+ucJl+EiPhgNbWfEY5d1GErEKAuWLBetRvaYHVU\negevi6mVxAxlLQU/i6Nkf9EQX25IT9gLb8cxg9vGHGbEmbrPocH8GASH5u06zD55\nA3ojcY4G4/UfUg2K2WnLmfg7tQKBgQDeVe/Zy9p55lo+ptxEG+nVMUTCXUzxEiWv\n7qKYFItyoB6avmzchO41pEX+VbW0DOgvSWnM23dyNHqp7AAgjok9csIvi5c/sbPA\n/6nU/Uj9QpX20cuu1WaW84YWR6PK7OT7FccyqFEqCrIGPAzaJZGiXRcyW7HuzFzf\n0vqvA+xYPwKBgQCPpj0FZPYKHGzcpsE65d/xhRxag4vofcpLhVlOR8XcoVWikaTk\nLbRg/t31LQueUtE84cuQPFzaGjrTi5weu6xipURy40NlN5xlf/4Mrc5z3O04n9xA\nz7/rbFwG0INTz9zMtwBg2y7czSjIG9s3UvI8D+kJsLzFLSdrcIHLd1xOcQKBgQCq\nfpv/GCPhdpOdl7cxQ3Z81ds0cPefpZrg3s4wcRC+RasyXvR75jQFToOeFXvRJlSm\nblWDkoh2O2gVBbTTQnpbdLUUYKcLYOnHBkbl3ZUrIPR+4UKgP2T8PKKGU0l3Q1IU\neQ7X+drDso/x1/rDDiwvpdMz+rznsi9GNDOoIgoLYQKBgD1O7MOhuC8SPsC7r1v6\niZWwms9OXys74ePRgCBrL2xydMY+am/JYdV/AG9UWfkIxsv5ULRVUIdBkQXDuTpp\nb2bVr8lGPLlN97E53hLVr8D0wKdlBNQZHmQJVhDtJvZWR8nLLq2beAa0xIsRiC4E\no7CesveZNhAbd4DfWOzoLyzT\n-----END PRIVATE KEY-----\n",
+    "client_email": "vertex-express@ai-sandbox-d-vml-ai-env-283d.iam.gserviceaccount.com",
+    "client_id": "101133707189287443389",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vertex-express%40ai-sandbox-d-vml-ai-env-283d.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+}
