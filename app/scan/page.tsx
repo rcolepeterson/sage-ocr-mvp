@@ -1,6 +1,4 @@
 "use client";
-
-"use client";
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import plantsData from "../../data/plants.json";
@@ -14,6 +12,7 @@ export default function ScanPage() {
   const [noMatch, setNoMatch] = useState(false);
   const [selectedId, setSelectedId] = useState("");
   const router = useRouter();
+  const noMatchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function initCamera() {
@@ -89,6 +88,14 @@ export default function ScanPage() {
     } else {
       setMatchId(null);
       setNoMatch(true);
+      setTimeout(() => {
+        if (noMatchRef.current) {
+          noMatchRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }, 100);
     }
     setLoading(false);
   }
@@ -120,7 +127,10 @@ export default function ScanPage() {
         </div>
 
         {noMatch && (
-          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div
+            ref={noMatchRef}
+            className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+          >
             <div className="text-red-700 font-semibold mb-2">
               No match found
             </div>
