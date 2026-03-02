@@ -1,0 +1,82 @@
+[
+    {
+        "id": "1",
+        "commonName": "Snake Plant",
+        "latinName": "Sansevieria trifasciata",
+        "category": "Succulent",
+        "light": "Low to bright indirect",
+        "water": "Allow soil to dry"
+    },
+    {
+        "id": "2",
+        "commonName": "Spider Plant",
+        "latinName": "Chlorophytum comosum",
+        "category": "Perennial",
+        "light": "Bright indirect",
+        "water": "Keep soil moist"
+    },
+    {
+        "id": "3",
+        "commonName": "Peace Lily",
+        "latinName": "Spathiphyllum",
+        "category": "Flowering",
+        "light": "Low to medium",
+        "water": "Keep soil moist"
+    },
+    {
+        "id": "4",
+        "commonName": "Pothos",
+        "latinName": "Epipremnum aureum",
+        "category": "Vine",
+        "light": "Low to bright indirect",
+        "water": "Allow soil to dry"
+    },
+    {
+        "id": "5",
+        "commonName": "ZZ Plant",
+        "latinName": "Zamioculcas zamiifolia",
+        "category": "Succulent",
+        "light": "Low to bright indirect",
+        "water": "Allow soil to dry"
+    },
+    {
+        "id": "6",
+        "commonName": "Fiddle Leaf Fig",
+        "latinName": "Ficus lyrata",
+        "category": "Tree",
+        "light": "Bright indirect",
+        "water": "Let top inch dry"
+    },
+    {
+        "id": "7",
+        "commonName": "Monstera",
+        "latinName": "Monstera deliciosa",
+        "category": "Vine",
+        "light": "Bright indirect",
+        "water": "Let top inch dry"
+    },
+    {
+        "id": "8",
+        "commonName": "Aloe Vera",
+        "latinName": "Aloe barbadensis miller",
+        "category": "Succulent",
+        "light": "Bright direct",
+        "water": "Allow soil to dry"
+    },
+    {
+        "id": "9",
+        "commonName": "Rubber Plant",
+        "latinName": "Ficus elastica",
+        "category": "Tree",
+        "light": "Bright indirect",
+        "water": "Let top inch dry"
+    },
+    {
+        "id": "10",
+        "commonName": "Jade Plant",
+        "latinName": "Crassula ovata",
+        "category": "Succulent",
+        "light": "Bright direct",
+        "water": "Allow soil to dry"
+    }
+]

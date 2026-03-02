@@ -1,12 +1,19 @@
 "use client";
 
+"use client";
 import { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import plantsData from "../../data/plants.json";
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [matchId, setMatchId] = useState<string | null>(null);
+  const [noMatch, setNoMatch] = useState(false);
+  const [selectedId, setSelectedId] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     async function initCamera() {
@@ -64,7 +71,25 @@ export default function ScanPage() {
     });
 
     const data = await res.json();
-    setText(data.text || "");
+    const ocrText = data.text || "";
+    setText(ocrText);
+    // Case-insensitive contains match
+    const match = plantsData.find(
+      (plant) =>
+        ocrText.toLowerCase().includes(plant.commonName.toLowerCase()) ||
+        ocrText.toLowerCase().includes(plant.latinName.toLowerCase()),
+    );
+    if (match) {
+      setMatchId(match.id);
+      setNoMatch(false);
+      // Route to plant profile after short delay for UX
+      setTimeout(() => {
+        router.push(`/plant/${match.id}`);
+      }, 800);
+    } else {
+      setMatchId(null);
+      setNoMatch(true);
+    }
     setLoading(false);
   }
 
@@ -93,6 +118,32 @@ export default function ScanPage() {
         <div className="mt-4 bg-gray-900 text-green-300 p-4 rounded-lg min-h-30 text-sm whitespace-pre-wrap">
           {text || "No OCR yet"}
         </div>
+
+        {noMatch && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="text-red-700 font-semibold mb-2">
+              No match found
+            </div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Select plant manually:
+            </label>
+            <select
+              className="w-full p-2 rounded border border-gray-300"
+              value={selectedId}
+              onChange={(e) => {
+                setSelectedId(e.target.value);
+                if (e.target.value) router.push(`/plant/${e.target.value}`);
+              }}
+            >
+              <option value="">Choose a plant...</option>
+              {plantsData.map((plant) => (
+                <option key={plant.id} value={plant.id}>
+                  {plant.commonName} ({plant.latinName})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <canvas ref={canvasRef} className="hidden" />
       </div>
