@@ -18,7 +18,7 @@ export default function ScanPage() {
   const [lookupLoading, setLookupLoading] = useState(false);
 
   const router = useRouter();
-  const noMatchRef = useRef<HTMLDivElement>(null);
+  const noMatchRef = useRef<HTMLDivElement>();
 
   async function handleLookup() {
     console.log("[lookup] button clicked");
@@ -37,9 +37,16 @@ export default function ScanPage() {
     const data = await res.json();
     console.log("[lookup] response:", data);
 
+    if (data?.found === false) {
+      setLookup(null);
+      setLookupError(data?.message || "No results found");
+      setLookupLoading(false);
+      return;
+    }
+
     if (!res.ok || data?.error) {
       setLookup(null);
-      setLookupError(data?.error || "No plant found");
+      setLookupError(data?.error || "Lookup failed");
       setLookupLoading(false);
       return;
     }
@@ -162,7 +169,6 @@ export default function ScanPage() {
           {text || "No OCR yet"}
         </div>
 
-        {/* Plant lookup UI */}
         <input
           className="w-full p-2 border rounded mt-4"
           placeholder="Edit plant name before lookup"

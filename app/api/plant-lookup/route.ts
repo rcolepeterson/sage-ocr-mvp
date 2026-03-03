@@ -6,7 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const { query } = await req.json();
-    if (!query) {
+    const cleanQuery = String(query).trim();
+    if (!cleanQuery) {
       return NextResponse.json({ error: "Missing query" }, { status: 400 });
     }
 
@@ -18,24 +19,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const url = `https://api.floraapi.com/v1/search?genus=${encodeURIComponent(query)}&limit=5`;
-    console.log("[lookup] query:", query);
+    const url = `https://api.floraapi.com/v1/search?q=${encodeURIComponent(cleanQuery)}&limit=5`;
+    console.log("[flora] url", url);
 
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
-    console.log("[lookup] status:", res.status);
+    console.log("[flora] status", res.status);
 
     const data = await res.json();
-    console.log("[lookup] results count:", data?.results?.length);
+    const results = data?.results || [];
+    console.log("[flora] results count", results.length);
 
-    const first = data?.results?.[0];
+    const first = results[0];
     if (!first) {
-      console.log("[lookup] no results");
-      return NextResponse.json({ error: "No results found" }, { status: 404 });
+      return NextResponse.json(
+        { found: false, message: "No results found" },
+        { status: 200 },
+      );
     }
 
     return NextResponse.json({
+      found: true,
       commonName: first?.common_names?.[0] || null,
       latinName: first?.scientific_name || null,
       family: first?.family_name || null,
@@ -46,6 +51,7 @@ export async function POST(req: NextRequest) {
       raw: first || null,
     });
   } catch (err: any) {
+    console.error("[flora] error", err);
     return NextResponse.json(
       { error: err?.message || "Lookup failed" },
       { status: 500 },
