@@ -6,6 +6,11 @@ const COOKIE = "sage-auth";
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Allow all API routes through
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
   // Allow login page and auth API through
   if (pathname === "/login" || pathname === "/api/auth") {
     return NextResponse.next();

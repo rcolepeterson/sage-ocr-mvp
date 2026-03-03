@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -11,8 +12,20 @@ export default function ScanPage() {
   const [matchId, setMatchId] = useState<string | null>(null);
   const [noMatch, setNoMatch] = useState(false);
   const [selectedId, setSelectedId] = useState("");
+  const [lookup, setLookup] = useState<any>();
+  const [query, setQuery] = useState("");
   const router = useRouter();
   const noMatchRef = useRef<HTMLDivElement>(null);
+
+  async function handleLookup() {
+    const res = await fetch("/api/plant-lookup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: query || text }),
+    });
+    const data = await res.json();
+    setLookup(data);
+  }
 
   useEffect(() => {
     async function initCamera() {
@@ -122,9 +135,40 @@ export default function ScanPage() {
           {loading ? "Scanning..." : "Scan"}
         </button>
 
-        <div className="mt-4 bg-gray-900 text-green-300 p-4 rounded-lg min-h-30 text-sm whitespace-pre-wrap">
+        <div className="mt-4 bg-gray-900 text-green-300 p-4 rounded-lg min-h-[120px] text-sm whitespace-pre-wrap">
           {text || "No OCR yet"}
         </div>
+
+        {/* Plant lookup UI */}
+        <input
+          className="w-full p-2 border rounded mt-4"
+          placeholder="Edit plant name before lookup"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <button
+          onClick={handleLookup}
+          className="mt-2 w-full bg-green-600 text-white py-2 rounded"
+        >
+          Find Plant Info
+        </button>
+
+        {lookup?.latinName && (
+          <div className="mt-4 p-4 bg-white rounded shadow">
+            <div className="font-semibold">{lookup.commonName}</div>
+            <div className="italic">{lookup.latinName}</div>
+            {lookup.family && <div>Family: {lookup.family}</div>}
+            {lookup.genus && <div>Genus: {lookup.genus}</div>}
+            {lookup.usdaSymbol && <div>USDA: {lookup.usdaSymbol}</div>}
+            {lookup.imageUrl && (
+              <img
+                src={lookup.imageUrl}
+                alt={lookup.commonName || lookup.latinName}
+                className="mt-2 rounded"
+              />
+            )}
+          </div>
+        )}
 
         {noMatch && (
           <div
