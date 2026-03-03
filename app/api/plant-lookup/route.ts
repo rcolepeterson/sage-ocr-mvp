@@ -19,13 +19,21 @@ export async function POST(req: NextRequest) {
     }
 
     const url = `https://api.floraapi.com/v1/search?genus=${encodeURIComponent(query)}&limit=5`;
+    console.log("[lookup] query:", query);
 
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
+    console.log("[lookup] status:", res.status);
 
     const data = await res.json();
+    console.log("[lookup] results count:", data?.results?.length);
+
     const first = data?.results?.[0];
+    if (!first) {
+      console.log("[lookup] no results");
+      return NextResponse.json({ error: "No results found" }, { status: 404 });
+    }
 
     return NextResponse.json({
       commonName: first?.common_names?.[0] || null,

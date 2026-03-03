@@ -5,26 +5,47 @@ import { useRouter } from "next/navigation";
 import plantsData from "../../data/plants.json";
 
 export default function ScanPage() {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>();
+  const canvasRef = useRef<HTMLCanvasElement>();
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [matchId, setMatchId] = useState<string | null>(null);
+  const [matchId, setMatchId] = useState<string | null>();
   const [noMatch, setNoMatch] = useState(false);
   const [selectedId, setSelectedId] = useState("");
   const [lookup, setLookup] = useState<any>();
   const [query, setQuery] = useState("");
+  const [lookupError, setLookupError] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+
   const router = useRouter();
   const noMatchRef = useRef<HTMLDivElement>(null);
 
   async function handleLookup() {
+    console.log("[lookup] button clicked");
+
+    setLookupError("");
+    setLookupLoading(true);
+
     const res = await fetch("/api/plant-lookup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: query || text }),
     });
+
+    console.log("[lookup] fetching… status:", res.status);
+
     const data = await res.json();
+    console.log("[lookup] response:", data);
+
+    if (!res.ok || data?.error) {
+      setLookup(null);
+      setLookupError(data?.error || "No plant found");
+      setLookupLoading(false);
+      return;
+    }
+
     setLookup(data);
+    setLookupLoading(false);
   }
 
   useEffect(() => {
@@ -85,16 +106,18 @@ export default function ScanPage() {
     const data = await res.json();
     const ocrText = data.text || "";
     setText(ocrText);
-    // Case-insensitive contains match
+
+    console.log("[ocr] text:", ocrText);
+
     const match = plantsData.find(
       (plant) =>
         ocrText.toLowerCase().includes(plant.commonName.toLowerCase()) ||
         ocrText.toLowerCase().includes(plant.latinName.toLowerCase()),
     );
+
     if (match) {
       setMatchId(match.id);
       setNoMatch(false);
-      // Route to plant profile after short delay for UX
       setTimeout(() => {
         router.push(`/plant/${match.id}`);
       }, 800);
@@ -152,6 +175,14 @@ export default function ScanPage() {
         >
           Find Plant Info
         </button>
+
+        {lookupLoading && (
+          <div className="mt-2 text-sm text-gray-500">Looking up plant...</div>
+        )}
+
+        {lookupError && (
+          <div className="mt-2 text-sm text-red-600">{lookupError}</div>
+        )}
 
         {lookup?.latinName && (
           <div className="mt-4 p-4 bg-white rounded shadow">
