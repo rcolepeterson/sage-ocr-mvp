@@ -7,9 +7,9 @@ import { parsePartialJson } from "ai";
 import plantsData from "../../data/plants.json";
 
 export default function ScanPage() {
-  const videoRef = useRef<HTMLVideoElement | null>();
-  const canvasRef = useRef<HTMLCanvasElement | null>();
-  const noMatchRef = useRef<HTMLDivElement | null>();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const noMatchRef = useRef<HTMLDivElement | null>(null);
 
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
