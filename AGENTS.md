@@ -1,24 +1,27 @@
-# AGENTS.md
-
-This file describes project context and key flows for the Sage OCR MVP web app.
+# Sage OCR MVP — Agent Guide
 
 ## Project Overview
 
-Sage is a web-based plant care system for Swansons Nursery. This MVP focuses on a scan-to-OCR flow that reads plant tag text.
+Sage is a web-based plant care system for Swansons Nursery. The MVP enables users to scan plant tags, extract text via OCR, and stream structured plant info from an LLM.
 
-## Current MVP Scope
+## MVP Scope
 
 **Implemented:**
 
-- Home page with link to `/scan`
-- `/scan` camera page
-- OCR via Google Vision (server-side API route)
-- Seeded plant catalog and matching flow
-- `/plant/[id]` profile page
+- Home page (`/`)
+- Scan page (`/scan`): camera, OCR, matching
+- OCR via Google Vision (server-side)
+- Seeded plant catalog
+- Plant profile page (`/plant/[id]`)
+
+**Planned:**
+
+- LLM plant info lookup (Gemini, streaming)
+- Structured schema for output
 
 **Not yet implemented:**
 
-- Reminders / notifications
+- Reminders/notifications
 - Ask-an-expert chat
 - Admin/staff tools
 
@@ -29,35 +32,38 @@ Sage is a web-based plant care system for Swansons Nursery. This MVP focuses on 
 - Tailwind CSS
 - Vercel hosting
 - Google Vision API
+- Vercel AI SDK (Gemini)
 
 ## Environment Variables
 
-Required for OCR:
-
-- `GOOGLE_APPLICATION_CREDENTIALS_JSON` — Service account JSON for Google Vision
+- `GOOGLE_APPLICATION_CREDENTIALS_JSON`: Service account JSON for Google Vision
+- `GEMINI_API_KEY`: Gemini LLM API key
 
 ## Directory Map
 
 ```
 /app
-  /api/ocr/route.ts      # OCR server route
-  /scan/page.tsx         # Camera + OCR UI + matching
-  /plant/[id]/page.tsx   # Plant profile page
-  /page.tsx              # Home
+	/api/ocr/route.ts         # OCR server route
+	/api/plant-llm/route.ts   # LLM streaming route (planned)
+	/scan/page.tsx            # Camera + OCR UI
+	/plant/[id]/page.tsx      # Plant profile page
+	/page.tsx                 # Home
 /data
-  plants.json            # Seeded plant catalog
+	plants.json               # Seeded plant catalog
 /lib
-  /ocr/index.ts
-  /ocr/googleVision.ts
-/docs                    # Product docs (optional)
+	/ocr/index.ts
+	/ocr/googleVision.ts
+	/llm/schema.ts            # Zod schema for plant output (planned)
+/docs                       # Product docs (optional)
 ```
 
 ## Coding Conventions
 
 - Keep OCR calls server-side only
 - Use Tailwind for UI styles
-- Keep UI clean and mobile-first
+- UI must be clean and mobile-first
 - Use App Router patterns
+- LLM responses must follow schema
 
 ## Do / Don’t
 
@@ -66,30 +72,26 @@ Required for OCR:
 - Keep secrets in env vars
 - Add new routes under `/app`
 - Keep OCR modular (swappable provider)
+- Stream LLM output when possible
 
 **Don’t:**
 
 - Call Google Vision from the client
 - Hardcode credentials
-- Add complex features without updating this file
+- Return unstructured LLM output
 
-## Key Flow
+## Key Flow (MVP POC)
 
 1. User opens `/scan`
 2. Camera captures image
 3. Server calls Google Vision
 4. OCR text returned to UI
-5. OCR result matched against plant catalog (case-insensitive contains)
-6. If match, route to `/plant/[id]` and show profile
-7. If no match, show manual select dropdown
+5. OCR text sent to LLM route
+6. LLM streams structured plant info (schema)
 
 ## Commands
 
-- `npm install` — Install dependencies
-- `npm run dev` — Start local dev server
-- `npm run build` — Build for production
-- `vercel --prod` — Deploy to Vercel
-
----
-
-For questions or updates, edit this file to keep flows and conventions up to date.
+- `npm install` # Install dependencies
+- `npm run dev` # Start local dev server
+- `npm run build` # Build for production
+- `vercel --prod` # Deploy to Vercel
