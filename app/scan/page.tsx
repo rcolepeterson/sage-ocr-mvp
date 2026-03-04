@@ -136,11 +136,13 @@ export default function ScanPage() {
       addDebug(`match found: ${match.id}`);
       setMatchId(match.id);
       setNoMatch(false);
+      setQuery(match.commonName);
       setTimeout(() => router.push(`/plant/${match.id}`), 800);
     } else {
       addDebug("no match found");
       setMatchId(null);
       setNoMatch(true);
+      setQuery(ocrText.replace(/\s+/g, " ").trim());
       setTimeout(() => {
         if (noMatchRef.current) {
           noMatchRef.current.scrollIntoView({
@@ -198,7 +200,8 @@ export default function ScanPage() {
               setLlmResult(null);
               complete(q);
             }}
-            className="mt-2 w-full bg-blue-600 text-white py-2 rounded"
+            disabled={llmLoading || !(query || text)}
+            className="mt-2 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {llmLoading ? "Streaming LLM..." : "Find Plant Info (LLM)"}
           </button>
