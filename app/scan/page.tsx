@@ -9,13 +9,9 @@ import plantsData from "../../data/plants.json";
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const noMatchRef = useRef<HTMLDivElement | null>(null);
 
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [matchId, setMatchId] = useState<string | null>();
-  const [noMatch, setNoMatch] = useState(false);
-  const [selectedId, setSelectedId] = useState("");
   const [query, setQuery] = useState("");
   const [llmResult, setLlmResult] = useState<{
     commonName?: string | null;
@@ -134,23 +130,11 @@ export default function ScanPage() {
 
     if (match) {
       addDebug(`match found: ${match.id}`);
-      setMatchId(match.id);
-      setNoMatch(false);
       setQuery(match.commonName);
       setTimeout(() => router.push(`/plant/${match.id}`), 800);
     } else {
       addDebug("no match found");
-      setMatchId(null);
-      setNoMatch(true);
       setQuery(ocrText.replace(/\s+/g, " ").trim());
-      setTimeout(() => {
-        if (noMatchRef.current) {
-          noMatchRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-        }
-      }, 100);
     }
     setLoading(false);
   }
@@ -205,35 +189,6 @@ export default function ScanPage() {
           >
             {llmLoading ? "Streaming LLM..." : "Find Plant Info (LLM)"}
           </button>
-
-          {noMatch && (
-            <div
-              ref={noMatchRef}
-              className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg"
-            >
-              <div className="text-red-700 font-semibold mb-2">
-                No match found
-              </div>
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Select plant manually:
-              </label>
-              <select
-                className="w-full p-2 rounded border border-gray-300"
-                value={selectedId}
-                onChange={(e) => {
-                  setSelectedId(e.target.value);
-                  if (e.target.value) router.push(`/plant/${e.target.value}`);
-                }}
-              >
-                <option value="">Choose a plant...</option>
-                {plantsData.map((plant) => (
-                  <option key={plant.id} value={plant.id}>
-                    {plant.commonName} ({plant.latinName})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
 
         {/* Right: LLM results */}
