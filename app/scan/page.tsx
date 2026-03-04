@@ -1,3 +1,4 @@
+// app/scan/page.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useRef, useState, useEffect } from "react";
@@ -5,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCompletion } from "@ai-sdk/react";
 import { parsePartialJson } from "ai";
 import plantsData from "../../data/plants.json";
+import { Button } from "@/components/ui/Button";
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -140,115 +142,189 @@ export default function ScanPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-semibold mb-4 max-w-6xl mx-auto">
-        Scan Plant Tag
-      </h1>
-
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6">
-        {/* Left: camera + controls */}
-        <div className="flex-1 min-w-0">
-          <div className="rounded-xl overflow-hidden bg-black">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="w-full h-auto"
-            />
+    <main className="min-h-screen bg-swansons-cream">
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🌿</span>
+            <h1 className="text-xl">Scan Plant Tag</h1>
           </div>
-
-          <button
-            onClick={handleScan}
-            disabled={loading}
-            className="mt-4 w-full rounded-lg bg-green-600 text-white py-3 font-medium hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? "Scanning..." : "Scan"}
-          </button>
-
-          <div className="mt-4 bg-gray-900 text-green-300 p-4 rounded-lg min-h-[120px] text-sm whitespace-pre-wrap">
-            {text || "No OCR yet"}
-          </div>
-
-          <input
-            className="w-full p-2 border rounded mt-4"
-            placeholder="Edit plant name before lookup"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-
-          <button
-            onClick={() => {
-              const q = query || text;
-              addDebug(`LLM submit: "${q}"`);
-              if (!q) return;
-              setLlmResult(null);
-              complete(q);
-            }}
-            disabled={llmLoading || !(query || text)}
-            className="mt-2 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {llmLoading ? "Streaming LLM..." : "Find Plant Info (LLM)"}
-          </button>
+          <a href="/" className="text-swansons-green hover:underline text-sm">
+            ← Back
+          </a>
         </div>
+      </header>
 
-        {/* Right: LLM results */}
-        <div className="flex-1 min-w-0">
-          {llmLoading && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 animate-pulse">
-              Streaming plant info...
-            </div>
-          )}
-
-          {llmResult?.latinName && (
-            <div className="p-4 bg-white rounded-xl shadow border border-blue-200">
-              <div className="text-xl font-semibold">
-                {llmResult.commonName}
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left: Camera + Controls */}
+          <div className="flex-1 min-w-0">
+            {/* Camera View */}
+            <div className="card overflow-hidden">
+              <div className="bg-swansons-green-dark">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-auto"
+                />
               </div>
-              <div className="italic text-gray-500 mb-3">
-                {llmResult.latinName}
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                <div className="bg-gray-50 rounded p-2">
-                  <span className="font-medium">Light</span>
-                  <div>{llmResult.light}</div>
-                </div>
-                <div className="bg-gray-50 rounded p-2">
-                  <span className="font-medium">Water</span>
-                  <div>{llmResult.water}</div>
-                </div>
-              </div>
-              {llmResult.careTips && llmResult.careTips.length > 0 && (
-                <div className="mb-3">
-                  <div className="font-medium text-sm mb-1">Care Tips</div>
-                  <ul className="list-disc pl-5 text-sm space-y-1">
-                    {llmResult.careTips.map((t: string, i: number) => (
-                      <li key={i}>{t}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {llmResult.warnings && llmResult.warnings.length > 0 && (
-                <div className="text-sm text-red-600 bg-red-50 rounded p-2">
-                  <div className="font-medium mb-1">Warnings</div>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {llmResult.warnings.map((w: string, i: number) => (
-                      <li key={i}>{w}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
-          )}
 
-          {!llmLoading && !llmResult && (
-            <div className="p-4 bg-gray-100 rounded-lg text-sm text-gray-400">
-              Plant info will appear here after lookup.
+            {/* Scan Button */}
+            <Button
+              onClick={handleScan}
+              disabled={loading}
+              variant="primary"
+              size="lg"
+              className="mt-4 w-full"
+            >
+              {loading ? "📷 Scanning..." : "📷 Scan"}
+            </Button>
+
+            {/* OCR Output */}
+            <div className="mt-4 card p-4">
+              <h3 className="text-sm font-medium text-swansons-muted mb-2">
+                OCR Result
+              </h3>
+              <div className="bg-swansons-green-dark text-swansons-green-light p-4 rounded-swansons min-h-[100px] text-sm font-mono whitespace-pre-wrap">
+                {text || "No OCR text yet — scan a plant tag to begin"}
+              </div>
             </div>
-          )}
 
-          {/* Debug panel */}
-          <div className="mt-6 bg-black text-green-400 p-3 rounded text-xs whitespace-pre-wrap">
-            {debug.length ? debug.join("\n") : "debug log empty"}
+            {/* Query Input */}
+            <div className="mt-4 card p-4">
+              <label className="text-sm font-medium text-swansons-muted mb-2 block">
+                Plant name (edit if needed)
+              </label>
+              <input
+                className="input"
+                placeholder="Edit plant name before lookup"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+
+              <Button
+                onClick={() => {
+                  const q = query || text;
+                  addDebug(`LLM submit: "${q}"`);
+                  if (!q) return;
+                  setLlmResult(null);
+                  complete(q);
+                }}
+                disabled={llmLoading || !(query || text)}
+                variant="secondary"
+                className="mt-3 w-full"
+              >
+                {llmLoading
+                  ? "🔍 Streaming LLM..."
+                  : "🔍 Find Plant Info (LLM)"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Right: LLM Results */}
+          <div className="flex-1 min-w-0">
+            {/* Loading State */}
+            {llmLoading && (
+              <div className="card p-4 border-2 border-swansons-green bg-swansons-green-muted">
+                <div className="flex items-center gap-3 text-swansons-green-dark">
+                  <div className="animate-spin h-5 w-5 border-2 border-swansons-green border-t-transparent rounded-full"></div>
+                  <span className="font-medium">Streaming plant info...</span>
+                </div>
+              </div>
+            )}
+
+            {/* Results Card */}
+            {llmResult?.latinName && (
+              <div className="card p-6">
+                <div className="text-center mb-4 pb-4 border-b border-gray-100">
+                  <span className="text-4xl mb-2 block">🌱</span>
+                  <h2 className="text-xl mb-1">{llmResult.commonName}</h2>
+                  <p className="italic text-swansons-muted">
+                    {llmResult.latinName}
+                  </p>
+                </div>
+
+                {/* Light & Water */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
+                    <span className="text-xl block mb-1">☀️</span>
+                    <span className="text-xs font-medium text-swansons-muted block">
+                      Light
+                    </span>
+                    <span className="text-sm text-swansons-text">
+                      {llmResult.light}
+                    </span>
+                  </div>
+                  <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
+                    <span className="text-xl block mb-1">💧</span>
+                    <span className="text-xs font-medium text-swansons-muted block">
+                      Water
+                    </span>
+                    <span className="text-sm text-swansons-text">
+                      {llmResult.water}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Care Tips */}
+                {llmResult.careTips && llmResult.careTips.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-swansons-green-dark mb-2">
+                      🌿 Care Tips
+                    </h3>
+                    <ul className="space-y-2">
+                      {llmResult.careTips.map((t: string, i: number) => (
+                        <li
+                          key={i}
+                          className="text-sm text-swansons-text bg-swansons-cream p-2 rounded-swansons"
+                        >
+                          {t}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Warnings */}
+                {llmResult.warnings && llmResult.warnings.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-swansons p-3">
+                    <h3 className="text-sm font-semibold text-red-700 mb-2">
+                      ⚠️ Warnings
+                    </h3>
+                    <ul className="space-y-1">
+                      {llmResult.warnings.map((w: string, i: number) => (
+                        <li key={i} className="text-sm text-red-600">
+                          {w}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!llmLoading && !llmResult && (
+              <div className="card p-8 text-center">
+                <span className="text-4xl mb-3 block opacity-50">🌿</span>
+                <p className="text-swansons-muted">
+                  Plant info will appear here after lookup
+                </p>
+              </div>
+            )}
+
+            {/* Debug Panel */}
+            <details className="mt-6">
+              <summary className="text-sm text-swansons-muted cursor-pointer hover:text-swansons-green">
+                🛠 Debug Log
+              </summary>
+              <div className="mt-2 bg-swansons-green-dark text-swansons-green-light p-3 rounded-swansons text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
+                {debug.length ? debug.join("\n") : "debug log empty"}
+              </div>
+            </details>
           </div>
         </div>
       </div>
