@@ -9,8 +9,8 @@ import plantsData from "../../data/plants.json";
 import { Button } from "@/components/ui/Button";
 
 export default function ScanPage() {
-  const videoRef = useRef<HTMLVideoElement | null>();
-  const canvasRef = useRef<HTMLCanvasElement | null>();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
