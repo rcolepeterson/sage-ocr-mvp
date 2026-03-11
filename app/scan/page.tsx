@@ -9,8 +9,8 @@ import plantsData from "../../data/plants.json";
 import { Button } from "@/components/ui/Button";
 
 export default function ScanPage() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>();
+  const canvasRef = useRef<HTMLCanvasElement | null>();
 
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,8 +22,11 @@ export default function ScanPage() {
     water?: string | null;
     careTips?: string[];
     warnings?: string[];
-  } | null>(null);
+  } | null>();
   const [debug, setDebug] = useState<string[]>([]);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">(
+    "environment",
+  );
 
   const router = useRouter();
 
@@ -55,20 +58,28 @@ export default function ScanPage() {
   }, [completion]);
 
   useEffect(() => {
-    async function initCamera() {
-      addDebug("initCamera()");
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        if (videoRef.current) videoRef.current.srcObject = stream;
-        addDebug("camera stream attached");
-      } catch (e: any) {
-        addDebug(`camera error: ${e?.message || String(e)}`);
-      }
-    }
-    initCamera();
+    initCamera("environment");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function initCamera(mode: "user" | "environment" = facingMode) {
+    addDebug(`initCamera(${mode})`);
+    try {
+      // stop previous stream if any
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach((t) => t.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode },
+      });
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      addDebug("camera stream attached");
+    } catch (e: any) {
+      addDebug(`camera error: ${e?.message || String(e)}`);
+    }
+  }
 
   function downscaleCanvas(canvas: HTMLCanvasElement, maxWidth = 1280) {
     const ctx = canvas.getContext("2d");
@@ -181,6 +192,21 @@ export default function ScanPage() {
               className="mt-4 w-full"
             >
               {loading ? "📷 Scanning..." : "📷 Scan"}
+            </Button>
+
+            {/* Switch Camera Button */}
+            <Button
+              onClick={() => {
+                const next = facingMode === "user" ? "environment" : "user";
+                setFacingMode(next);
+                initCamera(next);
+              }}
+              variant="secondary"
+              className="mt-2 w-full"
+            >
+              {facingMode === "user"
+                ? "↩️ Use Rear Camera"
+                : "🤳 Use Selfie Camera"}
             </Button>
 
             {/* OCR Output */}
