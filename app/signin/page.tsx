@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  signInWithPopup,
-  getRedirectResult,
-  GoogleAuthProvider,
-} from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase/auth";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/firebase/AuthContext";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function SignInPage() {
@@ -19,15 +15,6 @@ export default function SignInPage() {
       router.push("/");
     }
   }, [user, loading, router]);
-
-  // Handle Google sign-in redirect result
-  useEffect(() => {
-    getRedirectResult(auth).then((result) => {
-      if (result?.user) {
-        router.push("/");
-      }
-    });
-  }, [router]);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();

@@ -1,9 +1,9 @@
-// app/page.tsx
-
+"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import SignInButton from "@/components/auth/SignInButton";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase/auth";
 
 export default function Home() {
   return (
@@ -15,11 +15,6 @@ export default function Home() {
             <span className="text-5xl mb-3 block">🌿</span>
             <h1 className="text-2xl mb-1">Sage MVP</h1>
             <p className="text-swansons-muted">Choose a tool:</p>
-          </div>
-
-          {/* Sign In Button for testing */}
-          <div className="my-8">
-            <SignInButton />
           </div>
 
           {/* Actions */}
@@ -34,6 +29,16 @@ export default function Home() {
             <Button disabled className="w-full">
               Dashboard (coming soon)
             </Button>
+          </div>
+
+          {/* Temporary Sign Out Button for testing */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => signOut(auth)}
+              className="text-sm text-swansons-muted underline"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </main>
