@@ -1,78 +1,82 @@
-Sage OCR MVP — Agent Guide
-Project Overview
-Sage is a web-based plant care system for Swansons Nursery. The MVP
-enables users to scan plant tags, extract text via OCR, and stream
-structured plant info from an LLM.
+# AGENTS.md — Sage Plant Care System
 
-Client: Swansons Nursery
-Agency: Herd of Shepherds
-Developer: Cole Peterson
-Contract Start: March 25, 2026
-Contract End: August 31, 2026
+## Project Overview
 
-MVP Scope
+Sage is a mobile-first web app for a plant nursery. Users scan plant
+tags via QR code, get personalized plant care plans via LLM, and can
+ask experts questions through a threaded conversation interface.
+Staff and admins manage threads, notifications, and customer
+interactions through a back-office console.
 
-Implemented:
+---
 
-- Home page (/)
-- Scan page (/scan): camera, OCR, matching
-- OCR via Google Vision (server-side)
-- Seeded plant catalog
-- Plant profile page (/plant/[id])
-- LLM plant info lookup (Gemini, streaming)
-- Firebase Auth (Google Sign-In popup) ✅
-- Protected Routes ✅
-- Sign In page (/signin) ✅
-- Deployed: sage-ocr-mvp-one.vercel.app ✅
-- Firebase Auth (Google Sign-In) ✅
-- Firebase Config ✅
-- Firestore connected ✅
-
-Planned/In Scope:
-
-- Firebase Authentication (OAuth)
-- Firestore threaded conversations
-- Reminders/notifications (FCM)
-- Ask-an-expert chat (threaded UI)
-- Admin/staff tools
-- Role-based access control (RBAC)
-
-Tech Stack
+## Tech Stack
 
 - Next.js (App Router)
 - TypeScript
 - Tailwind CSS
-- Vercel hosting
-- Google Vision API
-- Vercel AI SDK (Gemini)
-- Firebase Auth (OAuth)
+- Vercel (hosting)
+- Google Vision API (OCR, server-side only)
+- Vercel AI SDK (Gemini gemini-2.5-flash)
+- Firebase Auth (Google Sign-In via signInWithPopup)
 - Firestore (database)
-- Firebase Cloud Messaging (FCM)
+- Firebase Cloud Messaging (FCM, notifications)
+- Firebase Storage (images/media)
 
-Users
-Two types of users:
+---
 
-1. Customers (public) — e.g. grandma scanning a plant tag
-2. Staff/Admin — Swansons nursery employees
+## Directory Structure
 
-Authentication Strategy
+/app
+/api/ocr/route.ts # OCR server route (Google Vision)
+/api/plant-llm/route.ts # LLM streaming route
+/api/flora/route.ts # Flora API plant lookup
+/scan/page.tsx # Camera + OCR UI
+/plant/[id]/page.tsx # Plant profile page
+/signin/page.tsx # Sign in page (Firebase Auth)
+/page.tsx # Home/Dashboard
+/components
+/auth
+ProtectedRoute.tsx # Guards all authenticated routes
+SignOutButton.tsx # Sign out button component
+/ui
+Button.tsx # Shared button component
+/lib
+/firebase
+config.ts # Firebase initialization
+auth.ts # Firebase Auth instance
+firestore.ts # Firestore instance
+AuthContext.tsx # Auth state context + provider
+/ocr
+index.ts
+googleVision.ts
+/llm
+schema.ts # Zod schema for LLM plant output
+/data
+plants.json # Seeded plant catalog
+/docs # Product docs (optional)
 
-- Firebase OAuth (passwordless)
-- Sign in with Google (Gmail users)
-- Sign in with Microsoft (Outlook/365 users)
-- Sign in with Apple (Apple ID users)
-- Email + Password (fallback for everyone else)
-- Phone/SMS sign-in (optional, costs ~$0.01/SMS, Swansons pays)
-- Magic links: NOT supported (deprecated by Firebase Aug 2025)
-- FirebaseUI recommended as drop-in auth solution
+---
 
-Roles (RBAC)
+## Authentication
 
-- Customer: view plants, scan tags, ask questions, view threads
-- Expert/Staff: respond to threads, use macros, request reassignment
-- Admin: manage staff accounts, routing rules, reporting, oversight
+- Provider: Firebase Auth
+- Method: signInWithPopup (Google)
+- DO NOT use signInWithRedirect — known issues on localhost
+- All routes protected via ProtectedRoute component
+- Public routes: /signin only
+- Auth state managed via AuthContext (useAuth hook)
 
-Database: Firestore Structure
+### Roles (RBAC — to be implemented)
+
+- customer: view plants, scan tags, ask questions, view threads
+- staff: respond to threads, use macros, request reassignment
+- admin: manage accounts, routing rules, reporting, oversight
+
+---
+
+## Firestore Structure
+
 /threads
 /{threadId}
 plantId: string
@@ -80,136 +84,174 @@ userId: string
 question: string
 status: "pending" | "answered" | "needs-followup"
 createdAt: timestamp
-/replies
+/replies (subcollection)
 /{replyId}
 authorId: string
 message: string
 createdAt: timestamp
 isStaff: boolean
 
-Threaded Conversation UI
+---
+
+## Users
+
+Two types:
+
+1. Customers — public users scanning plant tags
+2. Staff/Admin — nursery employees managing threads and content
+
+---
+
+## LLM Streaming
+
+- Frontend: useCompletion from @ai-sdk/react
+- streamProtocol: "text" is required
+- Partial JSON parsed with parsePartialJson(completion)
+- Route uses streamObject → toTextStreamResponse()
+- Model: gemini-2.5-flash
+- All LLM responses must follow Zod schema in /lib/llm/schema.ts
+
+---
+
+## Threaded Conversation UI
 
 - NOT a chat UI — threaded question-based UI
-- Realistic for staff response times
 - Supports text, photos, links
 - Staff profiles visible in conversation
 - Status: waiting / answered / needs follow-up
+- Realistic for async staff response times
 
-Notifications
+---
 
-- Firebase Cloud Messaging (FCM) — free
-- Push notifications (browser must be running in background)
-- Email notifications (free fallback)
-- SMS via Twilio (optional, ~$0.008/SMS + $1/month for number)
-- Plant care reminders (watering, fertilizing, seasonal)
-- Staff alerts for new customer threads
+## Notifications
 
-Infrastructure
+- Firebase Cloud Messaging (FCM) — free push notifications
+- Browser must be running in background to receive
+- Used for: staff reply alerts, plant care reminders
 
-- GCP account: owned by Herd of Shepherds (agency)
-- Firebase project: set up by agency
-- Vercel: set up by agency
-- Developer (Cole) gets admin access
-- Hosting costs: $50-$200/month (not included in contract, paid by client)
+---
 
-Local Dev Environment
+## Environment Variables
 
-- Machine: VML Mac (company managed, OneDrive synced)
-- Dev folder: ~/Dev/2026/
-- Repo: ~/Dev/2026/sage-ocr-mvp
-- Documents folder is OneDrive synced — keep all dev work in ~/Dev
+NEXT_PUBLIC_FIREBASE_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+NEXT_PUBLIC_FIREBASE_PROJECT_ID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID
+GOOGLE_APPLICATION_CREDENTIALS_JSON
+GEMINI_API_KEY
+FLORA_API_KEY
 
-Environment Variables
+---
 
-- GOOGLE_APPLICATION_CREDENTIALS_JSON: Google Vision service account
-- GEMINI_API_KEY: Gemini LLM API key
-- FLORA_API_KEY: Flora API plant lookup
-- FIREBASE_API_KEY: Firebase config (to be added)
-- FIREBASE_AUTH_DOMAIN: Firebase config (to be added)
+## Coding Conventions
 
-Directory Map
-/app
-/api/ocr/route.ts # OCR server route
-/api/plant-llm/route.ts # LLM streaming route (implemented)
-/api/flora/route.ts # Flora API lookup route
-/scan/page.tsx # Camera + OCR UI
-/plant/[id]/page.tsx # Plant profile page
-/page.tsx # Home
-/data
-plants.json # Seeded plant catalog
-/lib
-/ocr/index.ts
-/ocr/googleVision.ts
-/llm/schema.ts # Zod schema for plant output
-/docs # Product docs
-
-LLM Streaming Details
-
-- Frontend uses useCompletion from @ai-sdk/react
-- streamProtocol: "text" is required
-- Partial JSON parsed with parsePartialJson(completion)
-- LLM route uses streamObject → toTextStreamResponse()
-- Model: gemini-2.5-flash (stable)
-
-Coding Conventions
-
+- Mobile-first UI using Tailwind
+- Use App Router patterns only
 - Keep OCR calls server-side only
-- Use Tailwind for UI styles
-- UI must be clean and mobile-first
 - Use App Router patterns
-- LLM responses must follow schema
+- All LLM responses must follow Zod schema
+- Use useAuth() hook for auth state — never read Firebase auth directly
+- New routes go under /app
+- New components go under /components
 
-Do / Don't
-Do:
+---
+
+## Do
 
 - Keep secrets in env vars
 - Add new routes under /app
 - Keep OCR modular (swappable provider)
 - Stream LLM output when possible
+- Use Tailwind for all styles
+- Use useAuth() for auth state
 
-Don't:
+## Don't
 
 - Call Google Vision from the client
 - Hardcode credentials
 - Return unstructured LLM output
+- Use signInWithRedirect (use signInWithPopup)
+- Add business logic to UI components
+- Store sensitive data in NEXT*PUBLIC* vars
 
-Key Flow (MVP POC)
+---
+
+## Key Flows
+
+### Plant Scan Flow
 
 1. User opens /scan
 2. Camera captures image
-3. Server calls Google Vision
+3. Server calls Google Vision (OCR)
 4. OCR text returned to UI
 5. OCR text sent to LLM route
-6. LLM streams structured plant info (schema)
+6. LLM streams structured plant info
 
-Commands
+### Auth Flow
+
+1. User visits any page
+2. ProtectedRoute checks auth state
+3. Not signed in → redirect to /signin
+4. User clicks Sign in with Google → signInWithPopup
+5. Firebase authenticates
+6. AuthContext updates user state
+7. Redirect to home ✅
+
+---
+
+## Commands
+
 npm install # Install dependencies
 npm run dev # Start local dev server
 npm run build # Build for production
-vercel --prod # Deploy to Vercel
+npx vercel --prod # Deploy to Vercel
+
+---
+
+## Implemented
+
+- Home page (/)
+- Scan page (/scan): camera, OCR, matching
+- OCR via Google Vision (server-side)
+- Seeded plant catalog
+- Plant profile page (/plant/[id])
+- LLM plant info lookup (Gemini, streaming)
+- Firebase Auth (Google Sign-In via popup)
+- Firebase Config
+- Firestore connected
+- Protected Routes
+- Sign In page (/signin)
+- Deployed: sage-ocr-mvp-one.vercel.app
+
+## Planned
+
+- Firestore threaded conversations
+- Ask-an-expert threaded UI
+- Admin/staff console
+- Role-based access control (RBAC)
+- Firebase Storage (plant + thread images)
+- Firebase Cloud Messaging (notifications)
+- Apple Sign-In
+- Email + Password Sign-In
+
+---
 
 <!-- VERCEL BEST PRACTICES START -->
 
-## Best practices for developing on Vercel
+## Vercel Best Practices
 
-These defaults are optimized for AI coding agents (and humans) working on apps that deploy to Vercel.
-
-- Treat Vercel Functions as stateless + ephemeral (no durable RAM/FS, no background daemons), use Blob or marketplace integrations for preserving state
+- Treat Vercel Functions as stateless + ephemeral
 - Edge Functions (standalone) are deprecated; prefer Vercel Functions
-- Don't start new projects on Vercel KV/Postgres (both discontinued); use Marketplace Redis/Postgres instead
-- Store secrets in Vercel Env Variables; not in git or `NEXT_PUBLIC_*`
-- Provision Marketplace native integrations with `vercel integration add` (CI/agent-friendly)
-- Sync env + project settings with `vercel env pull` / `vercel pull` when you need local/offline parity
-- Use `waitUntil` for post-response work; avoid the deprecated Function `context` parameter
-- Set Function regions near your primary data source; avoid cross-region DB/service roundtrips
-- Tune Fluid Compute knobs (e.g., `maxDuration`, memory/CPU) for long I/O-heavy calls (LLMs, APIs)
-- Use Runtime Cache for fast **regional** caching + tag invalidation (don't treat it as global KV)
-- Use Cron Jobs for schedules; cron runs in UTC and triggers your production URL via HTTP GET
-- Use Vercel Blob for uploads/media; Use Edge Config for small, globally-read config
-- If Enable Deployment Protection is enabled, use a bypass secret to directly access them
-- Add OpenTelemetry via `@vercel/otel` on Node; don't expect OTEL support on the Edge runtime
+- Don't start new projects on Vercel KV/Postgres (discontinued)
+- Store secrets in Vercel Env Variables; not in git or NEXT*PUBLIC*\*
+- Use waitUntil for post-response work
+- Set Function regions near your primary data source
+- Use Runtime Cache for fast regional caching
+- Use Cron Jobs for schedules (runs UTC, triggers production URL)
+- Use Vercel Blob for uploads/media
+- Use Edge Config for small globally-read config
 - Enable Web Analytics + Speed Insights early
-- Use AI Gateway for model routing, set AI_GATEWAY_API_KEY, using a model string (e.g. 'anthropic/claude-sonnet-4.6'), Gateway is already default in AI SDK
-  needed. Always curl https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
-- For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel MCP for secure infra access
+- Use AI Gateway for model routing with AI_GATEWAY_API_KEY
 <!-- VERCEL BEST PRACTICES END -->
