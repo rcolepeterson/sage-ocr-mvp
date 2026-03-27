@@ -12,6 +12,7 @@ Contract End: August 31, 2026
 
 MVP Scope
 
+
 Implemented:
 
 - Home page (/)
@@ -20,6 +21,10 @@ Implemented:
 - Seeded plant catalog
 - Plant profile page (/plant/[id])
 - LLM plant info lookup (Gemini, streaming)
+- Firebase Auth (Google Sign-In popup) ✅
+- Protected Routes ✅
+- Sign In page (/signin) ✅
+- Deployed: sage-ocr-mvp-one.vercel.app ✅
 - Firebase Auth (Google Sign-In) ✅
 - Firebase Config ✅
 - Firestore connected ✅
