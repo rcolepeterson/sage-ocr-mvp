@@ -1,15 +1,29 @@
 "use client";
 
-import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  GoogleAuthProvider,
+  signOut,
+} from "firebase/auth";
 import { auth } from "@/lib/firebase/auth";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { useAuth } from "@/lib/firebase/AuthContext";
 
 export default function SignInButton() {
-  const [user, loading] = useAuthState(auth);
+  const { user, loading } = useAuth();
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      const isLocalhost = window.location.hostname === "localhost";
+      if (isLocalhost) {
+        await signInWithPopup(auth, provider);
+      } else {
+        await signInWithRedirect(auth, provider);
+      }
+    } catch (error) {
+      console.error("🚨 Sign in error:", error);
+    }
   };
 
   const handleSignOut = async () => {
@@ -35,7 +49,7 @@ export default function SignInButton() {
     <div className="flex justify-center">
       <button
         onClick={signInWithGoogle}
-        className="w-full rounded-full bg-green-700 text-white px-6 py-2 hover:bg-green-800 transition"
+        className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition"
       >
         Sign in with Google
       </button>
