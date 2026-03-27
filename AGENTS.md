@@ -12,7 +12,6 @@ Contract End: August 31, 2026
 
 MVP Scope
 
-
 Implemented:
 
 - Home page (/)
@@ -190,6 +189,7 @@ npm run build # Build for production
 vercel --prod # Deploy to Vercel
 
 <!-- VERCEL BEST PRACTICES START -->
+
 ## Best practices for developing on Vercel
 
 These defaults are optimized for AI coding agents (and humans) working on apps that deploy to Vercel.
