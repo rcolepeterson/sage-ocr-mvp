@@ -3,7 +3,7 @@
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { subscribeToThread, addReply } from "@/lib/firebase/threads";
 import { useParams } from "next/navigation";
 
@@ -13,6 +13,7 @@ export default function ThreadDetailPage() {
   const [thread, setThread] = useState<any>(null);
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   // Real time listener for thread + replies
   useEffect(() => {
@@ -20,6 +21,11 @@ export default function ThreadDetailPage() {
     const unsub = subscribeToThread(threadId, setThread);
     return () => unsub();
   }, [threadId]);
+
+  // Auto scroll to bottom when replies update
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [thread?.replies]);
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +69,7 @@ export default function ThreadDetailPage() {
                 <li className="text-gray-500 text-sm">No replies yet.</li>
               )}
             </ul>
+            <div ref={bottomRef} />
           </div>
           <form onSubmit={handleReply} className="flex flex-col gap-2">
             <textarea

@@ -3,7 +3,7 @@
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   subscribeToAllThreads,
   subscribeToThread,
@@ -19,6 +19,7 @@ export default function AdminInboxPage() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   // Real time listener for all threads
   useEffect(() => {
@@ -32,6 +33,11 @@ export default function AdminInboxPage() {
     const unsub = subscribeToThread(selectedThreadId, setSelectedThread);
     return () => unsub();
   }, [selectedThreadId]);
+
+  // Auto scroll to bottom when replies update
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedThread?.replies]);
 
   const handleSelectThread = (threadId: string) => {
     setSelectedThreadId(threadId);
@@ -115,6 +121,7 @@ export default function AdminInboxPage() {
                       <li className="text-gray-500 text-sm">No replies yet.</li>
                     )}
                   </ul>
+                  <div ref={bottomRef} />
                 </div>
                 <form onSubmit={handleReply} className="flex flex-col gap-2">
                   <textarea
