@@ -141,7 +141,7 @@ export default function AdminInboxPage() {
                 </form>
                 <div className="flex gap-2 mt-4">
                   <button
-                    className="btn btn-xs bg-green-200"
+                    className="btn btn-xs bg-green-200 cursor-pointer p-2"
                     onClick={() => handleStatus("answered")}
                   >
                     Mark Answered
