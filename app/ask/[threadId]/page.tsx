@@ -7,6 +7,17 @@ import { useEffect, useState, useRef } from "react";
 import { subscribeToThread, addReply } from "@/lib/firebase/threads";
 import { useParams } from "next/navigation";
 
+const getCustomerStatus = (status: string) => {
+  switch (status) {
+    case "answered":
+      return "✅ Answered";
+    case "pending":
+    case "needs-followup":
+    default:
+      return "⏳ Waiting for expert";
+  }
+};
+
 export default function ThreadDetailPage() {
   const { user, loading } = useAuth();
   const { threadId } = useParams() as { threadId: string };
@@ -41,52 +52,78 @@ export default function ThreadDetailPage() {
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen bg-swansons-cream flex flex-col items-center px-4 py-8">
-        <div className="card w-full max-w-md p-6 mb-8">
-          <h1 className="text-xl font-semibold mb-2">Thread</h1>
-          <div className="mb-2">
-            <span className="font-medium">Q: {thread.question}</span>
-            <span className="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
-              {thread.status}
+      <main className="h-screen flex flex-col bg-swansons-cream overflow-hidden">
+        <div className="flex flex-col h-full w-full max-w-screen-lg mx-auto bg-white shadow-sm">
+          {/* Fixed Header */}
+          <div className="flex-shrink-0 px-4 py-4 border-b border-gray-200 bg-white">
+            <p className="font-medium text-sm">{thread.question}</p>
+            <span
+              className={`text-xs p-2  rounded mt-1 inline-block ${
+                thread.status === "answered"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }`}
+            >
+              {getCustomerStatus(thread.status)}
             </span>
           </div>
-          <div className="mb-4">
-            <h2 className="text-sm font-medium mb-1">Replies</h2>
-            <ul className="space-y-2">
-              {thread.replies && thread.replies.length > 0 ? (
-                thread.replies.map((r: any) => (
-                  <li
-                    key={r.id}
-                    className="bg-white rounded p-2 shadow flex flex-col"
+
+          {/* Scrollable Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col">
+            {thread.replies && thread.replies.length > 0 ? (
+              thread.replies.map((r: any) => (
+                <div
+                  key={r.id}
+                  className={`flex flex-col max-w-xs ${
+                    r.isStaff ? "self-start" : "self-end ml-auto"
+                  }`}
+                >
+                  <span className="text-xs text-gray-400 mb-1 px-1">
+                    {r.isStaff ? "Swansons Expert" : "You"}
+                  </span>
+                  <div
+                    className={`rounded-2xl px-4 py-2 text-sm ${
+                      r.isStaff
+                        ? "bg-gray-100 text-gray-800"
+                        : "bg-green-700 text-white"
+                    }`}
                   >
-                    <span className="text-xs text-gray-500 mb-1">
-                      {r.isStaff ? "Staff" : "You"}
-                    </span>
-                    <span>{r.message}</span>
-                  </li>
-                ))
-              ) : (
-                <li className="text-gray-500 text-sm">No replies yet.</li>
-              )}
-            </ul>
+                    {r.message}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-gray-400 text-sm mt-8">
+                No replies yet. A Swansons expert will respond soon. 🌿
+              </p>
+            )}
             <div ref={bottomRef} />
           </div>
-          <form onSubmit={handleReply} className="flex flex-col gap-2">
-            <textarea
-              className="input min-h-[60px]"
-              placeholder="Type a follow-up message..."
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              required
-            />
-            <button
-              type="submit"
-              className="btn btn-primary w-full"
-              disabled={submitting || !reply.trim()}
-            >
-              {submitting ? "Sending..." : "Send Message"}
-            </button>
-          </form>
+
+          {/* Fixed Bottom Input */}
+          <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 bg-white">
+            <form onSubmit={handleReply} className="flex flex-col gap-2">
+              <textarea
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-600 min-h-[60px]"
+                placeholder="Send a message..."
+                value={reply}
+                onChange={(e) => setReply(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleReply(e as any);
+                  }
+                }}
+              />
+              <button
+                type="submit"
+                className="w-full rounded-full bg-green-700 text-white py-2 text-sm font-medium hover:bg-green-800 transition disabled:opacity-50"
+                disabled={submitting || !reply.trim()}
+              >
+                {submitting ? "Sending..." : "Send Message"}
+              </button>
+            </form>
+          </div>
         </div>
       </main>
     </ProtectedRoute>
