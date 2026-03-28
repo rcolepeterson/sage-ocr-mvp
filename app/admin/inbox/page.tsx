@@ -125,7 +125,7 @@ export default function AdminInboxPage() {
                 </div>
                 <form onSubmit={handleReply} className="flex flex-col gap-2">
                   <textarea
-                    className="input min-h-[60px]"
+                    className="input min-h-15"
                     placeholder="Type a reply..."
                     value={reply}
                     onChange={(e) => setReply(e.target.value)}
@@ -141,22 +141,10 @@ export default function AdminInboxPage() {
                 </form>
                 <div className="flex gap-2 mt-4">
                   <button
-                    className="btn btn-xs bg-yellow-200"
-                    onClick={() => handleStatus("pending")}
-                  >
-                    Mark Pending
-                  </button>
-                  <button
                     className="btn btn-xs bg-green-200"
                     onClick={() => handleStatus("answered")}
                   >
                     Mark Answered
-                  </button>
-                  <button
-                    className="btn btn-xs bg-red-200"
-                    onClick={() => handleStatus("needs-followup")}
-                  >
-                    Needs Follow-up
                   </button>
                 </div>
               </div>
