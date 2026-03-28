@@ -63,93 +63,107 @@ export default function AdminInboxPage() {
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen bg-swansons-cream flex flex-col items-center px-4 py-8">
-        <div className="w-full max-w-2xl flex flex-col md:flex-row gap-8">
-          <div className="flex-1">
-            <h1 className="text-xl font-semibold mb-4">Staff Inbox</h1>
-            <ul className="space-y-2">
+      <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden">
+        {/* Top Header */}
+        <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
+          <h1 className="text-xl font-semibold">Staff Inbox</h1>
+        </div>
+
+        {/* Split Pane */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left Panel — Thread List */}
+          <div className="w-80 flex-shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {threads.map((thread) => (
-                <li
+                <div
                   key={thread.id}
-                  className={`bg-white rounded p-3 shadow flex flex-col cursor-pointer ${
+                  className={`rounded p-3 cursor-pointer flex flex-col gap-1 ${
                     selectedThread?.id === thread.id
-                      ? "border-2 border-green-600"
-                      : ""
+                      ? "bg-green-50 border-2 border-green-600"
+                      : "bg-gray-50 hover:bg-gray-100"
                   }`}
                   onClick={() => handleSelectThread(thread.id)}
                 >
-                  <span className="font-medium">{thread.question}</span>
-                  <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 ml-2">
+                  <span className="font-medium text-sm">{thread.question}</span>
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600 self-start">
                     {thread.status}
                   </span>
-                </li>
+                </div>
               ))}
               {threads.length === 0 && (
-                <li className="text-gray-500 text-sm">No open threads.</li>
+                <p className="text-gray-500 text-sm">No open threads.</p>
               )}
-            </ul>
+            </div>
           </div>
-          <div className="flex-1">
+
+          {/* Right Panel — Thread Detail */}
+          <div className="flex-1 flex flex-col overflow-hidden">
             {selectedThread ? (
-              <div className="card p-4">
-                <h2 className="text-lg font-medium mb-2">Thread Detail</h2>
-                <div className="mb-2">
-                  <span className="font-medium">
-                    Q: {selectedThread.question}
-                  </span>
-                  <span className="ml-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
+              <>
+                {/* Fixed Thread Header */}
+                <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
+                  <p className="font-medium">Q: {selectedThread.question}</p>
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                     {selectedThread.status}
                   </span>
                 </div>
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium mb-1">Replies</h3>
-                  <ul className="space-y-2">
-                    {selectedThread.replies &&
-                    selectedThread.replies.length > 0 ? (
-                      selectedThread.replies.map((r: any) => (
-                        <li
-                          key={r.id}
-                          className="bg-gray-50 rounded p-2 flex flex-col"
-                        >
-                          <span className="text-xs text-gray-500 mb-1">
-                            {r.isStaff ? "Staff" : "Customer"}
-                          </span>
-                          <span>{r.message}</span>
-                        </li>
-                      ))
-                    ) : (
-                      <li className="text-gray-500 text-sm">No replies yet.</li>
-                    )}
-                  </ul>
+
+                {/* Scrollable Replies */}
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+                  {selectedThread.replies &&
+                  selectedThread.replies.length > 0 ? (
+                    selectedThread.replies.map((r: any) => (
+                      <div
+                        key={r.id}
+                        className={`flex flex-col max-w-sm rounded p-3 ${
+                          r.isStaff
+                            ? "bg-green-50 self-start"
+                            : "bg-white shadow self-end ml-auto"
+                        }`}
+                      >
+                        <span className="text-xs text-gray-500 mb-1">
+                          {r.isStaff ? "Staff" : "Customer"}
+                        </span>
+                        <span className="text-sm">{r.message}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm">No replies yet.</p>
+                  )}
                   <div ref={bottomRef} />
                 </div>
-                <form onSubmit={handleReply} className="flex flex-col gap-2">
-                  <textarea
-                    className="input min-h-15"
-                    placeholder="Type a reply..."
-                    value={reply}
-                    onChange={(e) => setReply(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="btn btn-primary w-full"
-                    disabled={submitting || !reply.trim()}
-                  >
-                    {submitting ? "Sending..." : "Send Reply"}
-                  </button>
-                </form>
-                <div className="flex gap-2 mt-4">
-                  <button
-                    className="btn btn-xs bg-green-200 cursor-pointer p-2"
-                    onClick={() => handleStatus("answered")}
-                  >
-                    Mark Answered
-                  </button>
+
+                {/* Fixed Bottom — Reply Box + Button */}
+                <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
+                  <form onSubmit={handleReply} className="flex flex-col gap-2">
+                    <textarea
+                      className="input min-h-[60px]"
+                      placeholder="Type a reply..."
+                      value={reply}
+                      onChange={(e) => setReply(e.target.value)}
+                      required
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        className="btn btn-primary flex-1"
+                        disabled={submitting || !reply.trim()}
+                      >
+                        {submitting ? "Sending..." : "Send Reply"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn bg-green-200 cursor-pointer px-4"
+                        onClick={() => handleStatus("answered")}
+                      >
+                        Mark Answered
+                      </button>
+                    </div>
+                  </form>
                 </div>
-              </div>
+              </>
             ) : (
-              <div className="text-gray-500 text-sm mt-8">
+              <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
                 Select a thread to view details.
               </div>
             )}
