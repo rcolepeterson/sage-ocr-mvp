@@ -1,32 +1,41 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/lib/firebase/AuthContext';
-import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useAuth } from "@/lib/firebase/AuthContext";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'customer' | 'staff' | 'admin';
+  requiredRole?: "customer" | "staff" | "admin";
 }
 
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  requiredRole,
+}: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicPaths = ['/signin'];
+  const publicPaths = ["/signin"];
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {
     if (!loading && !user && !isPublicPath) {
-      router.push('/signin');
+      router.push("/signin");
     }
-    if (!loading && user && requiredRole && role && !(
-      (requiredRole === 'staff' && (role === 'staff' || role === 'admin')) ||
-      (requiredRole === 'admin' && role === 'admin') ||
-      (requiredRole === 'customer' && role === 'customer')
-    )) {
-      router.push('/unauthorized');
+    if (
+      !loading &&
+      user &&
+      requiredRole &&
+      role &&
+      !(
+        (requiredRole === "staff" && (role === "staff" || role === "admin")) ||
+        (requiredRole === "admin" && role === "admin") ||
+        (requiredRole === "customer" && role === "customer")
+      )
+    ) {
+      router.push("/unauthorized");
     }
   }, [user, loading, router, isPublicPath, requiredRole, role]);
 
@@ -38,9 +47,9 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
 
   if (requiredRole && role) {
     if (
-      (requiredRole === 'staff' && (role === 'staff' || role === 'admin')) ||
-      (requiredRole === 'admin' && role === 'admin') ||
-      (requiredRole === 'customer' && role === 'customer')
+      (requiredRole === "staff" && (role === "staff" || role === "admin")) ||
+      (requiredRole === "admin" && role === "admin") ||
+      (requiredRole === "customer" && role === "customer")
     ) {
       return <>{children}</>;
     } else {
