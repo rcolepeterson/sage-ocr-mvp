@@ -12,7 +12,7 @@ import {
   Thread,
 } from "@/lib/firebase/threads";
 
-export default function AdminInboxPage() {
+function AdminInboxPage() {
   const { user, loading } = useAuth();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedThread, setSelectedThread] = useState<any>(null);
@@ -62,17 +62,16 @@ export default function AdminInboxPage() {
   if (loading) return <p className="text-center mt-10">Loading...</p>;
 
   return (
-    <ProtectedRoute>
-      <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden">
+    <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden">
         {/* Top Header */}
-        <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
+        <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
           <h1 className="text-xl font-semibold">Staff Inbox</h1>
         </div>
 
         {/* Split Pane */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left Panel — Thread List */}
-          <div className="w-80 flex-shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden">
+          <div className="w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {threads.map((thread) => (
                 <div
@@ -101,7 +100,7 @@ export default function AdminInboxPage() {
             {selectedThread ? (
               <>
                 {/* Fixed Thread Header */}
-                <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
+                <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
                   <p className="font-medium">Q: {selectedThread.question}</p>
                   <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                     {selectedThread.status}
@@ -134,10 +133,10 @@ export default function AdminInboxPage() {
                 </div>
 
                 {/* Fixed Bottom — Reply Box + Button */}
-                <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
+                <div className="shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
                   <form onSubmit={handleReply} className="flex flex-col gap-2">
                     <textarea
-                      className="input min-h-[60px]"
+                      className="input min-h-15"
                       placeholder="Type a reply..."
                       value={reply}
                       onChange={(e) => setReply(e.target.value)}
@@ -170,6 +169,13 @@ export default function AdminInboxPage() {
           </div>
         </div>
       </main>
+  );
+}
+
+export default function AdminInboxPageWrapper() {
+  return (
+    <ProtectedRoute requiredRole="staff">
+      <AdminInboxPage />
     </ProtectedRoute>
   );
 }

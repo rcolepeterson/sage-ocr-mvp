@@ -4,12 +4,13 @@ import { useAuth } from '@/lib/firebase/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
-export default function ProtectedRoute({ 
-  children 
-}: { 
-  children: React.ReactNode 
-}) {
-  const { user, loading } = useAuth();
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: 'customer' | 'staff' | 'admin';
+}
+
+export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+  const { user, role, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -20,13 +21,32 @@ export default function ProtectedRoute({
     if (!loading && !user && !isPublicPath) {
       router.push('/signin');
     }
-  }, [user, loading, router, isPublicPath]);
+    if (!loading && user && requiredRole && role && !(
+      (requiredRole === 'staff' && (role === 'staff' || role === 'admin')) ||
+      (requiredRole === 'admin' && role === 'admin') ||
+      (requiredRole === 'customer' && role === 'customer')
+    )) {
+      router.push('/unauthorized');
+    }
+  }, [user, loading, router, isPublicPath, requiredRole, role]);
 
   if (isPublicPath) return <>{children}</>;
 
   if (loading) return <p className="text-center mt-10">Loading...</p>;
 
   if (!user) return null;
+
+  if (requiredRole && role) {
+    if (
+      (requiredRole === 'staff' && (role === 'staff' || role === 'admin')) ||
+      (requiredRole === 'admin' && role === 'admin') ||
+      (requiredRole === 'customer' && role === 'customer')
+    ) {
+      return <>{children}</>;
+    } else {
+      return null;
+    }
+  }
 
   return <>{children}</>;
 }
