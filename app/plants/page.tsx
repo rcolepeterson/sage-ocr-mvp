@@ -2,7 +2,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/firebase/AuthContext";
-import { getSpaces, getPlantsInSpace } from "@/lib/firebase/spaces";
+import {
+  getSpaces,
+  getPlantsInSpace,
+  deletePlant,
+} from "@/lib/firebase/spaces";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function MyPlantsPage() {
@@ -10,25 +14,44 @@ export default function MyPlantsPage() {
   const [spaces, setSpaces] = useState<any[]>([]);
   const [plantsBySpace, setPlantsBySpace] = useState<Record<string, any[]>>({});
   const [spacesLoading, setSpacesLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
 
-    const loadSpacesAndPlants = async () => {
-      const fetchedSpaces = await getSpaces(user.uid);
+    const loadSpacesAndPlants = async (uid: string) => {
+      const fetchedSpaces = await getSpaces(uid);
       setSpaces(fetchedSpaces);
-
       const allPlants: Record<string, any[]> = {};
       for (const space of fetchedSpaces) {
-        const plants = await getPlantsInSpace(user.uid, space.id);
+        const plants = await getPlantsInSpace(uid, space.id);
         allPlants[space.id] = plants;
       }
       setPlantsBySpace(allPlants);
       setSpacesLoading(false);
     };
 
-    loadSpacesAndPlants();
+    loadSpacesAndPlants(user.uid);
   }, [user]);
+
+  const handleDeletePlant = async (spaceId: string, plantId: string) => {
+    if (!user) return;
+    const confirm = window.confirm("Remove this plant?");
+    if (!confirm) return;
+    setDeletingId(plantId);
+    await deletePlant(user.uid, spaceId, plantId);
+
+    // Reload plants after delete
+    const fetchedSpaces = await getSpaces(user.uid);
+    setSpaces(fetchedSpaces);
+    const allPlants: Record<string, any[]> = {};
+    for (const space of fetchedSpaces) {
+      const plants = await getPlantsInSpace(user.uid, space.id);
+      allPlants[space.id] = plants;
+    }
+    setPlantsBySpace(allPlants);
+    setDeletingId(null);
+  };
 
   if (loading || spacesLoading)
     return <p className="text-center mt-10">Loading...</p>;
@@ -67,6 +90,13 @@ export default function MyPlantsPage() {
                       <div className="text-xs text-gray-500">
                         {space.type} / {plant.indoor ? "Indoor" : "Outdoor"}
                       </div>
+                      <button
+                        onClick={() => handleDeletePlant(space.id, plant.id)}
+                        disabled={deletingId === plant.id}
+                        className="mt-2 text-xs text-red-400 hover:text-red-600 transition cursor-pointer"
+                      >
+                        {deletingId === plant.id ? "Removing..." : "🗑 Remove"}
+                      </button>
                     </div>
                   ))
                 )}

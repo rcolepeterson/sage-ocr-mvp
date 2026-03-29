@@ -6,7 +6,20 @@ import {
   getDoc,
   getDocs,
   serverTimestamp,
+  deleteDoc,
 } from "firebase/firestore";
+// Delete a plant from a space
+export async function deletePlant(
+  userId: string,
+  spaceId: string,
+  plantId: string,
+): Promise<void> {
+  const plantRef = doc(
+    db,
+    `users/${userId}/spaces/${spaceId}/plants/${plantId}`,
+  );
+  await deleteDoc(plantRef);
+}
 import { db } from "./firestore";
 
 export type SpaceType = "indoor" | "outdoor";
