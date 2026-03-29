@@ -8,6 +8,7 @@ import {
   deletePlant,
 } from "@/lib/firebase/spaces";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import Link from "next/link";
 
 export default function MyPlantsPage() {
   const { user, loading } = useAuth();
@@ -97,6 +98,12 @@ export default function MyPlantsPage() {
                       >
                         {deletingId === plant.id ? "Removing..." : "🗑 Remove"}
                       </button>
+                      <Link
+                        href={`/ask?plantId=${plant.id}&plantName=${encodeURIComponent(plant.commonName)}`}
+                        className="mt-1 text-xs text-green-700 hover:text-green-900 underline transition"
+                      >
+                        💬 Ask about this plant
+                      </Link>
                     </div>
                   ))
                 )}
