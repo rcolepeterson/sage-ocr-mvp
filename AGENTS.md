@@ -210,7 +210,6 @@ npx vercel --prod # Deploy to Vercel
 
 ---
 
-
 ## Implemented
 
 - Home page (/)
