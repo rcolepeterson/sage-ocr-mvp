@@ -210,6 +210,7 @@ npx vercel --prod # Deploy to Vercel
 
 ---
 
+
 ## Implemented
 
 - Home page (/)
@@ -224,6 +225,10 @@ npx vercel --prod # Deploy to Vercel
 - Protected Routes
 - Sign In page (/signin)
 - Deployed: sage-ocr-mvp-one.vercel.app
+- RBAC (Role-based access control) ✅
+- User documents in Firestore (/users) ✅
+- Roles: customer, staff, admin ✅
+- Unauthorized page (/unauthorized) ✅
 
 ## Planned
 
