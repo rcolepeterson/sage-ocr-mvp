@@ -18,6 +18,7 @@ import { db } from "./firestore";
 export interface Thread {
   id: string;
   plantId: string;
+  plantName: string;
   userId: string;
   question: string;
   status: "pending" | "answered" | "needs-followup";
@@ -37,9 +38,11 @@ export async function createThread(
   plantId: string,
   userId: string,
   question: string,
+  plantName: string = "",
 ) {
   const threadRef = await addDoc(collection(db, "threads"), {
     plantId,
+    plantName,
     userId,
     question,
     status: "pending",
@@ -171,7 +174,6 @@ export function subscribeToThread(
     }
   });
 
-  // Return combined unsubscribe function
   return () => {
     threadUnsub();
     repliesUnsub();

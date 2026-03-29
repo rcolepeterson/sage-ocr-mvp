@@ -29,7 +29,7 @@ export default function AskPage() {
     e.preventDefault();
     if (!question.trim() || !user) return;
     setSubmitting(true);
-    await createThread(plantId, user.uid, question.trim());
+    await createThread(plantId, user.uid, question.trim(), plantName);
     setQuestion("");
     setSubmitting(false);
   };
@@ -93,9 +93,9 @@ export default function AskPage() {
                     {thread.status}
                   </span>
                 </div>
-                {thread.plantId && (
+                {thread.plantName && (
                   <span className="text-xs text-green-600 mt-0.5">
-                    🌱 Plant question
+                    🌱 {thread.plantName}
                   </span>
                 )}
                 <Link

@@ -108,6 +108,11 @@ function AdminInboxPage() {
                   {userNames[thread.userId] || "Loading..."}
                 </span>
                 <span className="font-medium text-sm">{thread.question}</span>
+                {thread.plantName && (
+                  <span className="text-xs text-green-600 mt-0.5">
+                    🌱 {thread.plantName}
+                  </span>
+                )}
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600 self-start">
                   {thread.status}
                 </span>
@@ -130,6 +135,11 @@ function AdminInboxPage() {
                   {userNames[selectedThread.userId] || "Loading..."}
                 </p>
                 <p className="font-medium">Q: {selectedThread.question}</p>
+                {selectedThread.plantName && (
+                  <span className="text-xs text-green-600 mt-0.5 block">
+                    🌱 {selectedThread.plantName}
+                  </span>
+                )}
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                   {selectedThread.status}
                 </span>
