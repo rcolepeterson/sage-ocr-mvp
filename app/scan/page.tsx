@@ -3,14 +3,23 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCompletion } from "@ai-sdk/react";
 import { parsePartialJson } from "ai";
 import plantsData from "../../data/plants.json";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/lib/firebase/AuthContext";
+import {
+  getSpaces,
+  createSpace,
+  savePlantToSpace,
+  Space,
+} from "@/lib/firebase/spaces";
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { user } = useAuth();
 
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,6 +36,15 @@ export default function ScanPage() {
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
     "environment",
   );
+
+  // Save plant state
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string>("");
+  const [newSpaceName, setNewSpaceName] = useState("");
+  const [isIndoor, setIsIndoor] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [showNewSpace, setShowNewSpace] = useState(false);
 
   const router = useRouter();
 
@@ -62,15 +80,64 @@ export default function ScanPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load spaces when user is available
+  useEffect(() => {
+    if (!user) return;
+    getSpaces(user.uid).then((fetchedSpaces) => {
+      setSpaces(fetchedSpaces);
+      if (fetchedSpaces.length > 0) {
+        setSelectedSpaceId(fetchedSpaces[0].id);
+      }
+    });
+  }, [user]);
+
+  async function handleSavePlant() {
+    if (!user || !llmResult?.latinName) return;
+    setSaving(true);
+
+    try {
+      let spaceId = selectedSpaceId;
+
+      // Create new space if needed
+      if (showNewSpace && newSpaceName.trim()) {
+        spaceId = await createSpace(
+          user.uid,
+          newSpaceName.trim(),
+          isIndoor ? "indoor" : "outdoor",
+        );
+      }
+
+      if (!spaceId) {
+        alert("Please select or create a space first.");
+        setSaving(false);
+        return;
+      }
+
+      await savePlantToSpace(user.uid, spaceId, {
+        commonName: llmResult.commonName || "",
+        latinName: llmResult.latinName || "",
+        photo: "",
+        lightLevel: "medium",
+        container: false,
+        indoor: isIndoor,
+        careInfo: llmResult,
+      });
+
+      setSaved(true);
+    } catch (e) {
+      console.error("Error saving plant:", e);
+    }
+
+    setSaving(false);
+  }
+
   async function initCamera(mode: "user" | "environment" = facingMode) {
     addDebug(`initCamera(${mode})`);
     try {
-      // stop previous stream if any
       if (videoRef.current?.srcObject) {
         const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
         tracks.forEach((t) => t.stop());
       }
-
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: mode },
       });
@@ -84,21 +151,16 @@ export default function ScanPage() {
   function downscaleCanvas(canvas: HTMLCanvasElement, maxWidth = 1280) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     const { width, height } = canvas;
     if (width <= maxWidth) return;
-
     const scale = maxWidth / width;
     const newWidth = maxWidth;
     const newHeight = height * scale;
-
     const tmp = document.createElement("canvas");
     tmp.width = newWidth;
     tmp.height = newHeight;
-
     const tmpCtx = tmp.getContext("2d");
     if (!tmpCtx) return;
-
     tmpCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
     canvas.width = newWidth;
     canvas.height = newHeight;
@@ -109,38 +171,31 @@ export default function ScanPage() {
     if (!videoRef.current || !canvasRef.current) return;
     setLoading(true);
     addDebug("handleScan()");
-
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0);
-
     downscaleCanvas(canvas, 1280);
     const imageBase64 = canvas.toDataURL("image/jpeg", 0.7);
     addDebug(`image captured, len=${imageBase64.length}`);
-
     const res = await fetch("/api/ocr", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ imageBase64 }),
     });
-
     addDebug(`OCR status: ${res.status}`);
     const data = await res.json();
     const ocrText = data.text || "";
     setText(ocrText);
     addDebug(`OCR text len=${ocrText.length}`);
-
     const match = plantsData.find(
       (plant) =>
         ocrText.toLowerCase().includes(plant.commonName.toLowerCase()) ||
         ocrText.toLowerCase().includes(plant.latinName.toLowerCase()),
     );
-
     if (match) {
       addDebug(`match found: ${match.id}`);
       setQuery(match.commonName);
@@ -161,9 +216,12 @@ export default function ScanPage() {
             <span className="text-2xl">🌿</span>
             <h1 className="text-xl">Scan Plant Tag</h1>
           </div>
-          <a href="/" className="text-swansons-green hover:underline text-sm">
+          <Link
+            href="/"
+            className="text-swansons-green hover:underline text-sm"
+          >
             ← Back
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -230,13 +288,13 @@ export default function ScanPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-
               <Button
                 onClick={() => {
                   const q = query || text;
                   addDebug(`LLM submit: "${q}"`);
                   if (!q) return;
                   setLlmResult(null);
+                  setSaved(false);
                   complete(q);
                 }}
                 disabled={llmLoading || !(query || text)}
@@ -264,72 +322,177 @@ export default function ScanPage() {
 
             {/* Results Card */}
             {llmResult?.latinName && (
-              <div className="card p-6">
-                <div className="text-center mb-4 pb-4 border-b border-gray-100">
-                  <span className="text-4xl mb-2 block">🌱</span>
-                  <h2 className="text-xl mb-1">{llmResult.commonName}</h2>
-                  <p className="italic text-swansons-muted">
-                    {llmResult.latinName}
-                  </p>
+              <>
+                <div className="card p-6">
+                  <div className="text-center mb-4 pb-4 border-b border-gray-100">
+                    <span className="text-4xl mb-2 block">🌱</span>
+                    <h2 className="text-xl mb-1">{llmResult.commonName}</h2>
+                    <p className="italic text-swansons-muted">
+                      {llmResult.latinName}
+                    </p>
+                  </div>
+
+                  {/* Light & Water */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
+                      <span className="text-xl block mb-1">☀️</span>
+                      <span className="text-xs font-medium text-swansons-muted block">
+                        Light
+                      </span>
+                      <span className="text-sm text-swansons-text">
+                        {llmResult.light}
+                      </span>
+                    </div>
+                    <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
+                      <span className="text-xl block mb-1">💧</span>
+                      <span className="text-xs font-medium text-swansons-muted block">
+                        Water
+                      </span>
+                      <span className="text-sm text-swansons-text">
+                        {llmResult.water}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Care Tips */}
+                  {llmResult.careTips && llmResult.careTips.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-semibold text-swansons-green-dark mb-2">
+                        🌿 Care Tips
+                      </h3>
+                      <ul className="space-y-2">
+                        {llmResult.careTips.map((t: string, i: number) => (
+                          <li
+                            key={i}
+                            className="text-sm text-swansons-text bg-swansons-cream p-2 rounded-swansons"
+                          >
+                            {t}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Warnings */}
+                  {llmResult.warnings && llmResult.warnings.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-swansons p-3">
+                      <h3 className="text-sm font-semibold text-red-700 mb-2">
+                        ⚠️ Warnings
+                      </h3>
+                      <ul className="space-y-1">
+                        {llmResult.warnings.map((w: string, i: number) => (
+                          <li key={i} className="text-sm text-red-600">
+                            {w}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
-                {/* Light & Water */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
-                    <span className="text-xl block mb-1">☀️</span>
-                    <span className="text-xs font-medium text-swansons-muted block">
-                      Light
-                    </span>
-                    <span className="text-sm text-swansons-text">
-                      {llmResult.light}
-                    </span>
-                  </div>
-                  <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
-                    <span className="text-xl block mb-1">💧</span>
-                    <span className="text-xs font-medium text-swansons-muted block">
-                      Water
-                    </span>
-                    <span className="text-sm text-swansons-text">
-                      {llmResult.water}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Care Tips */}
-                {llmResult.careTips && llmResult.careTips.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-swansons-green-dark mb-2">
-                      🌿 Care Tips
+                {/* Save Plant Section */}
+                {!saved ? (
+                  <div className="card p-6 mt-4">
+                    <h3 className="text-sm font-semibold mb-4">
+                      💾 Save to My Plants
                     </h3>
-                    <ul className="space-y-2">
-                      {llmResult.careTips.map((t: string, i: number) => (
-                        <li
-                          key={i}
-                          className="text-sm text-swansons-text bg-swansons-cream p-2 rounded-swansons"
+
+                    {/* Space Picker */}
+                    {spaces.length > 0 && !showNewSpace && (
+                      <div className="mb-3">
+                        <label className="text-xs text-gray-500 mb-1 block">
+                          Select a space
+                        </label>
+                        <select
+                          className="input w-full"
+                          value={selectedSpaceId}
+                          onChange={(e) => setSelectedSpaceId(e.target.value)}
                         >
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                          {spaces.map((space) => (
+                            <option key={space.id} value={space.id}>
+                              {space.name} ({space.type})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
-                {/* Warnings */}
-                {llmResult.warnings && llmResult.warnings.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-swansons p-3">
-                    <h3 className="text-sm font-semibold text-red-700 mb-2">
-                      ⚠️ Warnings
-                    </h3>
-                    <ul className="space-y-1">
-                      {llmResult.warnings.map((w: string, i: number) => (
-                        <li key={i} className="text-sm text-red-600">
-                          {w}
-                        </li>
-                      ))}
-                    </ul>
+                    {/* New Space Toggle */}
+                    <button
+                      type="button"
+                      className="text-xs text-swansons-green underline mb-3 block"
+                      onClick={() => setShowNewSpace(!showNewSpace)}
+                    >
+                      {showNewSpace
+                        ? "← Use existing space"
+                        : "+ Create new space"}
+                    </button>
+
+                    {/* New Space Form */}
+                    {showNewSpace && (
+                      <div className="mb-3 space-y-2">
+                        <input
+                          className="input w-full"
+                          placeholder="Space name (e.g. Front Deck)"
+                          value={newSpaceName}
+                          onChange={(e) => setNewSpaceName(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Indoor/Outdoor Toggle */}
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        type="button"
+                        className={`flex-1 rounded-full py-1.5 text-sm border transition ${
+                          isIndoor
+                            ? "bg-green-700 text-white border-green-700"
+                            : "bg-white text-gray-600 border-gray-200"
+                        }`}
+                        onClick={() => setIsIndoor(true)}
+                      >
+                        🏠 Indoor
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-1 rounded-full py-1.5 text-sm border transition ${
+                          !isIndoor
+                            ? "bg-green-700 text-white border-green-700"
+                            : "bg-white text-gray-600 border-gray-200"
+                        }`}
+                        onClick={() => setIsIndoor(false)}
+                      >
+                        🌤️ Outdoor
+                      </button>
+                    </div>
+
+                    {/* Save Button */}
+                    <Button
+                      onClick={handleSavePlant}
+                      disabled={
+                        saving ||
+                        (showNewSpace && !newSpaceName.trim()) ||
+                        (!showNewSpace && !selectedSpaceId)
+                      }
+                      variant="primary"
+                      className="w-full"
+                    >
+                      {saving ? "Saving..." : "Save Plant 🌱"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="card p-6 mt-4 text-center">
+                    <span className="text-3xl mb-2 block">🎉</span>
+                    <p className="font-medium text-green-700">Plant saved!</p>
+                    <button
+                      className="text-sm text-swansons-green underline mt-2"
+                      onClick={() => router.push("/plants")}
+                    >
+                      View My Plants →
+                    </button>
                   </div>
                 )}
-              </div>
+              </>
             )}
 
             {/* Empty State */}

@@ -11,6 +11,7 @@ import {
   addReply,
   Thread,
 } from "@/lib/firebase/threads";
+import { getUser } from "@/lib/firebase/users";
 
 function AdminInboxPage() {
   const { user, loading } = useAuth();
@@ -19,6 +20,7 @@ function AdminInboxPage() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Real time listener for all threads
@@ -26,6 +28,24 @@ function AdminInboxPage() {
     const unsub = subscribeToAllThreads(setThreads);
     return () => unsub();
   }, []);
+
+  // Fetch customer names for all threads
+  useEffect(() => {
+    const fetchNames = async () => {
+      const uniqueUserIds = [...new Set(threads.map((t) => t.userId))];
+      const names: Record<string, string> = {};
+      await Promise.all(
+        uniqueUserIds.map(async (uid) => {
+          if (!userNames[uid]) {
+            const userData = await getUser(uid);
+            names[uid] = userData?.displayName || userData?.email || "Unknown";
+          }
+        }),
+      );
+      setUserNames((prev) => ({ ...prev, ...names }));
+    };
+    if (threads.length > 0) fetchNames();
+  }, [threads]);
 
   // Real time listener for selected thread
   useEffect(() => {
@@ -83,6 +103,10 @@ function AdminInboxPage() {
                 }`}
                 onClick={() => handleSelectThread(thread.id)}
               >
+                {/* Customer Name */}
+                <span className="text-xs text-gray-400">
+                  {userNames[thread.userId] || "Loading..."}
+                </span>
                 <span className="font-medium text-sm">{thread.question}</span>
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600 self-start">
                   {thread.status}
@@ -101,6 +125,10 @@ function AdminInboxPage() {
             <>
               {/* Fixed Thread Header */}
               <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
+                {/* Customer Name in Header */}
+                <p className="text-xs text-gray-400 mb-1">
+                  {userNames[selectedThread.userId] || "Loading..."}
+                </p>
                 <p className="font-medium">Q: {selectedThread.question}</p>
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                   {selectedThread.status}
@@ -120,7 +148,9 @@ function AdminInboxPage() {
                       }`}
                     >
                       <span className="text-xs text-gray-500 mb-1">
-                        {r.isStaff ? "Staff" : "Customer"}
+                        {r.isStaff
+                          ? "Staff"
+                          : userNames[selectedThread.userId] || "Customer"}
                       </span>
                       <span className="text-sm">{r.message}</span>
                     </div>
