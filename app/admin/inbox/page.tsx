@@ -63,6 +63,11 @@ function AdminInboxPage() {
     setSelectedThreadId(threadId);
   };
 
+  const handleBack = () => {
+    setSelectedThreadId(null);
+    setSelectedThread(null);
+  };
+
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reply.trim() || !user || !selectedThread) return;
@@ -84,14 +89,32 @@ function AdminInboxPage() {
   return (
     <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden pb-20">
       {/* Top Header */}
-      <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
-        <h1 className="text-xl font-semibold">Staff Inbox</h1>
+      <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white flex items-center gap-3">
+        {/* Back button on mobile when thread is selected */}
+        {selectedThread && (
+          <button
+            onClick={handleBack}
+            className="md:hidden text-green-700 font-medium text-sm"
+          >
+            ← Back
+          </button>
+        )}
+        <h1 className="text-xl font-semibold">
+          {selectedThread ? "Thread" : "Staff Inbox"}
+        </h1>
       </div>
 
-      {/* Split Pane */}
+      {/* Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel — Thread List */}
-        <div className="w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden">
+        {/* Left Panel — Thread List
+          On mobile: show only when no thread selected
+          On desktop: always show */}
+        <div
+          className={`
+        w-full md:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden
+        ${selectedThread ? "hidden md:flex" : "flex"}
+      `}
+        >
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
             {threads.map((thread) => (
               <div
@@ -103,7 +126,6 @@ function AdminInboxPage() {
                 }`}
                 onClick={() => handleSelectThread(thread.id)}
               >
-                {/* Customer Name */}
                 <span className="text-xs text-gray-400">
                   {userNames[thread.userId] || "Loading..."}
                 </span>
@@ -124,13 +146,19 @@ function AdminInboxPage() {
           </div>
         </div>
 
-        {/* Right Panel — Thread Detail */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Right Panel — Thread Detail
+          On mobile: show only when thread selected
+          On desktop: always show */}
+        <div
+          className={`
+        flex-1 flex flex-col overflow-hidden
+        ${selectedThread ? "flex" : "hidden md:flex"}
+      `}
+        >
           {selectedThread ? (
             <>
               {/* Fixed Thread Header */}
               <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
-                {/* Customer Name in Header */}
                 <p className="text-xs text-gray-400 mb-1">
                   {userNames[selectedThread.userId] || "Loading..."}
                 </p>
