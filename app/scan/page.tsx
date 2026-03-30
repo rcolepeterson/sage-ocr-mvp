@@ -87,6 +87,10 @@ export default function ScanPage() {
       setSpaces(fetchedSpaces);
       if (fetchedSpaces.length > 0) {
         setSelectedSpaceId(fetchedSpaces[0].id);
+        setShowNewSpace(false);
+      } else {
+        // No spaces yet — show new space form automatically
+        setShowNewSpace(true);
       }
     });
   }, [user]);
@@ -272,7 +276,7 @@ export default function ScanPage() {
               <h3 className="text-sm font-medium text-swansons-muted mb-2">
                 OCR Result
               </h3>
-              <div className="bg-swansons-green-dark text-swansons-green-light p-4 rounded-swansons min-h-[100px] text-sm font-mono whitespace-pre-wrap">
+              <div className="bg-swansons-green-dark text-swansons-green-light p-4 rounded-swansons min-h-25 text-sm font-mono whitespace-pre-wrap">
                 {text || "No OCR text yet — scan a plant tag to begin"}
               </div>
             </div>
@@ -393,9 +397,18 @@ export default function ScanPage() {
                 {/* Save Plant Section */}
                 {!saved ? (
                   <div className="card p-6 mt-4">
-                    <h3 className="text-sm font-semibold mb-4">
+                    <h3 className="text-sm font-semibold mb-1">
                       💾 Save to My Plants
                     </h3>
+
+                    {/* Helper text when no spaces */}
+                    {spaces.length === 0 && (
+                      <p className="text-xs text-gray-400 mb-3">
+                        First, give your space a name — like &quot;Living
+                        Room&quot; or &quot;Back Deck&quot; — then save your
+                        plant to it.
+                      </p>
+                    )}
 
                     {/* Space Picker */}
                     {spaces.length > 0 && !showNewSpace && (
@@ -425,7 +438,9 @@ export default function ScanPage() {
                     >
                       {showNewSpace
                         ? "← Use existing space"
-                        : "+ Create new space"}
+                        : spaces.length === 0
+                          ? "📍 Name your space first"
+                          : "+ Create new space"}
                     </button>
 
                     {/* New Space Form */}
