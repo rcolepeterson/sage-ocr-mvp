@@ -108,6 +108,10 @@ export default function BottomNav() {
                 src={user.photoURL}
                 alt="avatar"
                 className="w-7 h-7 rounded-full"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
               />
             ) : (
               "👤"
