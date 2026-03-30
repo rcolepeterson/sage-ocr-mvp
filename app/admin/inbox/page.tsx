@@ -82,7 +82,7 @@ function AdminInboxPage() {
   if (loading) return <p className="text-center mt-10">Loading...</p>;
 
   return (
-    <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden">
+    <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden pb-20">
       {/* Top Header */}
       <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
         <h1 className="text-xl font-semibold">Staff Inbox</h1>

@@ -208,7 +208,7 @@ export default function ScanPage() {
   }
 
   return (
-    <main className="min-h-screen bg-swansons-cream">
+    <main className="min-h-screen bg-swansons-cream pb-20">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">

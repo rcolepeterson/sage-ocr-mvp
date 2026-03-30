@@ -59,7 +59,7 @@ export default function MyPlantsPage() {
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen bg-swansons-cream px-4 py-8">
+      <main className="min-h-screen bg-swansons-cream px-4 py-8 pb-20">
         <h1 className="text-xl font-semibold mb-6">My Plants</h1>
         {spaces.length === 0 ? (
           <div className="text-gray-500 text-center">No plants yet.</div>
