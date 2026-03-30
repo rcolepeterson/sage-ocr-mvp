@@ -2,6 +2,9 @@
 import { useAuth } from "@/lib/firebase/AuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase/auth";
+import { useState } from "react";
 
 const NAV_ITEMS = {
   customer: [
@@ -32,6 +35,7 @@ function getNavItems(role: string | null) {
 export default function BottomNav() {
   const { user, role } = useAuth();
   const pathname = usePathname();
+  const [showAccount, setShowAccount] = useState(false);
 
   // Hide on /signin and /unauthorized
   if (pathname === "/signin" || pathname === "/unauthorized") return null;
@@ -39,33 +43,81 @@ export default function BottomNav() {
   const items = getNavItems(role);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-sm flex justify-around py-1 ">
-      {items.map((item) => {
-        const isActive = pathname.startsWith(item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex flex-col items-center flex-1 py-2"
-            aria-current={isActive ? "page" : undefined}
+    <>
+      {/* Account Popup */}
+      {showAccount && (
+        <div className="fixed bottom-16 right-4 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4 min-w-[200px]">
+          <p className="text-sm font-medium text-gray-800 mb-1">
+            {user?.displayName}
+          </p>
+          <p className="text-xs text-gray-400 mb-4">{user?.email}</p>
+          <button
+            onClick={() => signOut(auth)}
+            className="w-full text-sm text-red-500 hover:text-red-700 text-left transition"
           >
-            <span
-              className={`text-2xl mb-0.5 ${
-                isActive ? "text-green-600" : "text-gray-400"
-              }`}
+            Sign Out
+          </button>
+        </div>
+      )}
+
+      {/* Overlay to close popup */}
+      {showAccount && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowAccount(false)}
+        />
+      )}
+
+      {/* Bottom Nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-sm flex justify-around py-1">
+        {items.map((item) => {
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-col items-center flex-1 py-2"
+              aria-current={isActive ? "page" : undefined}
             >
-              {item.icon}
-            </span>
-            <span
-              className={`text-xs font-medium tracking-wide ${
-                isActive ? "text-green-600" : "text-gray-500"
-              }`}
-            >
-              {item.label}
-            </span>
-          </Link>
-        );
-      })}
-    </nav>
+              <span
+                className={`text-2xl mb-0.5 ${
+                  isActive ? "text-green-600" : "text-gray-400"
+                }`}
+              >
+                {item.icon}
+              </span>
+              <span
+                className={`text-xs font-medium tracking-wide ${
+                  isActive ? "text-green-600" : "text-gray-500"
+                }`}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+
+        {/* Account Button */}
+        <button
+          onClick={() => setShowAccount(!showAccount)}
+          className="flex flex-col items-center flex-1 py-2"
+        >
+          <span className="text-2xl mb-0.5">
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt="avatar"
+                className="w-7 h-7 rounded-full"
+              />
+            ) : (
+              "👤"
+            )}
+          </span>
+          <span className="text-xs font-medium tracking-wide text-gray-500">
+            {user?.displayName?.split(" ")[0] || "Account"}
+          </span>
+        </button>
+      </nav>
+    </>
   );
 }
