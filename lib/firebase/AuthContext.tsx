@@ -23,22 +23,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Handle redirect result for mobile
-    getRedirectResult(auth).catch(() => {});
+    let unsubscribe: () => void;
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        await createUserIfNotExists(user);
-        const userRole = await getUserRole(user.uid);
-        setRole(userRole);
-      } else {
-        setRole(null);
+    const init = async () => {
+      // Await redirect result FIRST before setting up auth listener
+      try {
+        await getRedirectResult(auth);
+      } catch {
+        // ignore
       }
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setUser(user);
+        if (user) {
+          await createUserIfNotExists(user);
+          const userRole = await getUserRole(user.uid);
+          setRole(userRole);
+        } else {
+          setRole(null);
+        }
+        setLoading(false);
+      });
+    };
+
+    init();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   return (
