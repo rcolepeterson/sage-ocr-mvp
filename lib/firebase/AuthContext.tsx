@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, onAuthStateChanged, getRedirectResult } from "firebase/auth";
+import { User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./auth";
 import { createUserIfNotExists, getUserRole, UserRole } from "./users";
 
@@ -23,34 +23,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribe: () => void;
-
-    const init = async () => {
-      // Await redirect result FIRST before setting up auth listener
-      try {
-        await getRedirectResult(auth);
-      } catch {
-        // ignore
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      if (user) {
+        await createUserIfNotExists(user);
+        const userRole = await getUserRole(user.uid);
+        setRole(userRole);
+      } else {
+        setRole(null);
       }
+      setLoading(false);
+    });
 
-      unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setUser(user);
-        if (user) {
-          await createUserIfNotExists(user);
-          const userRole = await getUserRole(user.uid);
-          setRole(userRole);
-        } else {
-          setRole(null);
-        }
-        setLoading(false);
-      });
-    };
-
-    init();
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   return (
