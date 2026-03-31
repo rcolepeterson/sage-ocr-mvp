@@ -1,6 +1,10 @@
 "use client";
 
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  GoogleAuthProvider,
+} from "firebase/auth";
 import { auth } from "@/lib/firebase/auth";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useRouter } from "next/navigation";
@@ -18,7 +22,13 @@ export default function SignInPage() {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    provider.setCustomParameters({ prompt: "select_account" });
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      await signInWithRedirect(auth, provider);
+    } else {
+      await signInWithPopup(auth, provider);
+    }
   };
 
   if (loading) return <p className="text-center mt-10">Loading...</p>;
