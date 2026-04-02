@@ -1,8 +1,19 @@
 [
-  {
-    "origin": ["http://localhost:3000", "https://sage-ocr-mvp-one.vercel.app"],
-    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
-    "responseHeader": ["Content-Type"],
-    "maxAgeSeconds": 3600
-  }
+    {
+        "origin": [
+            "http://localhost:3000",
+            "https://sage-ocr-mvp-one.vercel.app"
+        ],
+        "method": [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "HEAD"
+        ],
+        "responseHeader": [
+            "Content-Type"
+        ],
+        "maxAgeSeconds": 3600
+    }
 ]
