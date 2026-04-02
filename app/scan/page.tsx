@@ -15,6 +15,7 @@ import {
   savePlantToSpace,
   Space,
 } from "@/lib/firebase/spaces";
+import { uploadPlantPhoto } from "@/lib/firebase/storage";
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -45,6 +46,12 @@ export default function ScanPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showNewSpace, setShowNewSpace] = useState(false);
+
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploading, setUploading] = useState(false);
 
   const router = useRouter();
 
@@ -80,7 +87,6 @@ export default function ScanPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load spaces when user is available
   useEffect(() => {
     if (!user) return;
     getSpaces(user.uid).then((fetchedSpaces) => {
@@ -89,20 +95,29 @@ export default function ScanPage() {
         setSelectedSpaceId(fetchedSpaces[0].id);
         setShowNewSpace(false);
       } else {
-        // No spaces yet — show new space form automatically
         setShowNewSpace(true);
       }
     });
   }, [user]);
 
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  }
+
   async function handleSavePlant() {
     if (!user || !llmResult?.latinName) return;
     setSaving(true);
+    setUploading(false);
+    setUploadProgress(0);
+    let photoUrl = "";
 
     try {
       let spaceId = selectedSpaceId;
 
-      // Create new space if needed
       if (showNewSpace && newSpaceName.trim()) {
         spaceId = await createSpace(
           user.uid,
@@ -117,22 +132,43 @@ export default function ScanPage() {
         return;
       }
 
-      await savePlantToSpace(user.uid, spaceId, {
-        commonName: llmResult.commonName || "",
-        latinName: llmResult.latinName || "",
-        photo: "",
-        lightLevel: "medium",
-        container: false,
-        indoor: isIndoor,
-        careInfo: llmResult,
-      });
+      if (photoFile) {
+        setUploading(true);
+        photoUrl = await uploadPlantPhoto(
+          user.uid,
+          spaceId,
+          llmResult.latinName.replace(/\s+/g, "_"),
+          photoFile,
+          (progress) => setUploadProgress(progress),
+        );
+        setUploading(false);
+      }
+
+      await savePlantToSpace(
+        user.uid,
+        spaceId,
+        {
+          commonName: llmResult.commonName || "",
+          latinName: llmResult.latinName || "",
+          photo: photoUrl,
+          lightLevel: "medium",
+          container: false,
+          indoor: isIndoor,
+          careInfo: llmResult,
+        },
+        photoUrl,
+      );
 
       setSaved(true);
+      setPhotoFile(null);
+      setPhotoPreview("");
+      setUploadProgress(0);
     } catch (e) {
       console.error("Error saving plant:", e);
     }
 
     setSaving(false);
+    setUploading(false);
   }
 
   async function initCamera(mode: "user" | "environment" = facingMode) {
@@ -233,7 +269,6 @@ export default function ScanPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left: Camera + Controls */}
           <div className="flex-1 min-w-0">
-            {/* Camera View */}
             <div className="card overflow-hidden">
               <div className="bg-swansons-green-dark">
                 <video
@@ -245,7 +280,6 @@ export default function ScanPage() {
               </div>
             </div>
 
-            {/* Scan Button */}
             <Button
               onClick={handleScan}
               disabled={loading}
@@ -256,7 +290,6 @@ export default function ScanPage() {
               {loading ? "📷 Scanning..." : "📷 Scan"}
             </Button>
 
-            {/* Switch Camera Button */}
             <Button
               onClick={() => {
                 const next = facingMode === "user" ? "environment" : "user";
@@ -271,17 +304,15 @@ export default function ScanPage() {
                 : "🤳 Use Selfie Camera"}
             </Button>
 
-            {/* OCR Output */}
             <div className="mt-4 card p-4">
               <h3 className="text-sm font-medium text-swansons-muted mb-2">
                 OCR Result
               </h3>
-              <div className="bg-swansons-green-dark text-swansons-green-light p-4 rounded-swansons min-h-25 text-sm font-mono whitespace-pre-wrap">
+              <div className="bg-swansons-green-dark text-swansons-green-light p-4 rounded-swansons min-h-[100px] text-sm font-mono whitespace-pre-wrap">
                 {text || "No OCR text yet — scan a plant tag to begin"}
               </div>
             </div>
 
-            {/* Query Input */}
             <div className="mt-4 card p-4">
               <label className="text-sm font-medium text-swansons-muted mb-2 block">
                 Plant name (edit if needed)
@@ -336,7 +367,6 @@ export default function ScanPage() {
                     </p>
                   </div>
 
-                  {/* Light & Water */}
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
                       <span className="text-xl block mb-1">☀️</span>
@@ -358,7 +388,6 @@ export default function ScanPage() {
                     </div>
                   </div>
 
-                  {/* Care Tips */}
                   {llmResult.careTips && llmResult.careTips.length > 0 && (
                     <div className="mb-4">
                       <h3 className="text-sm font-semibold text-swansons-green-dark mb-2">
@@ -377,7 +406,6 @@ export default function ScanPage() {
                     </div>
                   )}
 
-                  {/* Warnings */}
                   {llmResult.warnings && llmResult.warnings.length > 0 && (
                     <div className="bg-red-50 border border-red-200 rounded-swansons p-3">
                       <h3 className="text-sm font-semibold text-red-700 mb-2">
@@ -401,7 +429,6 @@ export default function ScanPage() {
                       💾 Save to My Plants
                     </h3>
 
-                    {/* Helper text when no spaces */}
                     {spaces.length === 0 && (
                       <p className="text-xs text-gray-400 mb-3">
                         First, give your space a name — like &quot;Living
@@ -410,7 +437,6 @@ export default function ScanPage() {
                       </p>
                     )}
 
-                    {/* Space Picker */}
                     {spaces.length > 0 && !showNewSpace && (
                       <div className="mb-3">
                         <label className="text-xs text-gray-500 mb-1 block">
@@ -430,7 +456,6 @@ export default function ScanPage() {
                       </div>
                     )}
 
-                    {/* New Space Toggle */}
                     <button
                       type="button"
                       className="text-xs text-swansons-green underline mb-3 block"
@@ -443,7 +468,6 @@ export default function ScanPage() {
                           : "+ Create new space"}
                     </button>
 
-                    {/* New Space Form */}
                     {showNewSpace && (
                       <div className="mb-3 space-y-2">
                         <input
@@ -455,7 +479,35 @@ export default function ScanPage() {
                       </div>
                     )}
 
-                    {/* Indoor/Outdoor Toggle */}
+                    {/* Photo Upload */}
+                    <div className="mb-4">
+                      <label className="block text-xs text-gray-500 mb-1">
+                        Optional: Add a photo
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="block w-full text-xs"
+                        onChange={handlePhotoChange}
+                        disabled={saving || uploading}
+                      />
+                      {photoPreview && (
+                        <div className="mt-2 w-full flex justify-center">
+                          <img
+                            src={photoPreview}
+                            alt="Plant preview"
+                            className="rounded object-cover max-h-40 border"
+                          />
+                        </div>
+                      )}
+                      {uploading && (
+                        <div className="mt-2 text-xs text-swansons-green">
+                          Uploading photo... {uploadProgress.toFixed(0)}%
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex gap-2 mb-4">
                       <button
                         type="button"
@@ -481,18 +533,18 @@ export default function ScanPage() {
                       </button>
                     </div>
 
-                    {/* Save Button */}
                     <Button
                       onClick={handleSavePlant}
                       disabled={
                         saving ||
+                        uploading ||
                         (showNewSpace && !newSpaceName.trim()) ||
                         (!showNewSpace && !selectedSpaceId)
                       }
                       variant="primary"
                       className="w-full"
                     >
-                      {saving ? "Saving..." : "Save Plant 🌱"}
+                      {saving || uploading ? "Saving..." : "Save Plant 🌱"}
                     </Button>
                   </div>
                 ) : (

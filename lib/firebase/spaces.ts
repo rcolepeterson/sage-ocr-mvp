@@ -78,13 +78,14 @@ export async function savePlantToSpace(
   userId: string,
   spaceId: string,
   plantData: Omit<Plant, "id" | "createdAt"> & { careInfo: any },
+  photoUrl?: string,
 ) {
   const plantRef = doc(
     collection(db, `users/${userId}/spaces/${spaceId}/plants`),
   );
   const plant: Omit<Plant, "id"> = {
     ...plantData,
-    photo: "",
+    photo: photoUrl || "",
     createdAt: serverTimestamp(),
   };
   await setDoc(plantRef, plant);

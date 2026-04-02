@@ -31,6 +31,7 @@ export interface Reply {
   message: string;
   createdAt: any;
   isStaff: boolean;
+  photoURL?: string;
 }
 
 // Create a new thread
@@ -82,6 +83,7 @@ export async function addReply(
   authorId: string,
   message: string,
   isStaff: boolean,
+  photoURL?: string,
 ) {
   const replyRef = await addDoc(
     collection(db, "threads", threadId, "replies"),
@@ -90,6 +92,7 @@ export async function addReply(
       message,
       isStaff,
       createdAt: serverTimestamp(),
+      ...(photoURL ? { photoURL } : {}),
     },
   );
   if (!isStaff) {

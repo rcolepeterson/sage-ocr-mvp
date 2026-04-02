@@ -11,6 +11,7 @@ import {
   addReply,
   Thread,
 } from "@/lib/firebase/threads";
+import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { getUser } from "@/lib/firebase/users";
 
 function AdminInboxPage() {
@@ -22,6 +23,12 @@ function AdminInboxPage() {
   const [submitting, setSubmitting] = useState(false);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Real time listener for all threads
   useEffect(() => {
@@ -70,12 +77,48 @@ function AdminInboxPage() {
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reply.trim() || !user || !selectedThread) return;
+    if ((!reply.trim() && !photoFile) || !user || !selectedThread) return;
     setSubmitting(true);
-    await addReply(selectedThread.id, user.uid, reply.trim(), true);
-    setReply("");
+    setUploading(false);
+    setUploadProgress(0);
+    let photoURL = "";
+    try {
+      if (photoFile) {
+        setUploading(true);
+        photoURL = await uploadThreadPhoto(
+          user.uid,
+          selectedThread.id,
+          photoFile,
+          (progress) => setUploadProgress(progress),
+        );
+        setUploading(false);
+      }
+      await addReply(
+        selectedThread.id,
+        user.uid,
+        reply.trim(),
+        true,
+        photoURL || undefined,
+      );
+      setReply("");
+      setPhotoFile(null);
+      setPhotoPreview("");
+      setUploadProgress(0);
+    } catch (e) {
+      // Optionally handle error
+    }
     setSubmitting(false);
+    setUploading(false);
   };
+
+  // Handle file input change
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  }
 
   const handleStatus = async (
     status: "pending" | "answered" | "needs-followup",
@@ -191,6 +234,21 @@ function AdminInboxPage() {
                           : userNames[selectedThread.userId] || "Customer"}
                       </span>
                       <span className="text-sm">{r.message}</span>
+                      {r.photoURL && (
+                        <a
+                          href={r.photoURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2"
+                        >
+                          <img
+                            src={r.photoURL}
+                            alt="Attached photo"
+                            className="rounded object-cover max-h-48 border"
+                            style={{ width: "100%", marginTop: 4 }}
+                          />
+                        </a>
+                      )}
                     </div>
                   ))
                 ) : (
@@ -202,20 +260,69 @@ function AdminInboxPage() {
               {/* Fixed Bottom — Reply Box + Button */}
               <div className="shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
                 <form onSubmit={handleReply} className="flex flex-col gap-2">
-                  <textarea
-                    className="input min-h-15"
-                    placeholder="Type a reply..."
-                    value={reply}
-                    onChange={(e) => setReply(e.target.value)}
-                    required
-                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label="Attach photo"
+                      className="text-2xl px-2 py-1 bg-gray-100 rounded-full hover:bg-gray-200 focus:outline-none"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={submitting || uploading}
+                    >
+                      📎
+                    </button>
+                    <textarea
+                      className="flex-1 input min-h-15"
+                      placeholder="Type a reply..."
+                      value={reply}
+                      onChange={(e) => setReply(e.target.value)}
+                      disabled={submitting || uploading}
+                      required={!photoFile}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      ref={fileInputRef}
+                      className="hidden"
+                      onChange={handlePhotoChange}
+                      disabled={submitting || uploading}
+                    />
+                  </div>
+                  {/* Photo preview and progress */}
+                  {photoPreview && (
+                    <div className="flex flex-col items-center mt-2">
+                      <img
+                        src={photoPreview}
+                        alt="Preview"
+                        className="rounded object-cover max-h-48 border mb-2"
+                        style={{ width: "auto", maxWidth: "100%" }}
+                      />
+                      <button
+                        type="button"
+                        className="text-xs text-red-500 underline mb-1"
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview("");
+                        }}
+                      >
+                        Remove photo
+                      </button>
+                    </div>
+                  )}
+                  {uploading && (
+                    <div className="text-xs text-green-700 mt-1">
+                      Uploading photo... {uploadProgress.toFixed(0)}%
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <button
                       type="submit"
                       className="btn btn-primary flex-1"
-                      disabled={submitting || !reply.trim()}
+                      disabled={
+                        submitting || uploading || (!reply.trim() && !photoFile)
+                      }
                     >
-                      {submitting ? "Sending..." : "Send Reply"}
+                      {submitting || uploading ? "Sending..." : "Send Reply"}
                     </button>
                     <button
                       type="button"

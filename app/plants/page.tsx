@@ -81,8 +81,17 @@ export default function MyPlantsPage() {
                       key={plant.id}
                       className="bg-white rounded p-4 shadow flex flex-col gap-2"
                     >
-                      <div className="h-24 w-full bg-gray-100 rounded mb-2 flex items-center justify-center text-3xl">
-                        🌱
+                      <div className="h-24 w-full bg-gray-100 rounded mb-2 flex items-center justify-center text-3xl overflow-hidden">
+                        {plant.photo ? (
+                          <img
+                            src={plant.photo}
+                            alt={plant.commonName || "Plant photo"}
+                            className="w-full h-full object-cover"
+                            style={{ aspectRatio: "1/1", maxHeight: "6rem" }}
+                          />
+                        ) : (
+                          "🌱"
+                        )}
                       </div>
                       <div className="font-semibold">{plant.commonName}</div>
                       <div className="text-xs text-gray-500 italic">
