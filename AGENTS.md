@@ -219,6 +219,10 @@ npx vercel --prod # Deploy to Vercel
 - Plant profile page (/plant/[id])
 - LLM plant info lookup (Gemini, streaming)
 - Firebase Auth (Google Sign-In via popup)
+- Phone number sign-in (SMS) ✅
+- Email + Password ✅
+- Forgot Password ✅
+- Create Account ✅
 - Firebase Config
 - Firestore connected
 - Protected Routes

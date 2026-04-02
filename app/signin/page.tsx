@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
@@ -6,6 +7,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+  ConfirmationResult,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/auth";
 import { useAuth } from "@/lib/firebase/AuthContext";
@@ -23,10 +27,65 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
+  const [phoneStep, setPhoneStep] = useState<"input" | "code" | "done">(
+    "input",
+  );
+  const [phoneResult, setPhoneResult] = useState<ConfirmationResult | null>(
+    null,
+  );
+  const [phoneLoading, setPhoneLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && user) router.push("/");
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if ((window as any).recaptchaVerifier) return;
+    (window as any).recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      { size: "invisible", callback: () => {} },
+    );
+  }, []);
+
+  const handleSendPhoneCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setPhoneLoading(true);
+    try {
+      const appVerifier = (window as any).recaptchaVerifier;
+      const formatted = phone.startsWith("+")
+        ? phone
+        : `+1${phone.replace(/[^\d]/g, "")}`;
+      const result = await signInWithPhoneNumber(auth, formatted, appVerifier);
+      setPhoneResult(result);
+      setPhoneStep("code");
+    } catch (e: any) {
+      if (e.code === "auth/invalid-phone-number")
+        setError("Invalid phone number.");
+      else setError(e.message || "Failed to send code.");
+      (window as any).recaptchaVerifier = null;
+    }
+    setPhoneLoading(false);
+  };
+
+  const handleVerifyPhoneCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setPhoneLoading(true);
+    try {
+      if (!phoneResult) throw new Error("No verification in progress.");
+      await phoneResult.confirm(phoneCode);
+    } catch (e: any) {
+      if (e.code === "auth/invalid-verification-code")
+        setError("Invalid code. Please try again.");
+      else setError(e.message || "Failed to verify code.");
+    }
+    setPhoneLoading(false);
+  };
 
   const signInWithGoogle = async () => {
     setError(null);
@@ -91,19 +150,95 @@ export default function SignInPage() {
         {/* ── SIGN IN / SIGN UP ── */}
         {(mode === "signin" || mode === "signup") && (
           <>
+            {/* Phone */}
+            <form
+              onSubmit={
+                phoneStep === "input"
+                  ? handleSendPhoneCode
+                  : handleVerifyPhoneCode
+              }
+              className="mb-5"
+            >
+              <label className="block text-xs font-medium mb-1 text-gray-600 text-left">
+                Phone Number
+              </label>
+              {phoneStep === "input" && (
+                <div className="flex gap-2">
+                  <input
+                    type="tel"
+                    className="input flex-1"
+                    placeholder="+1 555 555 5555"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-full bg-green-700 text-white px-4 py-2 hover:bg-green-800 transition"
+                    disabled={phoneLoading}
+                  >
+                    {phoneLoading ? "Sending..." : "Send Code"}
+                  </button>
+                </div>
+              )}
+              {phoneStep === "code" && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs text-gray-500 text-left">
+                    Code sent to {phone}
+                  </p>
+                  <input
+                    type="text"
+                    className="input w-full"
+                    placeholder="6-digit code"
+                    value={phoneCode}
+                    onChange={(e) => setPhoneCode(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-full bg-green-700 text-white px-4 py-2 hover:bg-green-800 transition"
+                    disabled={phoneLoading}
+                  >
+                    {phoneLoading ? "Verifying..." : "Verify Code"}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-xs text-gray-400 underline"
+                    onClick={() => {
+                      setPhoneStep("input");
+                      setPhoneCode("");
+                      setPhoneResult(null);
+                      if ((window as any).recaptchaVerifier) {
+                        (window as any).recaptchaVerifier.clear();
+                        (window as any).recaptchaVerifier = null;
+                      }
+                    }}
+                  >
+                    Use a different number
+                  </button>
+                </div>
+              )}
+              <div id="recaptcha-container" />
+            </form>
+
+            {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
+
+            {/* Google */}
             <button
               onClick={signInWithGoogle}
-              className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition"
+              className="w-full rounded-full bg-white border border-gray-200 text-gray-700 px-6 py-3 hover:bg-gray-50 transition mb-4"
             >
               Sign in with Google
             </button>
 
-            <div className="my-6 flex items-center">
+            {/* Divider */}
+            <div className="my-4 flex items-center">
               <div className="flex-1 h-px bg-gray-200" />
               <span className="mx-3 text-gray-400 text-xs">or</span>
               <div className="flex-1 h-px bg-gray-200" />
             </div>
 
+            {/* Email/Password */}
             <form onSubmit={handleEmailAuth} className="space-y-3 text-left">
               <div>
                 <label className="block text-xs font-medium mb-1 text-gray-600">
@@ -129,9 +264,6 @@ export default function SignInPage() {
                   required
                 />
               </div>
-
-              {error && <p className="text-red-500 text-xs">{error}</p>}
-
               <button
                 type="submit"
                 disabled={submitting}
@@ -179,7 +311,6 @@ export default function SignInPage() {
             <p className="text-sm text-gray-500 mb-6">
               Enter your email and we'll send you a reset link.
             </p>
-
             {resetSent ? (
               <div className="text-center">
                 <span className="text-3xl block mb-3">📧</span>
@@ -214,9 +345,7 @@ export default function SignInPage() {
                     required
                   />
                 </div>
-
                 {error && <p className="text-red-500 text-xs">{error}</p>}
-
                 <button
                   type="submit"
                   disabled={submitting}
@@ -224,7 +353,6 @@ export default function SignInPage() {
                 >
                   {submitting ? "Sending..." : "Send Reset Email"}
                 </button>
-
                 <button
                   type="button"
                   onClick={() => {
