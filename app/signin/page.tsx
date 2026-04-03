@@ -309,7 +309,7 @@ export default function SignInPage() {
           <>
             <h2 className="text-lg font-medium mb-2">Reset Password</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Enter your email and we'll send you a reset link.
+              Enter your email and we&apos;ll send you a reset link.
             </p>
             {resetSent ? (
               <div className="text-center">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
@@ -5,14 +6,19 @@ import { User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./auth";
 import { createUserIfNotExists, getUserRole, getUser, UserRole } from "./users";
 
+type ExtendedUser = User & {
+  termsAcceptedAt?: any;
+  termsVersion?: string | null;
+};
+
 interface AuthContextType {
-  user: (User & { termsAcceptedAt?: any; termsVersion?: string }) | null;
+  user: ExtendedUser | null;
   role: UserRole | null;
   loading: boolean;
 }
 
 interface AuthContextWithSetter extends AuthContextType {
-  setUser: React.Dispatch<React.SetStateAction<any>>;
+  setUser: React.Dispatch<React.SetStateAction<ExtendedUser | null>>;
 }
 
 export const AuthContext = createContext<AuthContextWithSetter>({
@@ -23,7 +29,7 @@ export const AuthContext = createContext<AuthContextWithSetter>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 

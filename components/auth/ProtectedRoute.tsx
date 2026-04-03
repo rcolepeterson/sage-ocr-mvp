@@ -21,10 +21,12 @@ export default function ProtectedRoute({
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {
-    if (!loading && !user && !isPublicPath) {
+    if (isPublicPath) return; // ✅ Don't run any redirects on public paths
+
+    if (!loading && !user) {
       router.push("/signin");
     }
-    // T&C enforcement: if user is authenticated but has not accepted terms, redirect to /terms
+
     if (
       !loading &&
       user &&
@@ -34,10 +36,11 @@ export default function ProtectedRoute({
         router.replace("/terms");
       }
     }
-    // Prevent /terms for users who already accepted
+
     if (!loading && user && user.termsAcceptedAt && pathname === "/terms") {
       router.replace("/");
     }
+
     if (
       !loading &&
       user &&

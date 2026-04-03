@@ -1,12 +1,12 @@
 "use client";
-import { useAuth } from "@/lib/firebase/AuthContext";
-import { getUser } from "@/lib/firebase/users";
+import { useAuth, AuthContext } from "@/lib/firebase/AuthContext";
+import {
+  getUser,
+  AppUser,
+  updateUserTermsAccepted,
+} from "@/lib/firebase/users";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { updateUserTermsAccepted } from "@/lib/firebase/users";
-
-import { useContext } from "react";
-import { AuthContext } from "@/lib/firebase/AuthContext";
+import { useEffect, useState, useContext } from "react";
 
 export default function TermsPage() {
   const { user } = useAuth();
@@ -16,7 +16,7 @@ export default function TermsPage() {
 
   useEffect(() => {
     // If already accepted, redirect home
-    if (user && (user as any).termsAcceptedAt) {
+    if (user && user.termsAcceptedAt) {
       router.replace("/");
     }
   }, [user, router]);
@@ -27,13 +27,7 @@ export default function TermsPage() {
     await updateUserTermsAccepted(user.uid);
     // Re-fetch user doc and update AuthContext state
     const userDoc = await getUser(user.uid);
-    if (
-      userDoc &&
-      authCtx &&
-      typeof authCtx === "object" &&
-      "setUser" in authCtx
-    ) {
-      // @ts-ignore
+    if (userDoc && authCtx && typeof authCtx.setUser === "function") {
       authCtx.setUser({
         ...user,
         termsAcceptedAt: userDoc.termsAcceptedAt,
