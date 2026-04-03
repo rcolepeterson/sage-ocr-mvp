@@ -8,6 +8,11 @@ ask experts questions through a threaded conversation interface.
 Staff and admins manage threads, notifications, and customer
 interactions through a back-office console.
 
+Client: Swansons Nursery
+Agency: Herd of Shepherds
+Live URL: sage-ocr-mvp-one.vercel.app
+Firebase Project: sage-swansons-e4677
+
 ---
 
 ## Tech Stack
@@ -18,10 +23,10 @@ interactions through a back-office console.
 - Vercel (hosting)
 - Google Vision API (OCR, server-side only)
 - Vercel AI SDK (Gemini gemini-2.5-flash)
-- Firebase Auth (Google Sign-In via signInWithPopup)
+- Firebase Auth (Google, Email/Password, Phone)
 - Firestore (database)
-- Firebase Cloud Messaging (FCM, notifications)
 - Firebase Storage (images/media)
+- Firebase Cloud Messaging (FCM, notifications — planned)
 
 ---
 
@@ -31,14 +36,21 @@ interactions through a back-office console.
 /api/ocr/route.ts # OCR server route (Google Vision)
 /api/plant-llm/route.ts # LLM streaming route
 /api/flora/route.ts # Flora API plant lookup
-/scan/page.tsx # Camera + OCR UI
+/scan/page.tsx # Camera + OCR UI + save plant flow
 /plant/[id]/page.tsx # Plant profile page
-/signin/page.tsx # Sign in page (Firebase Auth)
+/plants/page.tsx # My Plants page
+/ask/page.tsx # Ask an Expert — thread list + new question
+/ask/[threadId]/page.tsx # Thread detail — customer view
+/admin/inbox/page.tsx # Staff inbox — split pane desktop, stacked mobile
+/signin/page.tsx # Sign in page (all auth methods)
+/unauthorized/page.tsx # Unauthorized access page
 /page.tsx # Home/Dashboard
 /components
 /auth
 ProtectedRoute.tsx # Guards all authenticated routes
 SignOutButton.tsx # Sign out button component
+/nav
+BottomNav.tsx # Mobile-first bottom nav, role-aware
 /ui
 Button.tsx # Shared button component
 /lib
@@ -46,7 +58,13 @@ Button.tsx # Shared button component
 config.ts # Firebase initialization
 auth.ts # Firebase Auth instance
 firestore.ts # Firestore instance
-AuthContext.tsx # Auth state context + provider
+AuthContext.tsx # Auth state context + provider (includes role)
+threads.ts # Thread + reply CRUD + real-time listeners
+spaces.ts # Spaces + plants CRUD
+storage.ts # Firebase Storage upload/delete
+users.ts # User CRUD + role management
+/utils
+imageCompression.ts # Client-side image compression before upload
 /ocr
 index.ts
 googleVision.ts
@@ -54,32 +72,57 @@ googleVision.ts
 schema.ts # Zod schema for LLM plant output
 /data
 plants.json # Seeded plant catalog
-/docs # Product docs (optional)
 
 ---
 
 ## Authentication
 
-- Provider: Firebase Auth
-- Method: signInWithPopup (Google)
+- Providers: Google OAuth, Email/Password, Phone (SMS)
+- Method: signInWithPopup (Google), signInWithEmailAndPassword, signInWithPhoneNumber
 - DO NOT use signInWithRedirect — known issues on localhost
 - All routes protected via ProtectedRoute component
-- Public routes: /signin only
-- Auth state managed via AuthContext (useAuth hook)
+- Public routes: /signin and /unauthorized only
+- Auth state + role managed via AuthContext (useAuth hook)
+- New users default to "customer" role
+- Roles stored in Firestore /users/{uid}
 
-### Roles (RBAC — to be implemented)
+### Sign-In Methods
+
+- Google Sign-In (one tap, Gmail users)
+- Email + Password (any email, create account or sign in)
+- Phone Number (SMS code, ~$0.01/SMS cost to Swansons)
+- Forgot Password (sends reset email via Firebase)
+
+### iPhone Safari Note
+
+- iPhone Safari shows Google passkey screen on sign-in
+- Helper text on sign-in page: "Tap Other accounts to sign in with Gmail"
+- This is a Google UX issue, not a bug in Sage
+
+### Roles (RBAC)
 
 - customer: view plants, scan tags, ask questions, view threads
-- staff: respond to threads, use macros, request reassignment
+- staff: respond to threads, view all threads, mark answered
 - admin: manage accounts, routing rules, reporting, oversight
+- Role stored in /users/{uid}.role
+- Change roles manually in Firestore (admin UI planned)
 
 ---
 
 ## Firestore Structure
 
+/users
+/{uid}
+uid: string
+email: string
+displayName: string
+role: "customer" | "staff" | "admin"
+createdAt: timestamp
+
 /threads
 /{threadId}
 plantId: string
+plantName: string
 userId: string
 question: string
 status: "pending" | "answered" | "needs-followup"
@@ -88,8 +131,39 @@ createdAt: timestamp
 /{replyId}
 authorId: string
 message: string
+photoURL?: string
 createdAt: timestamp
 isStaff: boolean
+
+/users/{uid}/spaces/{spaceId}
+name: string
+type: "indoor" | "outdoor"
+createdAt: timestamp
+/plants/{plantId}
+commonName: string
+latinName: string
+photo: string
+lightLevel: "low" | "medium" | "high"
+container: boolean
+indoor: boolean
+careInfo: object
+createdAt: timestamp
+
+---
+
+## Firebase Storage
+
+- Bucket: gs://sage-swansons-e4677.firebasestorage.app
+- Region: us-west1
+- CORS: configured for localhost:3000 and sage-ocr-mvp-one.vercel.app
+- Security rules: authenticated users can read/write
+- All images compressed before upload via imageCompression.ts
+- Max dimensions: 768x768, JPEG quality: 0.4
+
+### Storage Paths
+
+- Thread photos: threads/{threadId}/{timestamp}.jpg
+- Plant photos: users/{userId}/plants/{plantId}/{timestamp}.jpg
 
 ---
 
@@ -116,25 +190,41 @@ Two types:
 ## Threaded Conversation UI
 
 - NOT a chat UI — threaded question-based UI
-- Supports text, photos, links
+- Supports text + photo attachments
+- Photos compressed before upload, displayed inline
+- Photos open in new tab when tapped
 - Staff profiles visible in conversation
-- Status: waiting / answered / needs follow-up
-- Realistic for async staff response times
+- Status: pending / answered / needs-followup
+- Customer sees: ⏳ Waiting for expert / ✅ Answered
+- Customer reply → auto sets status to needs-followup
+- Real-time updates via Firestore onSnapshot listeners
+- Staff inbox: split pane on desktop, stacked on mobile
+
+---
+
+## Navigation
+
+- Bottom nav bar (fixed, role-aware)
+- Customer: Plants, Scan, Ask, Account
+- Staff/Admin: Plants, Scan, Ask, Inbox, Account
+- Account popup: name, email, sign out, Google profile photo
+- Hidden on /signin and /unauthorized
 
 ---
 
 ## Notifications
 
-- Firebase Cloud Messaging (FCM) — free push notifications
-- Browser must be running in background to receive
-- Used for: staff reply alerts, plant care reminders
+- Firebase Cloud Messaging (FCM) — planned
+- Push notifications for staff on new threads
+- Push notifications for customers on staff replies
+- Plant care reminders
 
 ---
 
 ## Environment Variables
 
 NEXT_PUBLIC_FIREBASE_API_KEY
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=sage-swansons-e4677.firebaseapp.com ← keep this, do NOT change to Vercel URL
 NEXT_PUBLIC_FIREBASE_PROJECT_ID
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
@@ -150,11 +240,11 @@ FLORA_API_KEY
 - Mobile-first UI using Tailwind
 - Use App Router patterns only
 - Keep OCR calls server-side only
-- Use App Router patterns
 - All LLM responses must follow Zod schema
 - Use useAuth() hook for auth state — never read Firebase auth directly
 - New routes go under /app
 - New components go under /components
+- Compress images before upload using compressImage() from /lib/utils/imageCompression.ts
 
 ---
 
@@ -166,6 +256,7 @@ FLORA_API_KEY
 - Stream LLM output when possible
 - Use Tailwind for all styles
 - Use useAuth() for auth state
+- Compress images before uploading to Firebase Storage
 
 ## Don't
 
@@ -175,6 +266,8 @@ FLORA_API_KEY
 - Use signInWithRedirect (use signInWithPopup)
 - Add business logic to UI components
 - Store sensitive data in NEXT*PUBLIC* vars
+- Change NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN to the Vercel URL
+- Upload uncompressed images to Firebase Storage
 
 ---
 
@@ -188,16 +281,28 @@ FLORA_API_KEY
 4. OCR text returned to UI
 5. OCR text sent to LLM route
 6. LLM streams structured plant info
+7. User optionally adds photo + selects/creates space
+8. Plant saved to Firestore under user's space
 
 ### Auth Flow
 
 1. User visits any page
 2. ProtectedRoute checks auth state
 3. Not signed in → redirect to /signin
-4. User clicks Sign in with Google → signInWithPopup
+4. User chooses sign-in method (Google, Email, Phone)
 5. Firebase authenticates
-6. AuthContext updates user state
+6. AuthContext updates user state + fetches role
 7. Redirect to home ✅
+
+### Thread Flow
+
+1. Customer asks question (optionally linked to a plant)
+2. Thread created in Firestore (status: pending)
+3. Staff sees thread in inbox in real-time
+4. Staff replies (text or photo)
+5. Customer sees reply in real-time
+6. Customer reply → auto sets needs-followup
+7. Staff marks answered ✅
 
 ---
 
@@ -210,40 +315,86 @@ npx vercel --prod # Deploy to Vercel
 
 ---
 
-## Implemented
+## Implemented ✅
 
-- Home page (/)
-- Scan page (/scan): camera, OCR, matching
-- OCR via Google Vision (server-side)
-- Seeded plant catalog
-- Plant profile page (/plant/[id])
-- LLM plant info lookup (Gemini, streaming)
-- Firebase Auth (Google Sign-In via popup)
-- Phone number sign-in (SMS) ✅
+### Authentication
+
+- Google Sign-In (popup) ✅
 - Email + Password ✅
+- Phone Number (SMS) ✅
 - Forgot Password ✅
 - Create Account ✅
-- Firebase Config
-- Firestore connected
-- Protected Routes
-- Sign In page (/signin)
+- Protected Routes ✅
+- RBAC (customer/staff/admin) ✅
+- User documents in Firestore ✅
+- Unauthorized page ✅
+- Sign In page (/signin) ✅
+
+### Navigation
+
+- Bottom nav bar (role-aware) ✅
+- Account popup + sign out ✅
+- Google profile photo ✅
+
+### Scanning & Plants
+
+- Scan page with camera ✅
+- OCR via Google Vision ✅
+- LLM plant info (Gemini streaming) ✅
+- Save plant to space ✅
+- Spaces (indoor/outdoor) ✅
+- My Plants page (/plants) ✅
+- Delete plant ✅
+- Ask about specific plant ✅
+
+### Threads & Expert Chat
+
+- Ask an Expert (/ask) ✅
+- Thread detail (/ask/[threadId]) ✅
+- Real-time messaging ✅
+- Photo sharing in threads ✅
+- Image compression before upload ✅
+- Staff inbox (/admin/inbox) ✅
+- Desktop split pane + mobile stacked ✅
+- Thread status management ✅
+- Auto needs-followup on customer reply ✅
+- Plant name in staff inbox ✅
+- Customer name in staff inbox ✅
+
+### Infrastructure
+
+- Firebase project: sage-swansons-e4677 ✅
+- Firestore database ✅
+- Firebase Storage (CORS + rules configured) ✅
 - Deployed: sage-ocr-mvp-one.vercel.app ✅
-- RBAC working in production ✅
-- RBAC (Role-based access control) ✅
-- User documents in Firestore (/users) ✅
-- Roles: customer, staff, admin ✅
-- Unauthorized page (/unauthorized) ✅
 
-## Planned
+---
 
-- Firestore threaded conversations
-- Ask-an-expert threaded UI
-- Admin/staff console
-- Role-based access control (RBAC)
-- Firebase Storage (plant + thread images)
-- Firebase Cloud Messaging (notifications)
-- Apple Sign-In
-- Email + Password Sign-In
+## Planned 🔲
+
+### High Priority
+
+- T&C acceptance at sign-up
+- Onboarding (capture name for email/phone users)
+- Admin user management (change roles in app)
+- FCM push notifications
+- QR code → direct URL sign in
+
+### Medium Priority
+
+- Staff profiles in replies
+- Internal notes (staff only)
+- Canned responses/macros
+- Routing rules
+- Dashboard/Home (waiting on Shawn's designs)
+
+### Lower Priority
+
+- Reporting & system health
+- Audit log
+- Flag & urgency alerts
+- Search & Export
+- Apple Sign-In ($99/yr Apple Developer account needed)
 
 ---
 
@@ -263,4 +414,5 @@ npx vercel --prod # Deploy to Vercel
 - Use Edge Config for small globally-read config
 - Enable Web Analytics + Speed Insights early
 - Use AI Gateway for model routing with AI_GATEWAY_API_KEY
+
 <!-- VERCEL BEST PRACTICES END -->
