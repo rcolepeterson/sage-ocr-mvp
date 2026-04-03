@@ -22,7 +22,7 @@ export default function OnboardingPage() {
     e.preventDefault();
     if (!user || !name.trim()) return;
     setSubmitting(true);
-    await updateUserDisplayName(user.uid, name.trim(), user);
+    await updateUserDisplayName(user.uid, name.trim());
     // Patch AuthContext user state immediately
     if (authCtx && typeof authCtx.setUser === "function") {
       authCtx.setUser({
