@@ -43,12 +43,26 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if ((window as any).recaptchaVerifier) return;
+
+    // Clear any stale verifier before creating a new one
+    if ((window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier.clear();
+      (window as any).recaptchaVerifier = null;
+    }
+
     (window as any).recaptchaVerifier = new RecaptchaVerifier(
       auth,
       "recaptcha-container",
       { size: "invisible", callback: () => {} },
     );
+
+    // Cleanup on unmount
+    return () => {
+      if ((window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier.clear();
+        (window as any).recaptchaVerifier = null;
+      }
+    };
   }, []);
 
   const handleSendPhoneCode = async (e: React.FormEvent) => {
@@ -138,201 +152,113 @@ export default function SignInPage() {
     setSubmitting(false);
   };
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
-
   return (
     <main className="min-h-screen flex items-center justify-center bg-swansons-cream px-4">
-      <div className="card p-8 w-full max-w-md text-center">
-        <span className="text-5xl mb-3 block">🌿</span>
-        <h1 className="text-2xl mb-1">Welcome to Sage</h1>
-        <p className="text-swansons-muted mb-8">Swansons Nursery Plant Care</p>
+      {/* Always in DOM so RecaptchaVerifier can find it */}
+      <div id="recaptcha-container" />
 
-        {/* ── SIGN IN / SIGN UP ── */}
-        {(mode === "signin" || mode === "signup") && (
-          <>
-            {/* Phone */}
-            <form
-              onSubmit={
-                phoneStep === "input"
-                  ? handleSendPhoneCode
-                  : handleVerifyPhoneCode
-              }
-              className="mb-5"
-            >
-              <label className="block text-xs font-medium mb-1 text-gray-600 text-left">
-                Phone Number
-              </label>
-              {phoneStep === "input" && (
-                <div className="flex gap-2">
-                  <input
-                    type="tel"
-                    className="input flex-1"
-                    placeholder="+1 555 555 5555"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-full bg-green-700 text-white px-4 py-2 hover:bg-green-800 transition"
-                    disabled={phoneLoading}
-                  >
-                    {phoneLoading ? "Sending..." : "Send Code"}
-                  </button>
-                </div>
-              )}
-              {phoneStep === "code" && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs text-gray-500 text-left">
-                    Code sent to {phone}
-                  </p>
-                  <input
-                    type="text"
-                    className="input w-full"
-                    placeholder="6-digit code"
-                    value={phoneCode}
-                    onChange={(e) => setPhoneCode(e.target.value)}
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-full bg-green-700 text-white px-4 py-2 hover:bg-green-800 transition"
-                    disabled={phoneLoading}
-                  >
-                    {phoneLoading ? "Verifying..." : "Verify Code"}
-                  </button>
-                  <button
-                    type="button"
-                    className="text-xs text-gray-400 underline"
-                    onClick={() => {
-                      setPhoneStep("input");
-                      setPhoneCode("");
-                      setPhoneResult(null);
-                      if ((window as any).recaptchaVerifier) {
-                        (window as any).recaptchaVerifier.clear();
-                        (window as any).recaptchaVerifier = null;
-                      }
-                    }}
-                  >
-                    Use a different number
-                  </button>
-                </div>
-              )}
-              <div id="recaptcha-container" />
-            </form>
+      {loading ? (
+        <p className="text-center mt-10">Loading...</p>
+      ) : (
+        <div className="card p-8 w-full max-w-md text-center">
+          <span className="text-5xl mb-3 block">🌿</span>
+          <h1 className="text-2xl mb-1">Welcome to Sage</h1>
+          <p className="text-swansons-muted mb-8">
+            Swansons Nursery Plant Care
+          </p>
 
-            {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
-
-            {/* Google */}
-            <button
-              onClick={signInWithGoogle}
-              className="w-full rounded-full bg-white border border-gray-200 text-gray-700 px-6 py-3 hover:bg-gray-50 transition mb-4"
-            >
-              Sign in with Google
-            </button>
-
-            {/* Divider */}
-            <div className="my-4 flex items-center">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="mx-3 text-gray-400 text-xs">or</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-
-            {/* Email/Password */}
-            <form onSubmit={handleEmailAuth} className="space-y-3 text-left">
-              <div>
-                <label className="block text-xs font-medium mb-1 text-gray-600">
-                  Email
+          {/* ── SIGN IN / SIGN UP ── */}
+          {(mode === "signin" || mode === "signup") && (
+            <>
+              {/* Phone */}
+              <form
+                onSubmit={
+                  phoneStep === "input"
+                    ? handleSendPhoneCode
+                    : handleVerifyPhoneCode
+                }
+                className="mb-5"
+              >
+                <label className="block text-xs font-medium mb-1 text-gray-600 text-left">
+                  Phone Number
                 </label>
-                <input
-                  type="email"
-                  className="input w-full"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1 text-gray-600">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  className="input w-full"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition disabled:opacity-50"
-              >
-                {mode === "signin"
-                  ? submitting
-                    ? "Signing in..."
-                    : "Sign In"
-                  : submitting
-                    ? "Creating account..."
-                    : "Create Account"}
-              </button>
-            </form>
+                {phoneStep === "input" && (
+                  <div className="flex gap-2">
+                    <input
+                      type="tel"
+                      className="input flex-1"
+                      placeholder="+1 555 555 5555"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-full bg-green-700 text-white px-4 py-2 hover:bg-green-800 transition"
+                      disabled={phoneLoading}
+                    >
+                      {phoneLoading ? "Sending..." : "Send Code"}
+                    </button>
+                  </div>
+                )}
+                {phoneStep === "code" && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-gray-500 text-left">
+                      Code sent to {phone}
+                    </p>
+                    <input
+                      type="text"
+                      className="input w-full"
+                      placeholder="6-digit code"
+                      value={phoneCode}
+                      onChange={(e) => setPhoneCode(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-full bg-green-700 text-white px-4 py-2 hover:bg-green-800 transition"
+                      disabled={phoneLoading}
+                    >
+                      {phoneLoading ? "Verifying..." : "Verify Code"}
+                    </button>
+                    <button
+                      type="button"
+                      className="text-xs text-gray-400 underline"
+                      onClick={() => {
+                        setPhoneStep("input");
+                        setPhoneCode("");
+                        setPhoneResult(null);
+                        if ((window as any).recaptchaVerifier) {
+                          (window as any).recaptchaVerifier.clear();
+                          (window as any).recaptchaVerifier = null;
+                        }
+                      }}
+                    >
+                      Use a different number
+                    </button>
+                  </div>
+                )}
+              </form>
 
-            <div className="flex flex-col items-center mt-4 gap-2">
-              <button
-                onClick={() => {
-                  setMode(mode === "signin" ? "signup" : "signin");
-                  setError(null);
-                }}
-                className="text-xs text-green-700 underline cursor-pointer"
-              >
-                {mode === "signin"
-                  ? "Need an account? Create one"
-                  : "Already have an account? Sign in"}
-              </button>
-              <button
-                onClick={() => {
-                  setMode("reset");
-                  setError(null);
-                }}
-                className="text-xs text-green-700 underline cursor-pointer"
-              >
-                Forgot your password?
-              </button>
-            </div>
-          </>
-        )}
+              {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 
-        {/* ── FORGOT PASSWORD ── */}
-        {mode === "reset" && (
-          <>
-            <h2 className="text-lg font-medium mb-2">Reset Password</h2>
-            <p className="text-sm text-gray-500 mb-6">
-              Enter your email and we&apos;ll send you a reset link.
-            </p>
-            {resetSent ? (
-              <div className="text-center">
-                <span className="text-3xl block mb-3">📧</span>
-                <p className="text-green-700 font-medium mb-2">
-                  Reset email sent!
-                </p>
-                <p className="text-xs text-gray-500 mb-6">
-                  Check your inbox for the reset link.
-                </p>
-                <button
-                  onClick={() => {
-                    setMode("signin");
-                    setResetSent(false);
-                    setEmail("");
-                  }}
-                  className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition"
-                >
-                  Back to Sign In
-                </button>
+              {/* Google */}
+              <button
+                onClick={signInWithGoogle}
+                className="w-full rounded-full bg-white border border-gray-200 text-gray-700 px-6 py-3 hover:bg-gray-50 transition mb-4"
+              >
+                Sign in with Google
+              </button>
+
+              {/* Divider */}
+              <div className="my-4 flex items-center">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="mx-3 text-gray-400 text-xs">or</span>
+                <div className="flex-1 h-px bg-gray-200" />
               </div>
-            ) : (
-              <form onSubmit={handleReset} className="space-y-3 text-left">
+
+              {/* Email/Password */}
+              <form onSubmit={handleEmailAuth} className="space-y-3 text-left">
                 <div>
                   <label className="block text-xs font-medium mb-1 text-gray-600">
                     Email
@@ -345,35 +271,129 @@ export default function SignInPage() {
                     required
                   />
                 </div>
-                {error && <p className="text-red-500 text-xs">{error}</p>}
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-gray-600">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    className="input w-full"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={submitting}
                   className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition disabled:opacity-50"
                 >
-                  {submitting ? "Sending..." : "Send Reset Email"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("signin");
-                    setError(null);
-                  }}
-                  className="w-full text-sm text-gray-500 mt-2 cursor-pointer"
-                >
-                  ← Back to Sign In
+                  {mode === "signin"
+                    ? submitting
+                      ? "Signing in..."
+                      : "Sign In"
+                    : submitting
+                      ? "Creating account..."
+                      : "Create Account"}
                 </button>
               </form>
-            )}
-          </>
-        )}
 
-        <p className="text-xs text-gray-400 mt-6">
-          On iPhone? If you see passkey options, tap{" "}
-          <span className="font-medium">&quot;Other accounts&quot;</span> to
-          sign in with Google.
-        </p>
-      </div>
+              <div className="flex flex-col items-center mt-4 gap-2">
+                <button
+                  onClick={() => {
+                    setMode(mode === "signin" ? "signup" : "signin");
+                    setError(null);
+                  }}
+                  className="text-xs text-green-700 underline cursor-pointer"
+                >
+                  {mode === "signin"
+                    ? "Need an account? Create one"
+                    : "Already have an account? Sign in"}
+                </button>
+                <button
+                  onClick={() => {
+                    setMode("reset");
+                    setError(null);
+                  }}
+                  className="text-xs text-green-700 underline cursor-pointer"
+                >
+                  Forgot your password?
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── FORGOT PASSWORD ── */}
+          {mode === "reset" && (
+            <>
+              <h2 className="text-lg font-medium mb-2">Reset Password</h2>
+              <p className="text-sm text-gray-500 mb-6">
+                Enter your email and we&apos;ll send you a reset link.
+              </p>
+              {resetSent ? (
+                <div className="text-center">
+                  <span className="text-3xl block mb-3">📧</span>
+                  <p className="text-green-700 font-medium mb-2">
+                    Reset email sent!
+                  </p>
+                  <p className="text-xs text-gray-500 mb-6">
+                    Check your inbox for the reset link.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setMode("signin");
+                      setResetSent(false);
+                      setEmail("");
+                    }}
+                    className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleReset} className="space-y-3 text-left">
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-gray-600">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      className="input w-full"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  {error && <p className="text-red-500 text-xs">{error}</p>}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition disabled:opacity-50"
+                  >
+                    {submitting ? "Sending..." : "Send Reset Email"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("signin");
+                      setError(null);
+                    }}
+                    className="w-full text-sm text-gray-500 mt-2 cursor-pointer"
+                  >
+                    ← Back to Sign In
+                  </button>
+                </form>
+              )}
+            </>
+          )}
+
+          <p className="text-xs text-gray-400 mt-6">
+            On iPhone? If you see passkey options, tap{" "}
+            <span className="font-medium">&quot;Other accounts&quot;</span> to
+            sign in with Google.
+          </p>
+        </div>
+      )}
     </main>
   );
 }

@@ -17,7 +17,7 @@ export default function ProtectedRoute({
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicPaths = ["/signin", "/terms"];
+  const publicPaths = ["/signin", "/terms", "/onboarding"];
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {
@@ -35,10 +35,31 @@ export default function ProtectedRoute({
       if (pathname !== "/terms") {
         router.replace("/terms");
       }
+      return;
     }
 
     if (!loading && user && user.termsAcceptedAt && pathname === "/terms") {
       router.replace("/");
+      return;
+    }
+
+    // Onboarding: if displayName is missing/null and not Google sign-in
+    if (
+      !loading &&
+      user &&
+      (!user.displayName || user.displayName.trim() === "") &&
+      user.providerData?.[0]?.providerId !== "google.com"
+    ) {
+      if (pathname !== "/onboarding") {
+        router.replace("/onboarding");
+      }
+      return;
+    }
+
+    // Prevent /onboarding for users who already have displayName
+    if (!loading && user && user.displayName && pathname === "/onboarding") {
+      router.replace("/");
+      return;
     }
 
     if (

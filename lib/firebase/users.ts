@@ -1,18 +1,8 @@
-// Update user T&C acceptance
-export async function updateUserTermsAccepted(uid: string) {
-  const userRef = doc(db, "users", uid);
-  await setDoc(
-    userRef,
-    {
-      termsAcceptedAt: serverTimestamp(),
-      termsVersion: "1.0",
-    },
-    { merge: true },
-  );
-}
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firestore";
+import { auth } from "./auth";
+import { updateProfile } from "firebase/auth";
 import type { User as FirebaseUser } from "firebase/auth";
 
 export type UserRole = "customer" | "staff" | "admin";
@@ -52,4 +42,29 @@ export async function getUser(uid: string): Promise<AppUser | null> {
 export async function getUserRole(uid: string): Promise<UserRole | null> {
   const user = await getUser(uid);
   return user?.role || null;
+}
+
+// Update displayName in Firestore and Firebase Auth
+export async function updateUserDisplayName(uid: string, displayName: string) {
+  // Update Firestore
+  const userRef = doc(db, "users", uid);
+  await setDoc(userRef, { displayName }, { merge: true });
+
+  // Update Firebase Auth profile using auth.currentUser (real Firebase user)
+  if (auth.currentUser) {
+    await updateProfile(auth.currentUser, { displayName }); // ✅ real Firebase user
+  }
+}
+
+// Update user T&C acceptance
+export async function updateUserTermsAccepted(uid: string) {
+  const userRef = doc(db, "users", uid);
+  await setDoc(
+    userRef,
+    {
+      termsAcceptedAt: serverTimestamp(),
+      termsVersion: "1.0",
+    },
+    { merge: true },
+  );
 }

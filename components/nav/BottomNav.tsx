@@ -35,11 +35,12 @@ export default function BottomNav() {
   const pathname = usePathname();
   const [showAccount, setShowAccount] = useState(false);
 
-  // Hide on /signin, /unauthorized, and /terms
+  // Hide on /signin, /unauthorized, /terms, /onboarding
   if (
     pathname === "/signin" ||
     pathname === "/unauthorized" ||
-    pathname === "/terms"
+    pathname === "/terms" ||
+    pathname === "/onboarding"
   )
     return null;
 
