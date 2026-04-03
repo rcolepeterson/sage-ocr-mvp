@@ -15,13 +15,11 @@ const NAV_ITEMS = {
   staff: [
     { label: "Plants", icon: "🌱", href: "/plants" },
     { label: "Scan", icon: "🔍", href: "/scan" },
-    { label: "Ask", icon: "💬", href: "/ask" },
     { label: "Inbox", icon: "📥", href: "/admin/inbox" },
   ],
   admin: [
     { label: "Plants", icon: "🌱", href: "/plants" },
     { label: "Scan", icon: "🔍", href: "/scan" },
-    { label: "Ask", icon: "💬", href: "/ask" },
     { label: "Inbox", icon: "📥", href: "/admin/inbox" },
   ],
 };
