@@ -17,12 +17,26 @@ export default function ProtectedRoute({
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicPaths = ["/signin"];
+  const publicPaths = ["/signin", "/terms"];
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {
     if (!loading && !user && !isPublicPath) {
       router.push("/signin");
+    }
+    // T&C enforcement: if user is authenticated but has not accepted terms, redirect to /terms
+    if (
+      !loading &&
+      user &&
+      (!("termsAcceptedAt" in user) || !user.termsAcceptedAt)
+    ) {
+      if (pathname !== "/terms") {
+        router.replace("/terms");
+      }
+    }
+    // Prevent /terms for users who already accepted
+    if (!loading && user && user.termsAcceptedAt && pathname === "/terms") {
+      router.replace("/");
     }
     if (
       !loading &&
@@ -37,7 +51,7 @@ export default function ProtectedRoute({
     ) {
       router.push("/unauthorized");
     }
-  }, [user, loading, router, isPublicPath, requiredRole, role]);
+  }, [user, loading, router, isPublicPath, requiredRole, role, pathname]);
 
   if (isPublicPath) return <>{children}</>;
 

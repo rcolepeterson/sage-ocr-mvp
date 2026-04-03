@@ -1,3 +1,15 @@
+// Update user T&C acceptance
+export async function updateUserTermsAccepted(uid: string) {
+  const userRef = doc(db, "users", uid);
+  await setDoc(
+    userRef,
+    {
+      termsAcceptedAt: serverTimestamp(),
+      termsVersion: "1.0",
+    },
+    { merge: true },
+  );
+}
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firestore";
