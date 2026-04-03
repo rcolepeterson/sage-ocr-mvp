@@ -23,6 +23,8 @@ export interface AppUser {
   displayName: string;
   role: UserRole;
   createdAt: any;
+  termsAcceptedAt?: any;
+  termsVersion?: string;
 }
 
 export async function createUserIfNotExists(user: FirebaseUser) {
