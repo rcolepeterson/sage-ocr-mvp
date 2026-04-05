@@ -122,17 +122,21 @@ export default function SignInPage() {
         await createUserWithEmailAndPassword(auth, email, password);
       }
     } catch (e: any) {
-      if (e.code === "auth/user-not-found")
-        setError("No account found for this email.");
-      else if (e.code === "auth/wrong-password")
-        setError("Incorrect password.");
-      else if (e.code === "auth/email-already-in-use")
+      if (
+        e.code === "auth/invalid-credential" ||
+        e.code === "auth/user-not-found" ||
+        e.code === "auth/wrong-password"
+      ) {
+        setError("Invalid email or password. Please try again or create an account.");
+      } else if (e.code === "auth/email-already-in-use") {
         setError("Email already in use.");
-      else if (e.code === "auth/invalid-email")
+      } else if (e.code === "auth/invalid-email") {
         setError("Invalid email address.");
-      else if (e.code === "auth/weak-password")
+      } else if (e.code === "auth/weak-password") {
         setError("Password must be at least 6 characters.");
-      else setError("Something went wrong. Please try again.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     }
     setSubmitting(false);
   };
