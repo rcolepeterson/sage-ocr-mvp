@@ -43,26 +43,12 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    // Clear any stale verifier before creating a new one
-    if ((window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier.clear();
-      (window as any).recaptchaVerifier = null;
-    }
-
+    if ((window as any).recaptchaVerifier) return;
     (window as any).recaptchaVerifier = new RecaptchaVerifier(
       auth,
       "recaptcha-container",
       { size: "invisible", callback: () => {} },
     );
-
-    // Cleanup on unmount
-    return () => {
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.clear();
-        (window as any).recaptchaVerifier = null;
-      }
-    };
   }, []);
 
   const handleSendPhoneCode = async (e: React.FormEvent) => {
