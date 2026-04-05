@@ -30,10 +30,6 @@ if (typeof window !== "undefined") {
       ),
       isTokenAutoRefreshEnabled: true,
     });
-    console.log(
-      "✅ App Check initialized with site key:",
-      process.env.NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY,
-    );
   } catch (e) {
     console.error("❌ App Check initialization failed:", e);
   }

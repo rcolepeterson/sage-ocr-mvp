@@ -17,7 +17,7 @@ export default function ProtectedRoute({
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicPaths = ["/signin", "/terms", "/onboarding"];
+  const publicPaths = ["/signin", "/unauthorized", "/terms", "/onboarding"];
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {

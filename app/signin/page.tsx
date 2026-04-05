@@ -41,22 +41,36 @@ export default function SignInPage() {
     if (!loading && user) router.push("/");
   }, [user, loading, router]);
 
+  // Initialize on mount so it has time to load
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if ((window as any).recaptchaVerifier) return;
-    (window as any).recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      { size: "invisible", callback: () => {} },
-    );
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        { size: "invisible", callback: () => {} },
+      );
+    }
   }, []);
+
+  // Recreate if cleared after an error
+  const getRecaptchaVerifier = () => {
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        { size: "invisible", callback: () => {} },
+      );
+    }
+    return (window as any).recaptchaVerifier;
+  };
 
   const handleSendPhoneCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setPhoneLoading(true);
     try {
-      const appVerifier = (window as any).recaptchaVerifier;
+      const appVerifier = getRecaptchaVerifier();
       const formatted = phone.startsWith("+")
         ? phone
         : `+1${phone.replace(/[^\d]/g, "")}`;

@@ -24,9 +24,10 @@ Firebase Project: sage-swansons-e4677
 - Google Vision API (OCR, server-side only)
 - Vercel AI SDK (Gemini gemini-2.5-flash)
 - Firebase Auth (Google, Email/Password, Phone)
+- Firebase App Check (reCAPTCHA Enterprise)
 - Firestore (database)
 - Firebase Storage (images/media)
-- Firebase Cloud Messaging (FCM, notifications — planned)
+- Firebase Cloud Messaging (FCN, notifications — planned)
 
 ---
 
@@ -44,6 +45,9 @@ Firebase Project: sage-swansons-e4677
 /admin/inbox/page.tsx # Staff inbox — split pane desktop, stacked mobile
 /signin/page.tsx # Sign in page (all auth methods)
 /unauthorized/page.tsx # Unauthorized access page
+/terms/page.tsx # T&C acceptance page
+/onboarding/page.tsx # Name capture for email/phone users
+/debug/page.tsx # Dev tools (admin only)
 /page.tsx # Home/Dashboard
 /components
 /auth
@@ -55,7 +59,7 @@ BottomNav.tsx # Mobile-first bottom nav, role-aware
 Button.tsx # Shared button component
 /lib
 /firebase
-config.ts # Firebase initialization
+config.ts # Firebase initialization + App Check
 auth.ts # Firebase Auth instance
 firestore.ts # Firestore instance
 AuthContext.tsx # Auth state context + provider (includes role)
@@ -81,7 +85,7 @@ plants.json # Seeded plant catalog
 - Method: signInWithPopup (Google), signInWithEmailAndPassword, signInWithPhoneNumber
 - DO NOT use signInWithRedirect — known issues on localhost
 - All routes protected via ProtectedRoute component
-- Public routes: /signin and /unauthorized only
+- Public routes: /signin, /unauthorized, /terms, /onboarding only
 - Auth state + role managed via AuthContext (useAuth hook)
 - New users default to "customer" role
 - Roles stored in Firestore /users/{uid}
@@ -107,6 +111,42 @@ plants.json # Seeded plant catalog
 - Role stored in /users/{uid}.role
 - Change roles manually in Firestore (admin UI planned)
 
+### Auth Flow (Updated)
+
+1. User visits any page
+2. ProtectedRoute checks auth state
+3. Not signed in → redirect to /signin
+4. User chooses sign-in method (Google, Email, Phone)
+5. Firebase authenticates
+6. AuthContext updates user state + fetches role
+7. T&C check → if not accepted → redirect to /terms
+8. Onboarding check → if no displayName (email/phone users only) → redirect to /onboarding
+9. Redirect to home ✅
+
+### T&C Acceptance
+
+- Stored in Firestore /users/{uid}.termsAcceptedAt (timestamp)
+- Stored in Firestore /users/{uid}.termsVersion (string, e.g. "1.0")
+- Enforced in ProtectedRoute.tsx after auth check
+- /terms page excluded from bottom nav
+- Google users also required to accept T&C
+
+### Onboarding
+
+- Captures displayName for email/phone sign-up users
+- Google users skipped (name comes from Google profile)
+- Saves to Firebase Auth profile via updateProfile()
+- Saves to Firestore /users/{uid}.displayName
+- Updates AuthContext immediately via setUser
+- /onboarding excluded from bottom nav
+
+### Display Name Editing
+
+- Non-Google users can edit their display name in the Account popup
+- Google users see name as read-only (managed by Google)
+- Uses updateUserDisplayName() from /lib/firebase/users.ts
+- Updates both Firebase Auth profile and Firestore
+
 ---
 
 ## Firestore Structure
@@ -118,6 +158,8 @@ email: string
 displayName: string
 role: "customer" | "staff" | "admin"
 createdAt: timestamp
+termsAcceptedAt: timestamp
+termsVersion: string
 
 /threads
 /{threadId}
@@ -167,6 +209,26 @@ createdAt: timestamp
 
 ---
 
+## Firebase App Check
+
+- Provider: reCAPTCHA Enterprise
+- Site key: stored in NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY
+- Initialized in /lib/firebase/config.ts
+- Debug token used for local development (registered in Firebase Console)
+- App Check enforced for Authentication in Firebase Console
+- phoneEnforcementState set to ENFORCE via Firebase Admin SDK
+- Google Cloud project: sage-swansons-e4677
+- reCAPTCHA Enterprise key: sage-captcha-key
+
+### Local Development
+
+- FIREBASE_APPCHECK_DEBUG_TOKEN = "0f545190-3605-4320-aa15-f59fd47d1cfa"
+- Debug token registered in Firebase Console → App Check → sage-web → Manage debug tokens
+- Firebase test phone numbers bypass reCAPTCHA automatically
+- Add test numbers in Firebase Console → Authentication → Sign-in method → Phone → Phone numbers for testing
+
+---
+
 ## Users
 
 Two types:
@@ -206,9 +268,10 @@ Two types:
 
 - Bottom nav bar (fixed, role-aware)
 - Customer: Plants, Scan, Ask, Account
-- Staff/Admin: Plants, Scan, Ask, Inbox, Account
+- Staff/Admin: Plants, Scan, Inbox, Account (Ask removed — staff use Inbox)
 - Account popup: name, email, sign out, Google profile photo
-- Hidden on /signin and /unauthorized
+- Non-Google users: edit name inline in Account popup
+- Hidden on /signin, /unauthorized, /terms, /onboarding
 
 ---
 
@@ -229,7 +292,9 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 NEXT_PUBLIC_FIREBASE_APP_ID
-GOOGLE_APPLICATION_CREDENTIALS_JSON
+NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY ← reCAPTCHA Enterprise site key for App Check
+GOOGLE_APPLICATION_CREDENTIALS_JSON ← VML AI sandbox credentials for Google Vision OCR
+FIREBASE_ADMIN_CREDENTIALS_JSON ← sage-swansons-e4677 service account for Firebase Admin SDK
 GEMINI_API_KEY
 FLORA_API_KEY
 
@@ -268,6 +333,7 @@ FLORA_API_KEY
 - Store sensitive data in NEXT*PUBLIC* vars
 - Change NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN to the Vercel URL
 - Upload uncompressed images to Firebase Storage
+- Use GOOGLE_APPLICATION_CREDENTIALS_JSON for Firebase Admin SDK (wrong project)
 
 ---
 
@@ -292,7 +358,9 @@ FLORA_API_KEY
 4. User chooses sign-in method (Google, Email, Phone)
 5. Firebase authenticates
 6. AuthContext updates user state + fetches role
-7. Redirect to home ✅
+7. T&C check → if not accepted → redirect to /terms
+8. Onboarding check → if no displayName → redirect to /onboarding
+9. Redirect to home ✅
 
 ### Thread Flow
 
@@ -329,12 +397,24 @@ npx vercel --prod # Deploy to Vercel
 - User documents in Firestore ✅
 - Unauthorized page ✅
 - Sign In page (/signin) ✅
+- T&C acceptance at sign-up ✅
+- Onboarding — name capture for email/phone users ✅
+- Display name editing in Account popup (non-Google users) ✅
+
+### Security
+
+- Firebase App Check with reCAPTCHA Enterprise ✅
+- phoneEnforcementState: ENFORCE ✅
+- App Check enforced for Authentication ✅
+- Debug token configured for local development ✅
 
 ### Navigation
 
 - Bottom nav bar (role-aware) ✅
+- Ask removed from Staff/Admin nav ✅
 - Account popup + sign out ✅
 - Google profile photo ✅
+- Nav hidden on /terms and /onboarding ✅
 
 ### Scanning & Plants
 
@@ -366,7 +446,13 @@ npx vercel --prod # Deploy to Vercel
 - Firebase project: sage-swansons-e4677 ✅
 - Firestore database ✅
 - Firebase Storage (CORS + rules configured) ✅
+- Firebase App Check (reCAPTCHA Enterprise) ✅
 - Deployed: sage-ocr-mvp-one.vercel.app ✅
+
+### Dev Tools
+
+- Debug page (/debug) — admin only ✅
+- Clear display name tool (non-Google users) ✅
 
 ---
 
@@ -374,8 +460,6 @@ npx vercel --prod # Deploy to Vercel
 
 ### High Priority
 
-- T&C acceptance at sign-up
-- Onboarding (capture name for email/phone users)
 - Admin user management (change roles in app)
 - FCM push notifications
 - QR code → direct URL sign in
@@ -387,6 +471,7 @@ npx vercel --prod # Deploy to Vercel
 - Canned responses/macros
 - Routing rules
 - Dashboard/Home (waiting on Shawn's designs)
+- Account/Profile page (edit name, view details)
 
 ### Lower Priority
 
@@ -395,6 +480,24 @@ npx vercel --prod # Deploy to Vercel
 - Flag & urgency alerts
 - Search & Export
 - Apple Sign-In ($99/yr Apple Developer account needed)
+
+---
+
+## Google Cloud Projects
+
+Two projects exist — do not confuse them:
+
+| Project Name  | Project ID          | Purpose                                                            |
+| ------------- | ------------------- | ------------------------------------------------------------------ |
+| sage-swansons | sage-swansons-e4677 | Firebase project — ALL app data, Auth, Firestore, Storage, billing |
+| sage-swansons | sage-swansons       | Empty duplicate — created manually before Firebase, safe to delete |
+
+**Always use sage-swansons-e4677 for Firebase, App Check, and Admin SDK work.**
+
+### Service Accounts
+
+- `GOOGLE_APPLICATION_CREDENTIALS_JSON` — VML AI sandbox project (`ai-sandbox-d-vml-ai-env-283d`) — used for Google Vision OCR only
+- `FIREBASE_ADMIN_CREDENTIALS_JSON` — sage-swansons-e4677 project — used for Firebase Admin SDK
 
 ---
 
