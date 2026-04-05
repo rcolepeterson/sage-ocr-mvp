@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { initializeApp, getApps } from "firebase/app";
 import {
   initializeAppCheck,
@@ -16,8 +17,10 @@ const firebaseConfig = {
 const app =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Initialize App Check
 if (typeof window !== "undefined") {
+  if (process.env.NODE_ENV === "development") {
+    (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  }
   initializeAppCheck(app, {
     provider: new ReCaptchaEnterpriseProvider(
       process.env.NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY!,
