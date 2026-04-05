@@ -35,7 +35,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { app } from "./config";
+import app from "./config";
 
 const storage = getStorage(app);
 
