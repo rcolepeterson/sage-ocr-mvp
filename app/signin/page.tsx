@@ -127,7 +127,9 @@ export default function SignInPage() {
         e.code === "auth/user-not-found" ||
         e.code === "auth/wrong-password"
       ) {
-        setError("Invalid email or password. Please try again or create an account.");
+        setError(
+          "Invalid email or password. Please try again or create an account.",
+        );
       } else if (e.code === "auth/email-already-in-use") {
         setError("Email already in use.");
       } else if (e.code === "auth/invalid-email") {
