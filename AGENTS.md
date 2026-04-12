@@ -27,7 +27,7 @@ Firebase Project: sage-swansons-e4677
 - Firebase App Check (reCAPTCHA Enterprise)
 - Firestore (database)
 - Firebase Storage (images/media)
-- Firebase Cloud Messaging (FCN, notifications — planned)
+- Firebase Cloud Messaging (FCM, notifications — planned)
 
 ---
 
@@ -366,7 +366,7 @@ FLORA_API_KEY
 
 1. Customer asks question (optionally linked to a plant)
 2. Thread created in Firestore (status: pending)
-3. Staff sees thread in inbox in real-time
+3. Thread created in Firestore (status: pending)
 4. Staff replies (text or photo)
 5. Customer sees reply in real-time
 6. Customer reply → auto sets needs-followup
@@ -485,12 +485,13 @@ npx vercel --prod # Deploy to Vercel
 
 ## Google Cloud Projects
 
-Two projects exist — do not confuse them:
+One active project:
 
 | Project Name  | Project ID          | Purpose                                                            |
 | ------------- | ------------------- | ------------------------------------------------------------------ |
 | sage-swansons | sage-swansons-e4677 | Firebase project — ALL app data, Auth, Firestore, Storage, billing |
-| sage-swansons | sage-swansons       | Empty duplicate — created manually before Firebase, safe to delete |
+
+The duplicate sage-swansons project (ID: sage-swansons) was deleted April 2026.
 
 **Always use sage-swansons-e4677 for Firebase, App Check, and Admin SDK work.**
 
