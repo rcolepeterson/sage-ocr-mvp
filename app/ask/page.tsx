@@ -7,12 +7,14 @@ import { useState, useEffect } from "react";
 import { createThread, subscribeToThreads } from "@/lib/firebase/threads";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import NotificationBanner from "@/components/ui/NotificationBanner";
 
 export default function AskPage() {
   const { user, loading } = useAuth();
   const [question, setQuestion] = useState("");
   const [threads, setThreads] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const searchParams = useSearchParams();
 
   const plantId = searchParams.get("plantId") || "";
@@ -31,6 +33,7 @@ export default function AskPage() {
     setSubmitting(true);
     await createThread(plantId, user.uid, question.trim(), plantName);
     setQuestion("");
+    setSubmitted(true);
     setSubmitting(false);
   };
 
@@ -78,6 +81,17 @@ export default function AskPage() {
             </button>
           </form>
         </div>
+
+        {/* Notification banner — appears after the first question is submitted */}
+        {user && (
+          <div className="w-full max-w-md mb-6">
+            <NotificationBanner
+              uid={user.uid}
+              message="Want to know when an expert replies? Enable notifications"
+              show={submitted}
+            />
+          </div>
+        )}
 
         <div className="w-full max-w-md">
           <h2 className="text-lg font-medium mb-2">Your Threads</h2>

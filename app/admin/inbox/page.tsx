@@ -13,6 +13,7 @@ import {
 } from "@/lib/firebase/threads";
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { getUser } from "@/lib/firebase/users";
+import NotificationBanner from "@/components/ui/NotificationBanner";
 
 function AdminInboxPage() {
   const { user, loading } = useAuth();
@@ -146,6 +147,16 @@ function AdminInboxPage() {
           {selectedThread ? "Thread" : "Staff Inbox"}
         </h1>
       </div>
+
+      {/* Notification banner — prompts staff to enable push notifications */}
+      {user && (
+        <div className="shrink-0 px-4 pt-3">
+          <NotificationBanner
+            uid={user.uid}
+            message="Get notified about new customer questions. Enable notifications"
+          />
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">

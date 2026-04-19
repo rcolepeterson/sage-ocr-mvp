@@ -94,6 +94,12 @@ export default function MyPlantsPage() {
                         )}
                       </div>
                       <div className="font-semibold">{plant.commonName}</div>
+                      <Link
+                        href={`/plant/${space.id}/${plant.id}`}
+                        className="text-xs text-green-700 hover:text-green-900 underline transition"
+                      >
+                        View plant details
+                      </Link>
                       <div className="text-xs text-gray-500 italic">
                         {plant.latinName}
                       </div>

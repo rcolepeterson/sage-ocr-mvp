@@ -14,6 +14,73 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "./firestore";
+import { getStaffFcmTokens, getUserFcmToken } from "./users";
+
+// ---------------------------------------------------------------------------
+// Notification helpers (best-effort, fire-and-forget)
+// ---------------------------------------------------------------------------
+
+async function sendNotification(
+  token: string,
+  title: string,
+  body: string,
+): Promise<void> {
+  console.log("[notify] sending to token:", token.slice(0, 20) + "...", {
+    title,
+    body,
+  });
+  const res = await fetch("/api/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, title, body }),
+  });
+  const data = await res.json();
+  console.log("[notify] response:", res.status, data);
+}
+
+async function notifyStaff(title: string, body: string): Promise<void> {
+  console.log("[notify] fetching staff FCM tokens...");
+  const tokens = await getStaffFcmTokens();
+  console.log(
+    "[notify] staff tokens found:",
+    tokens.length,
+    tokens.map((t) => t.slice(0, 20) + "..."),
+  );
+  if (tokens.length === 0) {
+    console.warn(
+      "[notify] no staff tokens — nobody will be notified. Have staff users enabled notifications?",
+    );
+  }
+  await Promise.allSettled(
+    tokens.map((token) => sendNotification(token, title, body)),
+  );
+}
+
+async function notifyThreadOwner(
+  threadId: string,
+  title: string,
+  body: string,
+): Promise<void> {
+  console.log("[notify] fetching thread owner token for thread:", threadId);
+  const threadSnap = await getDoc(doc(db, "threads", threadId));
+  if (!threadSnap.exists()) {
+    console.warn("[notify] thread not found:", threadId);
+    return;
+  }
+  const userId = threadSnap.data().userId as string;
+  console.log("[notify] thread owner uid:", userId);
+  const token = await getUserFcmToken(userId);
+  if (token) {
+    console.log("[notify] customer token found, sending...");
+    await sendNotification(token, title, body);
+  } else {
+    console.warn(
+      "[notify] no FCM token for customer uid:",
+      userId,
+      "— have they enabled notifications?",
+    );
+  }
+}
 
 export interface Thread {
   id: string;
@@ -49,6 +116,13 @@ export async function createThread(
     status: "pending",
     createdAt: serverTimestamp(),
   });
+
+  // TODO: re-enable when notifications are ready to ship
+  // notifyStaff(
+  //   "New question",
+  //   "A customer has a new plant care question.",
+  // ).catch(console.error);
+
   return threadRef.id;
 }
 
@@ -98,6 +172,21 @@ export async function addReply(
   if (!isStaff) {
     await updateThreadStatus(threadId, "needs-followup");
   }
+
+  // TODO: re-enable when notifications are ready to ship
+  // if (isStaff) {
+  //   notifyThreadOwner(
+  //     threadId,
+  //     "Expert reply",
+  //     "A Swansons expert replied to your plant question.",
+  //   ).catch(console.error);
+  // } else {
+  //   notifyStaff(
+  //     "Follow-up question",
+  //     "A customer replied and needs further help.",
+  //   ).catch(console.error);
+  // }
+
   return replyRef.id;
 }
 

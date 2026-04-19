@@ -40,6 +40,7 @@ export interface Plant {
   container: boolean;
   indoor: boolean;
   careInfo: any;
+  tags?: string[];
   createdAt: any;
 }
 
@@ -77,7 +78,10 @@ export async function getSpace(
 export async function savePlantToSpace(
   userId: string,
   spaceId: string,
-  plantData: Omit<Plant, "id" | "createdAt"> & { careInfo: any },
+  plantData: Omit<Plant, "id" | "createdAt"> & {
+    careInfo: any;
+    tags?: string[];
+  },
   photoUrl?: string,
 ) {
   const plantRef = doc(
@@ -86,6 +90,7 @@ export async function savePlantToSpace(
   const plant: Omit<Plant, "id"> = {
     ...plantData,
     photo: photoUrl || "",
+    tags: plantData.tags || [],
     createdAt: serverTimestamp(),
   };
   await setDoc(plantRef, plant);

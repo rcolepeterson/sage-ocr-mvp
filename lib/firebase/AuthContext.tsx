@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./auth";
 import { createUserIfNotExists, getUserRole, getUser, UserRole } from "./users";
+import { initFcm } from "./messaging";
 
 type ExtendedUser = User & {
   termsAcceptedAt?: any;
@@ -46,6 +47,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           termsAcceptedAt: userDoc?.termsAcceptedAt || null,
           termsVersion: userDoc?.termsVersion || null,
         });
+        // If the user has already granted notification permission, silently
+        // refresh the FCM token on every sign-in. This keeps the token fresh
+        // after service worker reinstalls or browser updates.
+        if (
+          typeof window !== "undefined" &&
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+          initFcm(user.uid).catch(console.error);
+        }
       } else {
         setUser(null);
         setRole(null);
