@@ -12,9 +12,9 @@ import { NextRequest, NextResponse } from "next/server";
  * Do NOT use GOOGLE_APPLICATION_CREDENTIALS_JSON here.
  */
 export async function POST(req: NextRequest) {
+  // Destructure outside try so token is available in catch block
+  const { token, title, body } = await req.json();
   try {
-    const { token, title, body } = await req.json();
-
     if (
       !token ||
       typeof token !== "string" ||
@@ -65,15 +65,12 @@ export async function POST(req: NextRequest) {
         token.slice(0, 20) + "...",
       );
       try {
-        const { token: reqToken } = await req
-          .clone()
-          .json()
-          .catch(() => ({ token: null }));
-        if (reqToken) {
+        if (token) {
+          const admin = await import("firebase-admin");
           const db = admin.firestore();
           const snap = await db
             .collection("users")
-            .where("fcmToken", "==", reqToken)
+            .where("fcmToken", "==", token)
             .limit(1)
             .get();
           if (!snap.empty) {

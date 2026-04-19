@@ -4,6 +4,7 @@ export const PlantSchema = z.object({
   commonName: z.string().nullable(),
   latinName: z.string().nullable(),
   light: z.string().nullable(),
+  lightLevel: z.enum(["low", "medium", "high"]).nullable().optional(),
   water: z.string().nullable(),
   careTips: z.array(z.string()).default([]),
   warnings: z.array(z.string()).default([]),

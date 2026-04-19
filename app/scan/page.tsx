@@ -29,6 +29,7 @@ export default function ScanPage() {
     commonName?: string | null;
     latinName?: string | null;
     light?: string | null;
+    lightLevel?: "low" | "medium" | "high" | null;
     water?: string | null;
     careTips?: string[];
     warnings?: string[];
@@ -152,7 +153,14 @@ export default function ScanPage() {
           commonName: llmResult.commonName || "",
           latinName: llmResult.latinName || "",
           photo: photoUrl,
-          lightLevel: "medium",
+          lightLevel:
+            llmResult.lightLevel ||
+            (() => {
+              const l = (llmResult.light || "").toLowerCase();
+              if (l.includes("full sun") || l.includes("high")) return "high";
+              if (l.includes("shade") || l.includes("low")) return "low";
+              return "medium";
+            })(),
           container: false,
           indoor: isIndoor,
           careInfo: llmResult,
