@@ -32,6 +32,7 @@ export default function ScanPage() {
     water?: string | null;
     careTips?: string[];
     warnings?: string[];
+    tags?: string[];
   } | null>();
   const [debug, setDebug] = useState<string[]>([]);
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
@@ -155,6 +156,7 @@ export default function ScanPage() {
           container: false,
           indoor: isIndoor,
           careInfo: llmResult,
+          tags: (llmResult as any).tags || [],
         },
         photoUrl,
       );
