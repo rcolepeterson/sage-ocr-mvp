@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import {
@@ -8,12 +8,110 @@ import {
   updateThreadAssignment,
   updateThreadUrgent,
 } from "@/lib/firebase/threads";
-import { getStaffUsers, updateUserSpecialty } from "@/lib/firebase/users";
+import {
+  getStaffUsers,
+  updateUserSpecialty,
+  getAllUsers,
+  updateUserRole,
+  UserRole,
+  AppUser,
+} from "@/lib/firebase/users";
 import { PlantSchema } from "@/lib/llm/schema";
-import { Button } from "@/components/ui/Button";
-import { UserRole, AppUser } from "@/lib/firebase/users";
 
-const TABS = ["Thread Queue", "Staff Workload", "Send Notifications"];
+function RoleBadge({ role }: { role: string }) {
+  const color =
+    role === "admin"
+      ? "bg-green-100 text-green-800 border-green-300"
+      : role === "staff"
+        ? "bg-blue-100 text-blue-800 border-blue-300"
+        : "bg-gray-100 text-gray-600 border-gray-300";
+  return (
+    <span
+      className={`px-2 py-0.5 rounded-full border text-xs font-medium ${color}`}
+    >
+      {role}
+    </span>
+  );
+}
+
+function StaffAccountsTab({ users, currentUid, onRoleChange }: any) {
+  const [search, setSearch] = useState("");
+  const [successUid, setSuccessUid] = useState<string | null>(null);
+  const filtered = users.filter(
+    (u: any) =>
+      u.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase()),
+  );
+  return (
+    <div className="bg-white rounded p-6 shadow max-w-2xl mx-auto">
+      <div className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+        <h2 className="font-bold text-lg">Staff Accounts</h2>
+        <input
+          className="input w-full sm:w-64 text-sm"
+          placeholder="Search by name or email"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white rounded shadow">
+          <thead>
+            <tr className="bg-gray-50 text-xs">
+              <th className="p-2">Avatar</th>
+              <th className="p-2">Name</th>
+              <th className="p-2">Email</th>
+              <th className="p-2">Role</th>
+              <th className="p-2">Change Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((u: any) => (
+              <tr key={u.uid} className="border-b text-xs">
+                <td className="p-2">
+                  <div className="w-8 h-8 rounded-full bg-green-100 text-green-900 flex items-center justify-center font-bold text-base">
+                    {u.displayName?.[0]?.toUpperCase() || "?"}
+                  </div>
+                </td>
+                <td className="p-2 font-medium">{u.displayName}</td>
+                <td className="p-2">{u.email}</td>
+                <td className="p-2">
+                  <RoleBadge role={u.role} />
+                </td>
+                <td className="p-2">
+                  <select
+                    className="input text-xs"
+                    value={u.role}
+                    disabled={u.uid === currentUid}
+                    onChange={async (e) => {
+                      const newRole = e.target.value;
+                      await onRoleChange(u.uid, newRole);
+                      setSuccessUid(u.uid);
+                      setTimeout(() => setSuccessUid(null), 1200);
+                    }}
+                  >
+                    <option value="customer">customer</option>
+                    <option value="staff">staff</option>
+                    <option value="admin">admin</option>
+                  </select>
+                  {successUid === u.uid && (
+                    <span className="ml-2 text-green-600 text-xs">✓</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const TABS = [
+  "Thread Queue",
+  "Staff Workload",
+  "Send Notifications",
+  "Staff Accounts",
+];
 
 function Sidebar({ user, counts, onTab, tab }: any) {
   return (
@@ -51,22 +149,28 @@ function Sidebar({ user, counts, onTab, tab }: any) {
       </div>
       <nav className="flex flex-col gap-2 mt-4">
         <button
-          className={`text-left ${tab === 0 ? "font-bold underline" : ""}`}
+          className={`text-left cursor-pointer ${tab === 0 ? "font-bold underline" : ""}`}
           onClick={() => onTab(0)}
         >
           📨 Thread Queue
         </button>
         <button
-          className={`text-left ${tab === 1 ? "font-bold underline" : ""}`}
+          className={`text-left cursor-pointer ${tab === 1 ? "font-bold underline" : ""}`}
           onClick={() => onTab(1)}
         >
           👥 Staff Workload
         </button>
         <button
-          className={`text-left ${tab === 2 ? "font-bold underline" : ""}`}
+          className={`text-left cursor-pointer ${tab === 2 ? "font-bold underline" : ""}`}
           onClick={() => onTab(2)}
         >
           🔔 Send Notifications
+        </button>
+        <button
+          className={`text-left cursor-pointer ${tab === 3 ? "font-bold underline" : ""}`}
+          onClick={() => onTab(3)}
+        >
+          👤 Staff Accounts
         </button>
         <button className="text-left opacity-60 cursor-not-allowed">
           ⚙️ Settings
@@ -79,7 +183,7 @@ function Sidebar({ user, counts, onTab, tab }: any) {
 function StatCard({ label, value, color, icon }: any) {
   return (
     <div
-      className={`flex-1 bg-white rounded p-4 shadow flex flex-col items-center border-t-4 ${color} min-w-[120px]`}
+      className={`flex-1 bg-white rounded p-4 shadow flex flex-col items-center border-t-4 ${color} min-w-30`}
     >
       <div className="text-2xl mb-1">{icon}</div>
       <div className="text-2xl font-bold">{value}</div>
@@ -113,15 +217,19 @@ function ThreadQueueTab({
     (t: any) => t.urgent && t.status !== "answered",
   );
   const open = threads.filter((t: any) => t.status !== "answered");
-  const avgResponse = open.length
-    ? (
-        open.reduce(
-          (sum: number, t: any) =>
-            sum + (Date.now() - (t.createdAt?.toMillis?.() || 0)) / 3600000,
-          0,
-        ) / open.length
-      ).toFixed(1)
-    : "-";
+  const now = Date.now();
+
+  const avgResponseTime = useMemo(() => {
+    if (!open.length) return "0.0";
+    return (
+      open.reduce(
+        (sum: number, t: any) =>
+          sum + (now - (t.createdAt?.toMillis?.() || 0)) / 3600000,
+        0,
+      ) / open.length
+    ).toFixed(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Filtering logic
   let filtered = threads;
@@ -191,7 +299,7 @@ function ThreadQueueTab({
         />
         <StatCard
           label="Avg Wait (hrs)"
-          value={avgResponse}
+          value={avgResponseTime}
           color="border-blue-400"
           icon="⏱️"
         />
@@ -212,7 +320,7 @@ function ThreadQueueTab({
           <tbody>
             {filtered.map((t: any) => {
               const waitHrs = (
-                (Date.now() - (t.createdAt?.toMillis?.() || 0)) /
+                (now - (t.createdAt?.toMillis?.() || 0)) /
                 3600000
               ).toFixed(1);
               const assigned = staffUsers.find(
@@ -346,7 +454,7 @@ function StaffWorkloadTab({ staffUsers, threads, onSpecialty }: any) {
 
 function SendNotificationsTab() {
   // Get tag list from PlantSchema
-  const tagList = PlantSchema.shape.tags._def.type.values;
+  const tagList = PlantSchema.shape.tags.unwrap().element.options;
   return (
     <div className="bg-white rounded p-8 shadow flex flex-col items-center">
       <div className="text-2xl mb-4">🔔</div>
@@ -391,6 +499,7 @@ export default function AdminDashboardPage() {
     closed: 0,
   });
   const [filters, setFilters] = useState<string[]>(["all"]);
+  const [allUsers, setAllUsers] = useState<AppUser[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -411,6 +520,7 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     getStaffUsers().then(setStaffUsers);
+    getAllUsers().then(setAllUsers);
   }, []);
 
   // Assign staff to thread
@@ -426,6 +536,13 @@ export default function AdminDashboardPage() {
     await updateUserSpecialty(uid, specialty);
     setStaffUsers((prev) =>
       prev.map((u) => (u.uid === uid ? { ...u, specialty } : u)),
+    );
+  }
+  // Update user role
+  async function handleRoleChange(uid: string, role: string) {
+    await updateUserRole(uid, role as UserRole);
+    setAllUsers((prev) =>
+      prev.map((u) => (u.uid === uid ? { ...u, role: role as UserRole } : u)),
     );
   }
 
@@ -463,6 +580,13 @@ export default function AdminDashboardPage() {
             />
           )}
           {tab === 2 && <SendNotificationsTab />}
+          {tab === 3 && (
+            <StaffAccountsTab
+              users={allUsers}
+              currentUid={user?.uid}
+              onRoleChange={handleRoleChange}
+            />
+          )}
         </main>
       </div>
     </ProtectedRoute>

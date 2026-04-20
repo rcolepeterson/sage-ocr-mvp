@@ -1,3 +1,19 @@
+// Get all users (admin only)
+export async function getAllUsers(): Promise<AppUser[]> {
+  const snapshot = await getDocs(collection(db, "users"));
+  return snapshot.docs.map(
+    (doc) => ({ uid: doc.id, ...doc.data() }) as AppUser,
+  );
+}
+
+// Update user role (admin only)
+export async function updateUserRole(
+  uid: string,
+  role: UserRole,
+): Promise<void> {
+  const userRef = doc(db, "users", uid);
+  await setDoc(userRef, { role }, { merge: true });
+}
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   doc,
