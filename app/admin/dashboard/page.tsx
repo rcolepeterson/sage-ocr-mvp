@@ -97,13 +97,30 @@ const FILTERS = [
   { key: "answered", label: "Answered" },
 ];
 
-function ThreadQueueTab({ threads, staffUsers, onAssign, onUrgent, filters, setFilters }: any) {
+function ThreadQueueTab({
+  threads,
+  staffUsers,
+  onAssign,
+  onUrgent,
+  filters,
+  setFilters,
+}: any) {
   // Calculate stats
-  const unassigned = threads.filter((t: any) => !t.assignedTo && t.status !== "answered");
-  const urgent = threads.filter((t: any) => t.urgent && t.status !== "answered");
+  const unassigned = threads.filter(
+    (t: any) => !t.assignedTo && t.status !== "answered",
+  );
+  const urgent = threads.filter(
+    (t: any) => t.urgent && t.status !== "answered",
+  );
   const open = threads.filter((t: any) => t.status !== "answered");
   const avgResponse = open.length
-    ? (open.reduce((sum: number, t: any) => sum + ((Date.now() - (t.createdAt?.toMillis?.() || 0)) / 3600000), 0) / open.length).toFixed(1)
+    ? (
+        open.reduce(
+          (sum: number, t: any) =>
+            sum + (Date.now() - (t.createdAt?.toMillis?.() || 0)) / 3600000,
+          0,
+        ) / open.length
+      ).toFixed(1)
     : "-";
 
   // Filtering logic
@@ -114,7 +131,8 @@ function ThreadQueueTab({ threads, staffUsers, onAssign, onUrgent, filters, setF
       if (filters.includes("unassigned") && !t.assignedTo) match = true;
       if (filters.includes("urgent") && t.urgent) match = true;
       if (filters.includes("pending") && t.status === "pending") match = true;
-      if (filters.includes("needs-followup") && t.status === "needs-followup") match = true;
+      if (filters.includes("needs-followup") && t.status === "needs-followup")
+        match = true;
       if (filters.includes("answered") && t.status === "answered") match = true;
       return match;
     });
@@ -148,13 +166,35 @@ function ThreadQueueTab({ threads, staffUsers, onAssign, onUrgent, filters, setF
             {f.label}
           </button>
         ))}
-        <span className="ml-2 text-xs text-gray-500">{filtered.length} thread{filtered.length === 1 ? "" : "s"} shown</span>
+        <span className="ml-2 text-xs text-gray-500">
+          {filtered.length} thread{filtered.length === 1 ? "" : "s"} shown
+        </span>
       </div>
       <div className="flex flex-wrap gap-4 mb-6">
-        <StatCard label="Unassigned" value={unassigned.length} color="border-yellow-400" icon="❓" />
-        <StatCard label="Urgent" value={urgent.length} color="border-red-500" icon="🚨" />
-        <StatCard label="Open" value={open.length} color="border-green-500" icon="📬" />
-        <StatCard label="Avg Wait (hrs)" value={avgResponse} color="border-blue-400" icon="⏱️" />
+        <StatCard
+          label="Unassigned"
+          value={unassigned.length}
+          color="border-yellow-400"
+          icon="❓"
+        />
+        <StatCard
+          label="Urgent"
+          value={urgent.length}
+          color="border-red-500"
+          icon="🚨"
+        />
+        <StatCard
+          label="Open"
+          value={open.length}
+          color="border-green-500"
+          icon="📬"
+        />
+        <StatCard
+          label="Avg Wait (hrs)"
+          value={avgResponse}
+          color="border-blue-400"
+          icon="⏱️"
+        />
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white rounded shadow">
@@ -171,14 +211,23 @@ function ThreadQueueTab({ threads, staffUsers, onAssign, onUrgent, filters, setF
           </thead>
           <tbody>
             {filtered.map((t: any) => {
-              const waitHrs = ((Date.now() - (t.createdAt?.toMillis?.() || 0)) / 3600000).toFixed(1);
-              const assigned = staffUsers.find((u: any) => u.uid === t.assignedTo);
+              const waitHrs = (
+                (Date.now() - (t.createdAt?.toMillis?.() || 0)) /
+                3600000
+              ).toFixed(1);
+              const assigned = staffUsers.find(
+                (u: any) => u.uid === t.assignedTo,
+              );
               return (
                 <tr key={t.id} className="border-b text-xs">
                   <td className="p-2">{t.customerName || t.userId}</td>
                   <td className="p-2">{t.plantName || "-"}</td>
                   <td className="p-2">
-                    <span className={`px-2 py-1 rounded text-white text-xs ${t.status === "pending" ? "bg-yellow-500" : t.status === "answered" ? "bg-green-500" : "bg-blue-500"}`}>{t.status}</span>
+                    <span
+                      className={`px-2 py-1 rounded text-white text-xs ${t.status === "pending" ? "bg-yellow-500" : t.status === "answered" ? "bg-green-500" : "bg-blue-500"}`}
+                    >
+                      {t.status}
+                    </span>
                   </td>
                   <td className="p-2">
                     <button
@@ -189,9 +238,15 @@ function ThreadQueueTab({ threads, staffUsers, onAssign, onUrgent, filters, setF
                     </button>
                   </td>
                   <td className="p-2">{waitHrs}</td>
-                  <td className="p-2">{assigned ? assigned.displayName : "—"}</td>
                   <td className="p-2">
-                    <AssignDropdown thread={t} staffUsers={staffUsers} onAssign={onAssign} />
+                    {assigned ? assigned.displayName : "—"}
+                  </td>
+                  <td className="p-2">
+                    <AssignDropdown
+                      thread={t}
+                      staffUsers={staffUsers}
+                      onAssign={onAssign}
+                    />
                   </td>
                 </tr>
               );
@@ -329,7 +384,12 @@ export default function AdminDashboardPage() {
   const [tab, setTab] = useState(0);
   const [threads, setThreads] = useState<any[]>([]);
   const [staffUsers, setStaffUsers] = useState<AppUser[]>([]);
-  const [counts, setCounts] = useState({ open: 0, unassigned: 0, urgent: 0, closed: 0 });
+  const [counts, setCounts] = useState({
+    open: 0,
+    unassigned: 0,
+    urgent: 0,
+    closed: 0,
+  });
   const [filters, setFilters] = useState<string[]>(["all"]);
 
   useEffect(() => {
@@ -338,8 +398,11 @@ export default function AdminDashboardPage() {
       setThreads(allThreads);
       setCounts({
         open: allThreads.filter((t) => t.status !== "answered").length,
-        unassigned: allThreads.filter((t) => !t.assignedTo && t.status !== "answered").length,
-        urgent: allThreads.filter((t) => t.urgent && t.status !== "answered").length,
+        unassigned: allThreads.filter(
+          (t) => !t.assignedTo && t.status !== "answered",
+        ).length,
+        urgent: allThreads.filter((t) => t.urgent && t.status !== "answered")
+          .length,
         closed: allThreads.filter((t) => t.status === "answered").length,
       });
     });
@@ -361,7 +424,9 @@ export default function AdminDashboardPage() {
   // Update specialty
   async function handleSpecialty(uid: string, specialty: string) {
     await updateUserSpecialty(uid, specialty);
-    setStaffUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, specialty } : u)));
+    setStaffUsers((prev) =>
+      prev.map((u) => (u.uid === uid ? { ...u, specialty } : u)),
+    );
   }
 
   return (

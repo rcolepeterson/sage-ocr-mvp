@@ -27,7 +27,7 @@ Firebase Project: sage-swansons-e4677
 - Firebase App Check (reCAPTCHA Enterprise)
 - Firestore (database)
 - Firebase Storage (images/media)
-- Firebase Cloud Messaging (FCM, notifications — planned)
+- Firebase Cloud Messaging (FCM, notifications)
 
 ---
 
@@ -37,12 +37,15 @@ Firebase Project: sage-swansons-e4677
 /api/ocr/route.ts # OCR server route (Google Vision)
 /api/plant-llm/route.ts # LLM streaming route
 /api/flora/route.ts # Flora API plant lookup
+/api/notify/route.ts # FCM push notification route
+/api/firebase-messaging-sw/route.ts # Service worker route
 /scan/page.tsx # Camera + OCR UI + save plant flow
-/plant/[id]/page.tsx # Plant profile page
+/plant/[spaceId]/[id]/page.tsx # Plant profile page
 /plants/page.tsx # My Plants page
 /ask/page.tsx # Ask an Expert — thread list + new question
 /ask/[threadId]/page.tsx # Thread detail — customer view
 /admin/inbox/page.tsx # Staff inbox — split pane desktop, stacked mobile
+/admin/dashboard/page.tsx # Admin dashboard — thread queue, staff workload
 /signin/page.tsx # Sign in page (all auth methods)
 /unauthorized/page.tsx # Unauthorized access page
 /terms/page.tsx # T&C acceptance page
@@ -57,6 +60,7 @@ SignOutButton.tsx # Sign out button component
 BottomNav.tsx # Mobile-first bottom nav, role-aware
 /ui
 Button.tsx # Shared button component
+NotificationBanner.tsx # FCM permission banner
 /lib
 /firebase
 config.ts # Firebase initialization + App Check
@@ -67,13 +71,14 @@ threads.ts # Thread + reply CRUD + real-time listeners
 spaces.ts # Spaces + plants CRUD
 storage.ts # Firebase Storage upload/delete
 users.ts # User CRUD + role management
+messaging.ts # FCM token management
 /utils
 imageCompression.ts # Client-side image compression before upload
 /ocr
 index.ts
 googleVision.ts
 /llm
-schema.ts # Zod schema for LLM plant output
+schema.ts # Zod schema for LLM plant output + tags
 /data
 plants.json # Seeded plant catalog
 
@@ -107,7 +112,7 @@ plants.json # Seeded plant catalog
 
 - customer: view plants, scan tags, ask questions, view threads
 - staff: respond to threads, view all threads, mark answered
-- admin: manage accounts, routing rules, reporting, oversight
+- admin: manage accounts, routing rules, reporting, oversight, dashboard
 - Role stored in /users/{uid}.role
 - Change roles manually in Firestore (admin UI planned)
 
@@ -160,6 +165,9 @@ role: "customer" | "staff" | "admin"
 createdAt: timestamp
 termsAcceptedAt: timestamp
 termsVersion: string
+fcmToken?: string
+notificationsDeclined?: boolean
+specialty?: string
 
 /threads
 /{threadId}
@@ -168,6 +176,8 @@ plantName: string
 userId: string
 question: string
 status: "pending" | "answered" | "needs-followup"
+urgent: boolean
+assignedTo: string | null
 createdAt: timestamp
 /replies (subcollection)
 /{replyId}
@@ -189,6 +199,7 @@ lightLevel: "low" | "medium" | "high"
 container: boolean
 indoor: boolean
 careInfo: object
+tags: string[]
 createdAt: timestamp
 
 ---
@@ -229,6 +240,52 @@ createdAt: timestamp
 
 ---
 
+## FCM Push Notifications
+
+- Provider: Firebase Cloud Messaging
+- Service worker served at /firebase-messaging-sw.js via Next.js rewrite
+- FCM token stored in Firestore /users/{uid}.fcmToken
+- Permission requested via NotificationBanner component — never automatically
+- NotificationBanner shown after customer submits question (/ask)
+- NotificationBanner shown at top of staff inbox (/admin/inbox)
+- Foreground notifications handled via onMessage in messaging.ts
+- Background notifications handled via service worker onBackgroundMessage
+
+### Who Gets Notified
+
+- Staff → when customer creates a new thread (status: pending)
+- Staff → when customer replies to a thread (status: needs-followup)
+- Customer → when staff replies to their thread
+
+### VAPID Key
+
+- Stored in NEXT_PUBLIC_FIREBASE_VAPID_KEY
+
+---
+
+## Plant Tagging System
+
+- Tags assigned automatically by Gemini LLM at scan time
+- Tags stored in Firestore /users/{uid}/spaces/{spaceId}/plants/{plantId}.tags
+- Tags defined in /lib/llm/schema.ts as a Zod enum array
+- Multiple tags per category — all applicable tags are assigned
+- Tags displayed on plant profile page grouped by category
+- Currently staff/admin facing only (labeled "AI Tags — staff/admin testing")
+
+### Tag Categories
+
+- Plant Type (30 values): fruit-tree, rose, tomato, houseplant, etc.
+- Light: full-sun-plant, part-shade-plant, full-shade-plant, adaptable-light
+- Water: drought-tolerant, moderate-water, high-water, moisture-lover
+- Seasonal: spring-bloomer, summer-bloomer, fall-bloomer, etc.
+- Care Complexity: beginner-friendly, intermediate-care, expert-care
+- Pest & Disease: slug-risk, aphid-risk, powdery-mildew-risk, etc.
+- Container: container-friendly, needs-ground-space, raised-bed-ideal, hanging-basket
+- PNW Specific: pnw-native, pnw-adapted, rain-tolerant, heat-sensitive, etc.
+- Upsell: needs-fertilizer-spring, needs-pruning-tools, needs-mulch, etc.
+
+---
+
 ## Users
 
 Two types:
@@ -246,6 +303,8 @@ Two types:
 - Route uses streamObject → toTextStreamResponse()
 - Model: gemini-2.5-flash
 - All LLM responses must follow Zod schema in /lib/llm/schema.ts
+- LLM returns structured lightLevel ("low" | "medium" | "high")
+- LLM assigns all applicable tags from the tag list
 
 ---
 
@@ -257,6 +316,7 @@ Two types:
 - Photos open in new tab when tapped
 - Staff profiles visible in conversation
 - Status: pending / answered / needs-followup
+- Urgent flag: boolean — set by admin in dashboard
 - Customer sees: ⏳ Waiting for expert / ✅ Answered
 - Customer reply → auto sets status to needs-followup
 - Real-time updates via Firestore onSnapshot listeners
@@ -264,23 +324,42 @@ Two types:
 
 ---
 
+## Admin Dashboard
+
+- Route: /admin/dashboard
+- Admin only (ProtectedRoute requiredRole="admin")
+- Three tabs: Thread Queue, Staff Workload, Send Notifications
+
+### Thread Queue Tab
+
+- Stat cards: Unassigned, Urgent, Open threads, Avg response time
+- Thread list: Customer, Plant/Space, Status, Urgent toggle, Waiting time, Assigned to, Assign/Reassign
+- Filter pills: All, Unassigned, Urgent, Pending, Needs Followup, Answered
+- Filters are client-side, multi-select
+- Assign/Reassign opens staff selector dropdown
+- Urgent toggle updates urgent field in Firestore in real-time
+
+### Staff Workload Tab
+
+- Lists all staff/admin users with specialty and thread count
+- Visual progress bar relative to highest count
+
+### Send Notifications Tab
+
+- Stubbed out — Coming Soon placeholder
+- Shows tag filter UI for future targeted notifications
+
+---
+
 ## Navigation
 
 - Bottom nav bar (fixed, role-aware)
 - Customer: Plants, Scan, Ask, Account
-- Staff/Admin: Plants, Scan, Inbox, Account (Ask removed — staff use Inbox)
+- Staff: Plants, Scan, Inbox, Account
+- Admin: Plants, Scan, Inbox, 📊 Dashboard, Account
 - Account popup: name, email, sign out, Google profile photo
 - Non-Google users: edit name inline in Account popup
 - Hidden on /signin, /unauthorized, /terms, /onboarding
-
----
-
-## Notifications
-
-- Firebase Cloud Messaging (FCM) — planned
-- Push notifications for staff on new threads
-- Push notifications for customers on staff replies
-- Plant care reminders
 
 ---
 
@@ -293,6 +372,7 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 NEXT_PUBLIC_FIREBASE_APP_ID
 NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY ← reCAPTCHA Enterprise site key for App Check
+NEXT_PUBLIC_FIREBASE_VAPID_KEY ← FCM Web Push VAPID key
 GOOGLE_APPLICATION_CREDENTIALS_JSON ← VML AI sandbox credentials for Google Vision OCR
 FIREBASE_ADMIN_CREDENTIALS_JSON ← sage-swansons-e4677 service account for Firebase Admin SDK
 GEMINI_API_KEY
@@ -310,6 +390,7 @@ FLORA_API_KEY
 - New routes go under /app
 - New components go under /components
 - Compress images before upload using compressImage() from /lib/utils/imageCompression.ts
+- params in Next.js 15+ are Promises — always unwrap with React.use()
 
 ---
 
@@ -322,6 +403,7 @@ FLORA_API_KEY
 - Use Tailwind for all styles
 - Use useAuth() for auth state
 - Compress images before uploading to Firebase Storage
+- Unwrap params with React.use() in page components
 
 ## Don't
 
@@ -334,6 +416,7 @@ FLORA_API_KEY
 - Change NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN to the Vercel URL
 - Upload uncompressed images to Firebase Storage
 - Use GOOGLE_APPLICATION_CREDENTIALS_JSON for Firebase Admin SDK (wrong project)
+- Request notification permission automatically — always use user gesture
 
 ---
 
@@ -346,9 +429,9 @@ FLORA_API_KEY
 3. Server calls Google Vision (OCR)
 4. OCR text returned to UI
 5. OCR text sent to LLM route
-6. LLM streams structured plant info
-7. User optionally adds photo + selects/creates space
-8. Plant saved to Firestore under user's space
+6. LLM streams structured plant info + assigns tags + structured lightLevel
+7. User optionally adds photo (compressed before upload) + selects/creates space
+8. Plant saved to Firestore under user's space with tags
 
 ### Auth Flow
 
@@ -366,11 +449,22 @@ FLORA_API_KEY
 
 1. Customer asks question (optionally linked to a plant)
 2. Thread created in Firestore (status: pending)
-3. Thread created in Firestore (status: pending)
-4. Staff replies (text or photo)
-5. Customer sees reply in real-time
-6. Customer reply → auto sets needs-followup
-7. Staff marks answered ✅
+3. Staff notified via FCM push notification
+4. Staff sees thread in inbox in real-time
+5. Staff replies (text or photo)
+6. Customer notified via FCM push notification
+7. Customer sees reply in real-time
+8. Customer reply → auto sets needs-followup
+9. Staff notified via FCM
+10. Staff marks answered ✅
+
+### Admin Thread Management Flow
+
+1. Admin views dashboard → Thread Queue tab
+2. Filters threads by status/urgent/unassigned
+3. Assigns thread to staff member
+4. Toggles urgent flag if needed
+5. Monitors staff workload via Staff Workload tab
 
 ---
 
@@ -412,6 +506,7 @@ npx vercel --prod # Deploy to Vercel
 
 - Bottom nav bar (role-aware) ✅
 - Ask removed from Staff/Admin nav ✅
+- Dashboard link for admin ✅
 - Account popup + sign out ✅
 - Google profile photo ✅
 - Nav hidden on /terms and /onboarding ✅
@@ -421,11 +516,17 @@ npx vercel --prod # Deploy to Vercel
 - Scan page with camera ✅
 - OCR via Google Vision ✅
 - LLM plant info (Gemini streaming) ✅
+- Structured lightLevel from LLM ✅
+- AI plant tagging (30+ tags across 9 categories) ✅
 - Save plant to space ✅
 - Spaces (indoor/outdoor) ✅
 - My Plants page (/plants) ✅
+- Plant profile page (/plant/[spaceId]/[id]) ✅
+- Tags displayed on plant profile page ✅
 - Delete plant ✅
 - Ask about specific plant ✅
+- Photo upload with compression ✅
+- Styled photo upload button ✅
 
 ### Threads & Expert Chat
 
@@ -440,6 +541,30 @@ npx vercel --prod # Deploy to Vercel
 - Auto needs-followup on customer reply ✅
 - Plant name in staff inbox ✅
 - Customer name in staff inbox ✅
+
+### Admin Dashboard
+
+- Admin dashboard (/admin/dashboard) ✅
+- Thread Queue tab with stat cards ✅
+- Filter pills (All, Unassigned, Urgent, Pending, Needs Followup, Answered) ✅
+- Assign/Reassign threads to staff ✅
+- Urgent flag toggle ✅
+- Staff Workload tab ✅
+- Send Notifications tab (stubbed) ✅
+- Staff specialty field ✅
+
+### Notifications (FCM)
+
+- Firebase App Check + reCAPTCHA Enterprise ✅
+- Service worker at /firebase-messaging-sw.js ✅
+- FCM token saved to Firestore ✅
+- NotificationBanner component ✅
+- Permission requested via user gesture only ✅
+- Staff notified on new thread ✅
+- Staff notified on customer reply ✅
+- Customer notified on staff reply ✅
+- Foreground + background notifications ✅
+- Stale token cleanup ✅
 
 ### Infrastructure
 
@@ -461,8 +586,9 @@ npx vercel --prod # Deploy to Vercel
 ### High Priority
 
 - Admin user management (change roles in app)
-- FCM push notifications
 - QR code → direct URL sign in
+- Update plant photo after saving
+- Email notifications
 
 ### Medium Priority
 
@@ -472,14 +598,15 @@ npx vercel --prod # Deploy to Vercel
 - Routing rules
 - Dashboard/Home (waiting on Shawn's designs)
 - Account/Profile page (edit name, view details)
+- Send Notifications — targeted push by plant tags
+- Apple Developer account ($99/yr) for iPhone push + Sign in with Apple
 
 ### Lower Priority
 
 - Reporting & system health
 - Audit log
-- Flag & urgency alerts
 - Search & Export
-- Apple Sign-In ($99/yr Apple Developer account needed)
+- SMS notifications via Twilio
 
 ---
 
