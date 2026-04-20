@@ -16,10 +16,13 @@ import {
   Space,
 } from "@/lib/firebase/spaces";
 import { uploadPlantPhoto } from "@/lib/firebase/storage";
+import { compressImage } from "@/lib/utils/imageCompression";
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Ref for hidden photo input
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
 
   const [text, setText] = useState("");
@@ -136,11 +139,12 @@ export default function ScanPage() {
 
       if (photoFile) {
         setUploading(true);
+        const compressed = await compressImage(photoFile);
         photoUrl = await uploadPlantPhoto(
           user.uid,
           spaceId,
           llmResult.latinName.replace(/\s+/g, "_"),
-          photoFile,
+          compressed,
           (progress) => setUploadProgress(progress),
         );
         setUploading(false);
@@ -494,14 +498,26 @@ export default function ScanPage() {
                       <label className="block text-xs text-gray-500 mb-1">
                         Optional: Add a photo
                       </label>
+                      {/* Hidden file input */}
                       <input
                         type="file"
                         accept="image/*"
                         capture="environment"
-                        className="block w-full text-xs"
+                        className="hidden"
+                        ref={photoInputRef}
                         onChange={handlePhotoChange}
                         disabled={saving || uploading}
                       />
+                      {/* Styled button to trigger file input */}
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={saving || uploading}
+                        className="w-full border-2 border-dashed border-gray-300 rounded-lg py-4 text-sm text-gray-500 hover:border-green-600 hover:text-green-700 transition flex items-center justify-center gap-2"
+                      >
+                        📷{" "}
+                        {photoFile ? "Change photo" : "Add a photo (optional)"}
+                      </button>
                       {photoPreview && (
                         <div className="mt-2 w-full flex justify-center">
                           <img
