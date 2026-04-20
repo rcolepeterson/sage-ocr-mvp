@@ -26,6 +26,25 @@ export interface AppUser {
   termsVersion?: string;
   fcmToken?: string;
   notificationsDeclined?: boolean;
+  specialty?: string;
+}
+
+// Get all staff and admin users
+export async function getStaffUsers(): Promise<AppUser[]> {
+  const q = query(
+    collection(db, "users"),
+    where("role", "in", ["staff", "admin"]),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(
+    (doc) => ({ uid: doc.id, ...doc.data() }) as AppUser,
+  );
+}
+
+// Update user specialty
+export async function updateUserSpecialty(uid: string, specialty: string) {
+  const userRef = doc(db, "users", uid);
+  await setDoc(userRef, { specialty }, { merge: true });
 }
 
 export async function createUserIfNotExists(user: FirebaseUser) {

@@ -90,6 +90,8 @@ export interface Thread {
   question: string;
   status: "pending" | "answered" | "needs-followup";
   createdAt: any;
+  assignedTo?: string | null;
+  urgent?: boolean;
 }
 
 export interface Reply {
@@ -115,6 +117,8 @@ export async function createThread(
     question,
     status: "pending",
     createdAt: serverTimestamp(),
+    assignedTo: null,
+    urgent: false,
   });
 
   // TODO: re-enable when notifications are ready to ship
@@ -124,6 +128,34 @@ export async function createThread(
   // ).catch(console.error);
 
   return threadRef.id;
+}
+
+// Update thread assignment
+export async function updateThreadAssignment(
+  threadId: string,
+  staffUid: string | null,
+) {
+  await updateDoc(doc(db, "threads", threadId), { assignedTo: staffUid });
+}
+
+// Update thread urgent flag
+export async function updateThreadUrgent(threadId: string, urgent: boolean) {
+  await updateDoc(doc(db, "threads", threadId), { urgent });
+}
+
+// Real-time listener for all threads (admin)
+export function subscribeToAllThreadsAdmin(
+  onUpdate: (threads: Thread[]) => void,
+) {
+  return onSnapshot(
+    query(collection(db, "threads"), orderBy("createdAt", "asc")),
+    (snapshot) => {
+      const threads = snapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() }) as Thread,
+      );
+      onUpdate(threads);
+    },
+  );
 }
 
 // Get all threads for a user (one time)

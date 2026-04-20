@@ -19,6 +19,7 @@ const NAV_ITEMS = {
     { label: "Inbox", icon: "📥", href: "/admin/inbox" },
   ],
   admin: [
+    { label: "Dashboard", icon: "📊", href: "/admin/dashboard" },
     { label: "Plants", icon: "🌱", href: "/plants" },
     { label: "Scan", icon: "🔍", href: "/scan" },
     { label: "Inbox", icon: "📥", href: "/admin/inbox" },
