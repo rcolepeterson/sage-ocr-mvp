@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     if (data.error) {
       return NextResponse.json({ error: data.error }, { status: 500 });
     }
-    return NextResponse.json({ success: true, id: data.id });
+    return NextResponse.json({ success: true, id: data.data?.id });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Unknown error" },
