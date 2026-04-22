@@ -11,7 +11,7 @@ const NAV_ITEMS = {
   customer: [
     { label: "Plants", icon: "🌱", href: "/plants" },
     { label: "Scan", icon: "🔍", href: "/scan" },
-    { label: "Ask", icon: "💬", href: "/ask" },
+    // Ask removed from customer nav
   ],
   staff: [
     { label: "Plants", icon: "🌱", href: "/plants" },

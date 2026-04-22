@@ -194,11 +194,10 @@ function StatCard({ label, value, color, icon }: any) {
 
 const FILTERS = [
   { key: "all", label: "All" },
-  { key: "unassigned", label: "Unassigned" },
-  { key: "urgent", label: "Urgent" },
-  { key: "pending", label: "Pending" },
-  { key: "needs-followup", label: "Needs Followup" },
-  { key: "answered", label: "Answered" },
+  { key: "unassigned", label: "Unassigned (New)" },
+  { key: "needs-followup", label: "Needs Follow-Up" },
+  { key: "waiting-on-customer", label: "Waiting on Customer" },
+  { key: "closed", label: "Closed" },
 ];
 
 function ThreadQueueTab({
@@ -211,12 +210,10 @@ function ThreadQueueTab({
 }: any) {
   // Calculate stats
   const unassigned = threads.filter(
-    (t: any) => !t.assignedTo && t.status !== "answered",
+    (t: any) => !t.assignedTo && t.status === "new",
   );
-  const urgent = threads.filter(
-    (t: any) => t.urgent && t.status !== "answered",
-  );
-  const open = threads.filter((t: any) => t.status !== "answered");
+  const urgent = threads.filter((t: any) => t.urgent && t.status !== "closed");
+  const open = threads.filter((t: any) => t.status !== "closed");
   const now = Date.now();
 
   const avgResponseTime = useMemo(() => {
@@ -236,12 +233,17 @@ function ThreadQueueTab({
   if (!filters.includes("all")) {
     filtered = filtered.filter((t: any) => {
       let match = false;
-      if (filters.includes("unassigned") && !t.assignedTo) match = true;
+      if (filters.includes("unassigned") && t.status === "new" && !t.assignedTo)
+        match = true;
       if (filters.includes("urgent") && t.urgent) match = true;
-      if (filters.includes("pending") && t.status === "pending") match = true;
       if (filters.includes("needs-followup") && t.status === "needs-followup")
         match = true;
-      if (filters.includes("answered") && t.status === "answered") match = true;
+      if (
+        filters.includes("waiting-on-customer") &&
+        t.status === "waiting-on-customer"
+      )
+        match = true;
+      if (filters.includes("closed") && t.status === "closed") match = true;
       return match;
     });
   }
@@ -280,10 +282,10 @@ function ThreadQueueTab({
       </div>
       <div className="flex flex-wrap gap-4 mb-6">
         <StatCard
-          label="Unassigned"
+          label="Unassigned (New)"
           value={unassigned.length}
           color="border-yellow-400"
-          icon="❓"
+          icon="🆕"
         />
         <StatCard
           label="Urgent"
@@ -332,9 +334,36 @@ function ThreadQueueTab({
                   <td className="p-2">{t.plantName || "-"}</td>
                   <td className="p-2">
                     <span
-                      className={`px-2 py-1 rounded text-white text-xs ${t.status === "pending" ? "bg-yellow-500" : t.status === "answered" ? "bg-green-500" : "bg-blue-500"}`}
+                      className={`px-2 py-1 rounded text-white text-xs ${
+                        t.status === "new"
+                          ? "bg-yellow-500"
+                          : t.status === "assigned"
+                            ? "bg-blue-500"
+                            : t.status === "waiting-on-customer"
+                              ? "bg-blue-400"
+                              : t.status === "needs-followup"
+                                ? "bg-orange-500"
+                                : t.status === "closed"
+                                  ? "bg-green-500"
+                                  : "bg-gray-400"
+                      }`}
                     >
-                      {t.status}
+                      {(() => {
+                        switch (t.status) {
+                          case "new":
+                            return "🆕 New";
+                          case "assigned":
+                            return "👤 Assigned";
+                          case "waiting-on-customer":
+                            return "⏳ Waiting on Customer";
+                          case "needs-followup":
+                            return "🔁 Needs Follow-Up";
+                          case "closed":
+                            return "✅ Closed";
+                          default:
+                            return t.status;
+                        }
+                      })()}
                     </span>
                   </td>
                   <td className="p-2">
@@ -506,13 +535,13 @@ export default function AdminDashboardPage() {
     const unsub = subscribeToAllThreadsAdmin((allThreads) => {
       setThreads(allThreads);
       setCounts({
-        open: allThreads.filter((t) => t.status !== "answered").length,
+        open: allThreads.filter((t) => t.status !== "closed").length,
         unassigned: allThreads.filter(
-          (t) => !t.assignedTo && t.status !== "answered",
+          (t) => !t.assignedTo && t.status === "new",
         ).length,
-        urgent: allThreads.filter((t) => t.urgent && t.status !== "answered")
+        urgent: allThreads.filter((t) => t.urgent && t.status !== "closed")
           .length,
-        closed: allThreads.filter((t) => t.status === "answered").length,
+        closed: allThreads.filter((t) => t.status === "closed").length,
       });
     });
     return () => unsub();

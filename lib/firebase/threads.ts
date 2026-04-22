@@ -82,13 +82,20 @@ async function notifyThreadOwner(
   }
 }
 
+export type ThreadStatus =
+  | "new"
+  | "assigned"
+  | "waiting-on-customer"
+  | "needs-followup"
+  | "closed";
+
 export interface Thread {
   id: string;
   plantId: string;
   plantName: string;
   userId: string;
   question: string;
-  status: "pending" | "answered" | "needs-followup";
+  status: ThreadStatus;
   createdAt: any;
   assignedTo?: string | null;
   urgent?: boolean;
@@ -115,18 +122,16 @@ export async function createThread(
     plantName,
     userId,
     question,
-    status: "pending",
+    status: "new",
     createdAt: serverTimestamp(),
     assignedTo: null,
     urgent: false,
   });
-
   // TODO: re-enable when notifications are ready to ship
   // notifyStaff(
   //   "New question",
   //   "A customer has a new plant care question.",
   // ).catch(console.error);
-
   return threadRef.id;
 }
 
@@ -135,7 +140,15 @@ export async function updateThreadAssignment(
   threadId: string,
   staffUid: string | null,
 ) {
-  await updateDoc(doc(db, "threads", threadId), { assignedTo: staffUid });
+  // If assigning to staff, set status to assigned
+  if (staffUid) {
+    await updateDoc(doc(db, "threads", threadId), {
+      assignedTo: staffUid,
+      status: "assigned",
+    });
+  } else {
+    await updateDoc(doc(db, "threads", threadId), { assignedTo: null });
+  }
 }
 
 // Update thread urgent flag
@@ -201,10 +214,11 @@ export async function addReply(
       ...(photoURL ? { photoURL } : {}),
     },
   );
-  if (!isStaff) {
+  if (isStaff) {
+    await updateThreadStatus(threadId, "waiting-on-customer");
+  } else {
     await updateThreadStatus(threadId, "needs-followup");
   }
-
   // TODO: re-enable when notifications are ready to ship
   // if (isStaff) {
   //   notifyThreadOwner(
@@ -218,14 +232,13 @@ export async function addReply(
   //     "A customer replied and needs further help.",
   //   ).catch(console.error);
   // }
-
   return replyRef.id;
 }
 
 // Update thread status
 export async function updateThreadStatus(
   threadId: string,
-  status: "pending" | "answered" | "needs-followup",
+  status: ThreadStatus,
 ) {
   await updateDoc(doc(db, "threads", threadId), { status });
 }

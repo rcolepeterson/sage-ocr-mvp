@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { use, useRef, useEffect, useState } from "react";
+import { use } from "react";
+import { useRef, useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/firestore";
@@ -285,6 +287,14 @@ function PlantProfilePage({
         </div>
       </div>
       <TagBadges tags={plant.tags || []} />
+      <div className="mt-6">
+        <Link
+          href={`/ask?plantId=${spaceId}_${id}&plantName=${encodeURIComponent(plant.commonName)}`}
+          className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold text-lg text-center block hover:bg-green-800 transition"
+        >
+          💬 Ask an Expert
+        </Link>
+      </div>
     </main>
   );
 }

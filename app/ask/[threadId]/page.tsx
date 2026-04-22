@@ -10,10 +10,14 @@ import { useParams } from "next/navigation";
 
 const getCustomerStatus = (status: string) => {
   switch (status) {
-    case "answered":
-      return "✅ Answered";
-    case "pending":
+    case "new":
+    case "assigned":
     case "needs-followup":
+      return "⏳ Sent";
+    case "waiting-on-customer":
+      return "💬 Replied";
+    case "closed":
+      return "✅ Closed";
     default:
       return "⏳ Waiting for expert";
   }
@@ -96,15 +100,17 @@ export default function ThreadDetailPage() {
   return (
     <ProtectedRoute>
       <main className="h-[calc(100vh-4rem)] flex flex-col bg-swansons-cream overflow-hidden">
-        <div className="flex flex-col h-full w-full max-w-screen-lg mx-auto bg-white shadow-sm">
+        <div className="flex flex-col h-full w-full max-w-5xl mx-auto bg-white shadow-sm">
           {/* Fixed Header */}
-          <div className="flex-shrink-0 px-4 py-4 border-b border-gray-200 bg-white">
+          <div className="shrink-0 px-4 py-4 border-b border-gray-200 bg-white">
             <p className="font-medium text-sm">{thread.question}</p>
             <span
-              className={`text-xs p-2  rounded mt-1 inline-block ${
-                thread.status === "answered"
+              className={`text-xs p-2 rounded mt-1 inline-block ${
+                thread.status === "closed"
                   ? "bg-green-100 text-green-700"
-                  : "bg-yellow-100 text-yellow-700"
+                  : thread.status === "waiting-on-customer"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-yellow-100 text-yellow-700"
               }`}
             >
               {getCustomerStatus(thread.status)}
@@ -159,7 +165,7 @@ export default function ThreadDetailPage() {
           </div>
 
           {/* Fixed Bottom Input */}
-          <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 bg-white">
+          <div className="shrink-0 px-4 py-4 border-t border-gray-200 bg-white">
             <form onSubmit={handleReply} className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <button
@@ -172,7 +178,7 @@ export default function ThreadDetailPage() {
                   📎
                 </button>
                 <textarea
-                  className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-600 min-h-[60px]"
+                  className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-600 min-h-15"
                   placeholder="Send a message..."
                   value={reply}
                   onChange={(e) => setReply(e.target.value)}

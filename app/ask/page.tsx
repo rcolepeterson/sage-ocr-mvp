@@ -10,7 +10,7 @@ import { useSearchParams } from "next/navigation";
 import NotificationBanner from "@/components/ui/NotificationBanner";
 
 export default function AskPage() {
-  const { user, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   const [question, setQuestion] = useState("");
   const [threads, setThreads] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -44,6 +44,13 @@ export default function AskPage() {
       <main className="min-h-screen bg-swansons-cream flex flex-col items-center px-4 py-8 pb-20">
         <div className="card w-full max-w-md p-6 mb-8">
           <h1 className="text-xl font-semibold mb-1">Ask an Expert</h1>
+          {/* Customer access note */}
+          {role === "customer" && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-4 text-yellow-800 text-sm">
+              Customers: To ask a new question, go to your plant's profile and
+              tap <b>Ask an Expert</b>.
+            </div>
+          )}
 
           {/* Plant Context Banner */}
           {plantName && (
@@ -104,7 +111,20 @@ export default function AskPage() {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">{thread.question}</span>
                   <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 ml-2">
-                    {thread.status}
+                    {(() => {
+                      switch (thread.status) {
+                        case "new":
+                        case "assigned":
+                        case "needs-followup":
+                          return "⏳ Sent";
+                        case "waiting-on-customer":
+                          return "💬 Replied";
+                        case "closed":
+                          return "✅ Closed";
+                        default:
+                          return thread.status;
+                      }
+                    })()}
                   </span>
                 </div>
                 {thread.plantName && (

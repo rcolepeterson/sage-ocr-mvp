@@ -122,7 +122,12 @@ function AdminInboxPage() {
   }
 
   const handleStatus = async (
-    status: "pending" | "answered" | "needs-followup",
+    status:
+      | "new"
+      | "assigned"
+      | "waiting-on-customer"
+      | "needs-followup"
+      | "closed",
   ) => {
     if (!selectedThread) return;
     await updateThreadStatus(selectedThread.id, status);
@@ -190,7 +195,22 @@ function AdminInboxPage() {
                   </span>
                 )}
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600 self-start">
-                  {thread.status}
+                  {(() => {
+                    switch (thread.status) {
+                      case "new":
+                        return "🆕 New";
+                      case "assigned":
+                        return "👤 Assigned";
+                      case "waiting-on-customer":
+                        return "⏳ Waiting on Customer";
+                      case "needs-followup":
+                        return "🔁 Needs Follow-Up";
+                      case "closed":
+                        return "✅ Closed";
+                      default:
+                        return thread.status;
+                    }
+                  })()}
                 </span>
               </div>
             ))}
@@ -223,7 +243,22 @@ function AdminInboxPage() {
                   </span>
                 )}
                 <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                  {selectedThread.status}
+                  {(() => {
+                    switch (selectedThread.status) {
+                      case "new":
+                        return "🆕 New";
+                      case "assigned":
+                        return "👤 Assigned";
+                      case "waiting-on-customer":
+                        return "⏳ Waiting on Customer";
+                      case "needs-followup":
+                        return "🔁 Needs Follow-Up";
+                      case "closed":
+                        return "✅ Closed";
+                      default:
+                        return selectedThread.status;
+                    }
+                  })()}
                 </span>
               </div>
 
@@ -338,9 +373,9 @@ function AdminInboxPage() {
                     <button
                       type="button"
                       className="btn bg-green-200 cursor-pointer px-4"
-                      onClick={() => handleStatus("answered")}
+                      onClick={() => handleStatus("closed")}
                     >
-                      Mark Answered
+                      Close Thread
                     </button>
                   </div>
                 </form>

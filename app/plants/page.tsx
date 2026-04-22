@@ -113,12 +113,7 @@ export default function MyPlantsPage() {
                       >
                         {deletingId === plant.id ? "Removing..." : "🗑 Remove"}
                       </button>
-                      <Link
-                        href={`/ask?plantId=${plant.id}&plantName=${encodeURIComponent(plant.commonName)}`}
-                        className="mt-1 text-xs text-green-700 hover:text-green-900 underline transition"
-                      >
-                        💬 Ask about this plant
-                      </Link>
+                      {/* Ask about this plant link removed; now on plant profile page */}
                     </div>
                   ))
                 )}
