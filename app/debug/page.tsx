@@ -13,6 +13,36 @@ export default function DebugPage() {
   const { user } = useAuth();
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Email test state
+  const [email, setEmail] = useState("");
+  const [emailResult, setEmailResult] = useState<string | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+
+  async function handleSendTestEmail() {
+    setEmailResult(null);
+    setEmailLoading(true);
+    try {
+      const res = await fetch("/api/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: email,
+          subject: "Sage — Test Email",
+          html: `<h1>🌿 Sage Email Test</h1><p>This is a test email from the Sage plant care app. If you received this, email notifications are working correctly.</p>`,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEmailResult("✅ Test email sent! Check your inbox.");
+      } else {
+        setEmailResult(`❌ Error: ${data.error || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      setEmailResult(`❌ Error: ${err.message || "Unknown error"}`);
+    } finally {
+      setEmailLoading(false);
+    }
+  }
 
   const isGoogleUser = user?.providerData?.some(
     (p) => p.providerId === "google.com",
@@ -43,6 +73,34 @@ export default function DebugPage() {
     <ProtectedRoute requiredRole="admin">
       <main className="min-h-screen flex flex-col items-center justify-start bg-swansons-cream px-4 pt-10">
         <div className="card p-6 w-full max-w-md text-center">
+          {/* Email Test Section */}
+          <div className="border border-gray-200 rounded-lg p-4 mb-4 text-left">
+            <h2 className="font-semibold text-gray-700 mb-2">📧 Email Test</h2>
+            <p className="text-xs text-gray-500 mb-3">
+              Send a test email using Resend to confirm email notifications are
+              working.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-2">
+              <input
+                type="email"
+                className="input w-full text-sm"
+                placeholder="Recipient email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={emailLoading}
+              />
+              <button
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition w-full sm:w-auto disabled:opacity-60"
+                onClick={handleSendTestEmail}
+                disabled={!email || emailLoading}
+              >
+                {emailLoading ? "Sending..." : "Send Test Email"}
+              </button>
+            </div>
+            {emailResult && (
+              <div className="mt-2 text-sm text-center">{emailResult}</div>
+            )}
+          </div>
           <h1 className="text-2xl font-bold mb-4 text-red-600">DEV TOOLS</h1>
 
           <div className="border border-gray-200 rounded-lg p-4 mb-4 text-left">
