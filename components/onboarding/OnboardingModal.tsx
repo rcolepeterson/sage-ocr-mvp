@@ -29,16 +29,11 @@ function OnboardingModalInner() {
   const searchParams = useSearchParams();
   const preview = searchParams.get("onboarding") === "preview";
 
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(() => preview);
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
-
-    if (preview) {
-      setVisible(true);
-      return;
-    }
+    if (!user || preview) return;
 
     const check = async () => {
       const snap = await getDoc(doc(db, "users", user.uid));
@@ -79,7 +74,11 @@ function OnboardingModalInner() {
       }}
     >
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
-        {/* Illustration area — swap in real assets when ready */}
+        {/* Heading — now at the top */}
+        <h2 className="text-center px-6 pt-6 pb-4 whitespace-pre-line leading-snug">
+          {current.title}
+        </h2>
+        {/* Illustration */}
         <div className="bg-gray-100 h-56 flex items-center justify-center">
           <span className="text-gray-400 text-sm italic">
             Illustration placeholder — step {step + 1}
@@ -98,10 +97,6 @@ function OnboardingModalInner() {
               />
             ))}
           </div>
-          {/* Heading */}
-          <h2 className="text-2xl font-semibold text-center text-green-600 mb-3 whitespace-pre-line leading-snug">
-            {current.title}
-          </h2>
           {/* Body */}
           <p className="text-center text-gray-500 text-sm leading-relaxed mb-7">
             {current.body}

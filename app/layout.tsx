@@ -42,10 +42,11 @@ export default function RootLayout({
   const isSignInPage =
     typeof window !== "undefined" && window.location.pathname === "/signin";
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${poppins.variable} antialiased`}
-      >
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${poppins.variable}`}
+    >
+      <body className="antialiased">
         <AuthProvider>
           {isSignInPage ? (
             children

@@ -1,5 +1,11 @@
 # AGENTS.md — Sage Plant Care System
 
+## Typography
+
+- font-heading → Poppins (all headings)
+- font-body → Raleway (body text, buttons, labels)
+- Never use default Tailwind font classes
+
 ## Project Overview
 
 Sage is a mobile-first web app for a plant nursery. Users scan plant
@@ -165,6 +171,7 @@ role: "customer" | "staff" | "admin"
 createdAt: timestamp
 termsAcceptedAt: timestamp
 termsVersion: string
+onboardingCompletedAt?: timestamp
 fcmToken?: string
 notificationsDeclined?: boolean
 specialty?: string
@@ -407,6 +414,8 @@ FLORA_API_KEY
 
 ## Don't
 
+- Use hardcoded Tailwind colour classes (text-green-600, text-gray-500 etc)
+  — always use Swansons theme colours (text-swansons-green, text-swansons-muted etc)
 - Call Google Vision from the client
 - Hardcode credentials
 - Return unstructured LLM output
@@ -573,6 +582,13 @@ npx vercel --prod # Deploy to Vercel
 - Firebase Storage (CORS + rules configured) ✅
 - Firebase App Check (reCAPTCHA Enterprise) ✅
 - Deployed: sage-ocr-mvp-one.vercel.app ✅
+
+### Onboarding Modal
+
+- First-time onboarding modal ✅
+- Shows once per user (Firestore flag) ✅
+- Preview mode via ?onboarding=preview ✅
+- Reset tool on /debug page ✅
 
 ### Dev Tools
 

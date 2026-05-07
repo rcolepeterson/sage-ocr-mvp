@@ -29,6 +29,17 @@
 
 /* ===== BASE STYLES ===== */
 @layer base {
+  body,
+  p,
+  span,
+  button,
+  input,
+  textarea,
+  label,
+  a {
+    font-family: var(--font-body);
+  }
+
   body {
     @apply bg-swansons-cream text-swansons-text font-body;
   }
@@ -36,8 +47,11 @@
   h1,
   h2,
   h3,
-  h4 {
-    @apply font-heading text-swansons-green-dark;
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    @apply text-swansons-green-dark;
   }
 
   h1 {
