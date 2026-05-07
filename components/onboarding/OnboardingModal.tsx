@@ -23,7 +23,6 @@ const STEPS = [
   },
 ];
 
-
 // ─── Inner component (uses useSearchParams — must be inside Suspense) ──────────
 function OnboardingModalInner() {
   const { user } = useAuth();
@@ -94,7 +93,7 @@ function OnboardingModalInner() {
                 key={i}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
-                  i === step ? "bg-green-700 w-4" : "bg-gray-300 w-2"
+                  i === step ? "bg-green-700 w-4" : "bg-gray-300 w-2",
                 )}
               />
             ))}
