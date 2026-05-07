@@ -24,7 +24,21 @@ import {
   query,
   where,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
+// Call when user completes or skips onboarding
+export async function markOnboardingComplete(uid: string): Promise<void> {
+  await updateDoc(doc(db, "users", uid), {
+    onboardingCompletedAt: serverTimestamp(),
+  });
+}
+
+// Call from /debug page to reset so onboarding shows again on next load
+export async function resetOnboarding(uid: string): Promise<void> {
+  await updateDoc(doc(db, "users", uid), {
+    onboardingCompletedAt: null,
+  });
+}
 import { db } from "./firestore";
 import { auth } from "./auth";
 import { updateProfile } from "firebase/auth";

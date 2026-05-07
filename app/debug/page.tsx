@@ -1,13 +1,40 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { useAuth } from "@/lib/firebase/AuthContext";
-import { auth } from "@/lib/firebase/auth";
-import { doc, updateDoc, deleteField } from "firebase/firestore";
-import { db } from "@/lib/firebase/firestore";
-import { updateProfile } from "firebase/auth";
-import { useState } from "react";
+import { resetOnboarding } from "@/lib/firebase/users";
+function ResetOnboardingTool() {
+  const { user } = useAuth();
+  const [done, setDone] = useState(false);
+
+  const handleReset = async () => {
+    if (!user) return;
+    await resetOnboarding(user.uid);
+    setDone(true);
+    setTimeout(() => setDone(false), 3000);
+  };
+
+  return (
+    <div className="border rounded-xl p-4 flex items-center justify-between mb-4">
+      <div>
+        <p className="font-medium text-sm">Reset Onboarding</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Clears your onboardingCompletedAt flag — modal will show on next page
+          load. Or use{" "}
+          <code className="bg-gray-100 px-1 rounded text-orange-500">
+            ?onboarding=preview
+          </code>{" "}
+          for a non-destructive preview.
+        </p>
+      </div>
+      <button
+        onClick={handleReset}
+        className="ml-4 shrink-0 text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"
+      >
+        {done ? "✅ Reset!" : "Reset"}
+      </button>
+    </div>
+  );
+}
 
 export default function DebugPage() {
   const { user } = useAuth();
@@ -73,6 +100,7 @@ export default function DebugPage() {
     <ProtectedRoute requiredRole="admin">
       <main className="min-h-screen flex flex-col items-center justify-start bg-swansons-cream px-4 pt-10">
         <div className="card p-6 w-full max-w-md text-center">
+          <ResetOnboardingTool />
           {/* Email Test Section */}
           <div className="border border-gray-200 rounded-lg p-4 mb-4 text-left">
             <h2 className="font-semibold text-gray-700 mb-2">📧 Email Test</h2>

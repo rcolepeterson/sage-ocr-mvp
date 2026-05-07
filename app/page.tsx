@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/Button";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/auth";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 
 export default function Home() {
   return (
     <ProtectedRoute>
+      <OnboardingModal />
       <main className="min-h-screen flex items-center justify-center bg-swansons-cream px-4">
         <div className="card p-8 w-full max-w-md">
           {/* Header */}
