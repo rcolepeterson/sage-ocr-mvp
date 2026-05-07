@@ -26,3 +26,7 @@ FLORA_API_KEY
 ## Tech Stack
 
 Next.js, TypeScript, Tailwind, Firebase, Vercel
+
+AI HELP 4 this Sage project.
+Skills
+https://imagine.wpp.ai/chat/vBtXbYvXSfQgVSuvitMA8/foundational?resultId=vCn7AIibI90yZFcZgs1NI

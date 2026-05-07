@@ -20,8 +20,8 @@
   --color-swansons-muted: #6b6b6b;
 
   /* Fonts */
-  --font-heading: Georgia, Cambria, serif;
-  --font-body: Inter, system-ui, sans-serif;
+  --font-heading: var(--font-poppins), Poppins, Arial, sans-serif;
+  --font-body: var(--font-raleway), Raleway, Inter, system-ui, sans-serif;
 
   /* Custom Border Radius */
   --radius-swansons: 6px;
