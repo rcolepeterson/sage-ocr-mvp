@@ -5,7 +5,6 @@ import { AuthProvider } from "@/lib/firebase/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import BottomNav from "@/components/nav/BottomNav";
 
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -26,7 +25,7 @@ const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   display: "swap",
-  weight: ["400","500","600","700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {

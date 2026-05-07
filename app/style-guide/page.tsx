@@ -14,10 +14,13 @@ export default function StyleGuidePage() {
       <section className="mb-10">
         <h2 className="text-2xl font-heading mb-2">Body Text (Raleway)</h2>
         <p className="text-base font-body mb-2">
-          This is a sample paragraph using the Raleway font. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque euismod, nisi eu consectetur.
+          This is a sample paragraph using the Raleway font. Lorem ipsum dolor
+          sit amet, consectetur adipiscing elit. Pellentesque euismod, nisi eu
+          consectetur.
         </p>
         <p className="text-lg font-body mb-2">
-          This is a larger body text using Raleway. Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.
+          This is a larger body text using Raleway. Vivamus sagittis lacus vel
+          augue laoreet rutrum faucibus dolor auctor.
         </p>
         <ul className="list-disc pl-6 font-body">
           <li>Unordered list item — Raleway</li>
