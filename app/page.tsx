@@ -27,6 +27,10 @@ export default function Home() {
               </Button>
             </Link>
 
+            <Link href="/ask" className="btn-primary w-full">
+              Ask an Expert
+            </Link>
+
             {/* Placeholder for future */}
             <Button disabled className="w-full">
               Dashboard (coming soon)

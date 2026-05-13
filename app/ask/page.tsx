@@ -44,13 +44,6 @@ export default function AskPage() {
       <main className="min-h-screen bg-swansons-cream flex flex-col items-center px-4 py-8 pb-20">
         <div className="card w-full max-w-md p-6 mb-8">
           <h1 className="text-xl font-semibold mb-1">Ask an Expert</h1>
-          {/* Customer access note */}
-          {role === "customer" && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-4 text-yellow-800 text-sm">
-              Customers: To ask a new question, go to your plant's profile and
-              tap <b>Ask an Expert</b>.
-            </div>
-          )}
 
           {/* Plant Context Banner */}
           {plantName && (
