@@ -1,5 +1,6 @@
 "use client";
 import { useAuth, AuthContext } from "@/lib/firebase/AuthContext";
+import { Button } from "@/components/ui/Button";
 import {
   getUser,
   AppUser,
@@ -53,13 +54,15 @@ export default function TermsPage() {
             [Placeholder for full legal terms. Replace with actual content.]
           </p>
         </div>
-        <button
-          className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-800 transition disabled:opacity-50"
+        <Button
+          className="w-full text-lg font-semibold"
           onClick={handleAgree}
           disabled={submitting}
+          size="md"
+          variant="primary"
         >
           {submitting ? "Saving..." : "I Agree"}
-        </button>
+        </Button>
       </div>
     </main>
   );

@@ -1,5 +1,6 @@
 "use client";
 import { useAuth, AuthContext } from "@/lib/firebase/AuthContext";
+import { Button } from "@/components/ui/Button";
 import { updateUserDisplayName } from "@/lib/firebase/users";
 import { useRouter } from "next/navigation";
 import { useState, useContext, useEffect } from "react";
@@ -38,7 +39,7 @@ export default function OnboardingPage() {
     <main className="min-h-screen flex flex-col items-center justify-center bg-swansons-cream px-4">
       <div className="max-w-lg w-full bg-white rounded-xl shadow p-6">
         <h1 className="text-2xl font-bold mb-4 text-center">Welcome!</h1>
-        <div className="prose prose-sm max-w-none mb-6 text-gray-700">
+        <div className="prose prose-sm max-w-none mb-6 text-gray-700 text-center">
           <p>Let’s get started. What’s your name?</p>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -52,13 +53,15 @@ export default function OnboardingPage() {
             required
             autoFocus
           />
-          <button
+          <Button
             type="submit"
-            className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-800 transition disabled:opacity-50"
+            className="w-full text-lg font-semibold"
             disabled={submitting || !name.trim()}
+            size="md"
+            variant="primary"
           >
             {submitting ? "Saving..." : "Continue"}
-          </button>
+          </Button>
         </form>
       </div>
     </main>
