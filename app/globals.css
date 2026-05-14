@@ -20,7 +20,7 @@
   --color-swansons-muted: #6b6b6b;
 
   /* Fonts */
-  --font-heading: var(--font-poppins), Poppins, Arial, sans-serif;
+  --font-heading: var(--font-serif), DM Serif Display, serif;
   --font-body: var(--font-raleway), Raleway, Inter, system-ui, sans-serif;
 
   /* Custom Border Radius */

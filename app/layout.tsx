@@ -1,5 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Raleway, Poppins } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Raleway,
+  Poppins,
+  DM_Serif_Display,
+} from "next/font/google";
+const dmSerifDisplay = DM_Serif_Display({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  display: "swap",
+  weight: "400", // ← add this
+});
 import "./globals.css";
 import { AuthProvider } from "@/lib/firebase/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -44,7 +56,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${poppins.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${raleway.variable} ${poppins.variable} ${dmSerifDisplay.variable}`}
     >
       <body className="antialiased">
         <AuthProvider>

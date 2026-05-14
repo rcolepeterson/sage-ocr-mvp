@@ -19,12 +19,12 @@ export function Button({
 
   const variants = {
     primary:
-      "bg-[#1a2456] text-white hover:bg-[#141c44] shadow-sm hover:shadow-md active:scale-[0.98] cursor-pointer",
+      "bg-[var(--color-swansons-navy)] text-white hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] shadow-sm hover:shadow-md active:scale-[0.98] cursor-pointer",
     secondary:
-      "bg-transparent text-[#1a2456] border-2 border-[#1a2456] hover:bg-[#1a2456] hover:text-white active:scale-[0.98] cursor-pointer",
-    text: "text-[#1a2456] underline underline-offset-4 hover:opacity-80 cursor-pointer",
+      "bg-transparent text-[var(--color-swansons-navy)] border-2 border-[var(--color-swansons-navy)] hover:bg-[var(--color-swansons-navy)] hover:text-white active:scale-[0.98] cursor-pointer",
+    text: "text-[var(--color-swansons-navy)] underline underline-offset-4 hover:opacity-80 cursor-pointer",
     disabled:
-      "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed",
+      "bg-[var(--color-swansons-cream)] text-[var(--color-swansons-green-muted)] border border-[var(--color-swansons-green-muted)] cursor-not-allowed",
   };
 
   const sizes = {
