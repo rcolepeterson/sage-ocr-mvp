@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useAuth } from "@/lib/firebase/AuthContext";
 import { resetOnboarding } from "@/lib/firebase/users";
+import { useState } from "react";
 function ResetOnboardingTool() {
   const { user } = useAuth();
   const [done, setDone] = useState(false);
