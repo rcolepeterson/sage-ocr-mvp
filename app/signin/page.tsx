@@ -159,7 +159,7 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-swansons-cream px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       {/* Always in DOM so RecaptchaVerifier can find it */}
       <div id="recaptcha-container" />
 
@@ -310,7 +310,7 @@ export default function SignInPage() {
                     setMode(mode === "signin" ? "signup" : "signin");
                     setError(null);
                   }}
-                  className="text-xs text-green-700 underline cursor-pointer"
+                  className="text-xs text-swansons-navy underline cursor-pointer"
                 >
                   {mode === "signin"
                     ? "Need an account? Create one"
@@ -321,7 +321,7 @@ export default function SignInPage() {
                     setMode("reset");
                     setError(null);
                   }}
-                  className="text-xs text-green-700 underline cursor-pointer"
+                  className="text-xs text-swansons-navy underline cursor-pointer"
                 >
                   Forgot your password?
                 </button>

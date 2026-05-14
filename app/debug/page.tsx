@@ -98,7 +98,7 @@ export default function DebugPage() {
 
   return (
     <ProtectedRoute requiredRole="admin">
-      <main className="min-h-screen flex flex-col items-center justify-start bg-swansons-cream px-4 pt-10">
+      <main className="min-h-screen flex flex-col items-center justify-start px-4 pt-10">
         <div className="card p-6 w-full max-w-md text-center">
           <ResetOnboardingTool />
           {/* Email Test Section */}

@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <ProtectedRoute>
       <OnboardingModal />
-      <main className="min-h-screen flex items-center justify-center bg-swansons-cream px-4">
+      <main className="min-h-screen flex items-center justify-center px-4">
         <div className="card p-8 w-full max-w-md">
           {/* Header */}
           <div className="text-center mb-8">
