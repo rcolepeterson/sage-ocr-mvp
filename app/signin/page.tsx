@@ -200,7 +200,7 @@ export default function SignInPage() {
                     />
                     <button
                       type="submit"
-                      className="rounded-full bg-green-700 text-white px-4 py-2 hover:bg-green-800 transition"
+                      className="rounded-full bg-swansons-navy text-white px-4 py-2 hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] transition"
                       disabled={phoneLoading}
                     >
                       {phoneLoading ? "Sending..." : "Send Code"}
@@ -222,7 +222,7 @@ export default function SignInPage() {
                     />
                     <button
                       type="submit"
-                      className="rounded-full bg-green-700 text-white px-4 py-2 hover:bg-green-800 transition"
+                      className="rounded-full bg-swansons-navy text-white px-4 py-2 hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] transition"
                       disabled={phoneLoading}
                     >
                       {phoneLoading ? "Verifying..." : "Verify Code"}
@@ -251,7 +251,7 @@ export default function SignInPage() {
               {/* Google */}
               <button
                 onClick={signInWithGoogle}
-                className="w-full rounded-full bg-white border border-gray-200 text-gray-700 px-6 py-3 hover:bg-gray-50 transition mb-4"
+                className="w-full rounded-full bg-swansons-navy text-white px-6 py-3 hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] transition mb-4"
               >
                 Sign in with Google
               </button>
@@ -292,7 +292,7 @@ export default function SignInPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition disabled:opacity-50"
+                  className="w-full rounded-full bg-swansons-navy text-white px-6 py-3 hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] transition disabled:opacity-50"
                 >
                   {mode === "signin"
                     ? submitting
@@ -351,7 +351,7 @@ export default function SignInPage() {
                       setResetSent(false);
                       setEmail("");
                     }}
-                    className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition"
+                    className="w-full rounded-full bg-swansons-navy text-white px-6 py-3 hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] transition"
                   >
                     Back to Sign In
                   </button>
@@ -374,7 +374,7 @@ export default function SignInPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full rounded-full bg-green-700 text-white px-6 py-3 hover:bg-green-800 transition disabled:opacity-50"
+                    className="w-full rounded-full bg-swansons-navy text-white px-6 py-3 hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] transition disabled:opacity-50"
                   >
                     {submitting ? "Sending..." : "Send Reset Email"}
                   </button>
