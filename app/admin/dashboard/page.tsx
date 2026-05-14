@@ -115,7 +115,7 @@ const TABS = [
 
 function Sidebar({ user, counts, onTab, tab }: any) {
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-swansons-green-dark text-white min-h-screen p-6">
+    <aside className="hidden md:flex flex-col w-64 bg-swansons-navy text-white min-h-screen p-6">
       <div className="mb-8">
         <div className="text-2xl font-bold mb-1">Sage</div>
         <div className="text-sm mb-2">Swansons Nursery</div>

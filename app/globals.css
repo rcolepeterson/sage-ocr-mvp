@@ -4,10 +4,10 @@
 /* ===== SWANSONS THEME ===== */
 @theme {
   /* Primary Greens */
-  --color-swansons-green: #4a7c59;
-  --color-swansons-green-light: #6b9b7a;
-  --color-swansons-green-dark: #3a5f46;
-  --color-swansons-green-muted: #e8f0ea;
+  --color-swansons-green: #9ac791;         /* sage green */
+  --color-swansons-green-light: #a2fe92;   /* bright green */
+  --color-swansons-green-muted: #e7fee5;   /* pale green */
+  --color-swansons-navy: #141f62;          /* dark navy */
 
   /* Earthy Browns */
   --color-swansons-brown: #8b5e3c;
@@ -15,7 +15,7 @@
   --color-swansons-brown-dark: #5d3d28;
 
   /* Neutrals */
-  --color-swansons-cream: #faf8f5;
+  --color-swansons-cream: #F2F2F2;
   --color-swansons-text: #3d3d3d;
   --color-swansons-muted: #6b6b6b;
 
@@ -51,7 +51,7 @@
   h5,
   h6 {
     font-family: var(--font-heading);
-    @apply text-swansons-green-dark;
+    @apply text-swansons-navy;
   }
 
   h1 {
@@ -80,7 +80,7 @@
     @apply bg-swansons-green text-white px-6 py-3 
          rounded-swansons font-medium
          transition-all duration-200
-         hover:bg-swansons-green-dark
+         hover:bg-swansons-navy
          active:scale-[0.98]
          shadow-sm hover:shadow-md
          cursor-pointer;

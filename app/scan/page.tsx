@@ -284,7 +284,7 @@ export default function ScanPage() {
           {/* Left: Camera + Controls */}
           <div className="flex-1 min-w-0">
             <div className="card overflow-hidden">
-              <div className="bg-swansons-green-dark">
+              <div className="bg-swansons-navy">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -322,7 +322,7 @@ export default function ScanPage() {
               <h3 className="text-sm font-medium text-swansons-muted mb-2">
                 OCR Result
               </h3>
-              <div className="bg-swansons-green-dark text-swansons-green-light p-4 rounded-swansons min-h-[100px] text-sm font-mono whitespace-pre-wrap">
+              <div className="bg-swansons-navy text-swansons-green-light p-4 rounded-swansons min-h-[100px] text-sm font-mono whitespace-pre-wrap">
                 {text || "No OCR text yet — scan a plant tag to begin"}
               </div>
             </div>
@@ -362,7 +362,7 @@ export default function ScanPage() {
             {/* Loading State */}
             {llmLoading && (
               <div className="card p-4 border-2 border-swansons-green bg-swansons-green-muted">
-                <div className="flex items-center gap-3 text-swansons-green-dark">
+                <div className="flex items-center gap-3 text-swansons-navy">
                   <div className="animate-spin h-5 w-5 border-2 border-swansons-green border-t-transparent rounded-full"></div>
                   <span className="font-medium">Streaming plant info...</span>
                 </div>
@@ -404,7 +404,7 @@ export default function ScanPage() {
 
                   {llmResult.careTips && llmResult.careTips.length > 0 && (
                     <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-swansons-green-dark mb-2">
+                      <h3 className="text-sm font-semibold text-swansons-navy mb-2">
                         🌿 Care Tips
                       </h3>
                       <ul className="space-y-2">
@@ -603,7 +603,7 @@ export default function ScanPage() {
               <summary className="text-sm text-swansons-muted cursor-pointer hover:text-swansons-green">
                 🛠 Debug Log
               </summary>
-              <div className="mt-2 bg-swansons-green-dark text-swansons-green-light p-3 rounded-swansons text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
+              <div className="mt-2 bg-swansons-navy text-swansons-green-light p-3 rounded-swansons text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
                 {debug.length ? debug.join("\n") : "debug log empty"}
               </div>
             </details>
