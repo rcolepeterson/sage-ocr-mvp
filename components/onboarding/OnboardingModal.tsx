@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import cn from "classnames";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { markOnboardingComplete } from "@/lib/firebase/users";
 import { doc, getDoc } from "firebase/firestore";
@@ -75,7 +76,8 @@ function OnboardingModalInner() {
           </span>
         </div>
         <div className="px-6 pt-5 pb-7 flex flex-col items-center">
-          {/* Step dots */}
+          {/* Step dots (scrolling indicator) commented out for design */}
+          {/**
           <div className="flex gap-2 mb-5">
             {STEPS.map((_, i) => (
               <div
@@ -87,24 +89,30 @@ function OnboardingModalInner() {
               />
             ))}
           </div>
+          */}
           {/* Body */}
-          <p className="text-center text-gray-500 text-sm leading-relaxed mb-7">
+          <p className="text-center text-black text-base leading-snug mb-7 w-[80%] mx-auto">
             {current.body}
           </p>
           {/* CTA button */}
-          <button
+          <Button
             onClick={handleNext}
-            className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-medium py-3 rounded-xl transition-colors duration-200"
+            className="w-[75%] mx-auto"
+            size="md"
+            variant="primary"
           >
             {isLastStep ? "Get Started" : "Next"}
-          </button>
+          </Button>
           {/* Skip */}
-          <button
+          <Button
             onClick={dismiss}
-            className="mt-3 text-sm text-gray-400 underline underline-offset-2 hover:text-gray-600 transition-colors"
+            className="mt-3 text-sm underline underline-offset-2"
+            variant="text"
+            size="sm"
+            type="button"
           >
             Skip
-          </button>
+          </Button>
           {/* Preview badge — visible to designer so they know they're in preview mode */}
           {preview && (
             <span className="mt-4 text-xs text-orange-400 font-medium tracking-wide uppercase">
