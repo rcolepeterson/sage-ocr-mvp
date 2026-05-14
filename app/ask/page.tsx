@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import type { Space, Plant } from "@/lib/firebase/spaces";
+import { getSpaces, getPlantsInSpace } from "@/lib/firebase/spaces";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useState, useEffect } from "react";
@@ -10,15 +12,20 @@ import { useSearchParams } from "next/navigation";
 import NotificationBanner from "@/components/ui/NotificationBanner";
 
 export default function AskPage() {
-  const { user, role, loading } = useAuth();
+  const { user, loading } = useAuth();
   const [question, setQuestion] = useState("");
   const [threads, setThreads] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [selectedSpaceId, setSelectedSpaceId] = useState("");
+  const [plants, setPlants] = useState<Plant[]>([]);
+  const [selectedPlantId, setSelectedPlantId] = useState("");
+  const [selectedPlantName, setSelectedPlantName] = useState("");
   const searchParams = useSearchParams();
 
-  const plantId = searchParams.get("plantId") || "";
-  const plantName = searchParams.get("plantName") || "";
+  const urlPlantId = searchParams.get("plantId") || "";
+  const urlPlantName = searchParams.get("plantName") || "";
 
   // Real time listener for user's threads
   useEffect(() => {
@@ -27,11 +34,38 @@ export default function AskPage() {
     return () => unsub();
   }, [user]);
 
+  // Fetch spaces on mount if no plantId in URL
+  useEffect(() => {
+    if (!user || urlPlantId) return;
+    getSpaces(user.uid).then(setSpaces);
+  }, [user, urlPlantId]);
+
+  const handleSpaceChange = (spaceId: string) => {
+    setSelectedSpaceId(spaceId);
+    setPlants([]);
+    setSelectedPlantId("");
+    setSelectedPlantName("");
+    if (spaceId && user) {
+      getPlantsInSpace(user.uid, spaceId).then(setPlants);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!question.trim() || !user) return;
     setSubmitting(true);
-    await createThread(plantId, user.uid, question.trim(), plantName);
+    let threadPlantId = urlPlantId;
+    let threadPlantName = urlPlantName;
+    if (!urlPlantId && selectedPlantId) {
+      threadPlantId = selectedPlantId;
+      threadPlantName = selectedPlantName;
+    }
+    await createThread(
+      threadPlantId,
+      user.uid,
+      question.trim(),
+      threadPlantName,
+    );
     setQuestion("");
     setSubmitted(true);
     setSubmitting(false);
@@ -45,8 +79,8 @@ export default function AskPage() {
         <div className="card w-full max-w-md p-6 mb-8">
           <h1 className="text-xl font-semibold mb-1">Ask an Expert</h1>
 
-          {/* Plant Context Banner */}
-          {plantName && (
+          {/* Plant Context Banner if navigated from plant profile */}
+          {urlPlantName ? (
             <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
               <span className="text-lg">🌱</span>
               <div>
@@ -54,18 +88,57 @@ export default function AskPage() {
                   Asking about:
                 </p>
                 <p className="text-sm text-green-800 font-semibold">
-                  {plantName}
+                  {urlPlantName}
                 </p>
               </div>
             </div>
+          ) : (
+            <>
+              {/* Optional Space Dropdown */}
+              {spaces.length > 0 && (
+                <select
+                  className="input mb-2"
+                  value={selectedSpaceId}
+                  onChange={(e) => handleSpaceChange(e.target.value)}
+                  aria-label="Select a space"
+                >
+                  <option value="">Add a space (optional)</option>
+                  {spaces.map((space) => (
+                    <option key={space.id} value={space.id}>
+                      {space.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {/* Optional Plant Dropdown */}
+              {selectedSpaceId && plants.length > 0 && (
+                <select
+                  className="input mb-2"
+                  value={selectedPlantId}
+                  onChange={(e) => {
+                    const plant = plants.find((p) => p.id === e.target.value);
+                    setSelectedPlantId(e.target.value);
+                    setSelectedPlantName(plant ? plant.commonName : "");
+                  }}
+                  aria-label="Select a plant"
+                >
+                  <option value="">Select a plant (optional)</option>
+                  {plants.map((plant) => (
+                    <option key={plant.id} value={plant.id}>
+                      {plant.commonName}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <textarea
-              className="input min-h-[80px]"
+              className="input min-h-20"
               placeholder={
-                plantName
-                  ? `What would you like to know about your ${plantName}?`
+                urlPlantName
+                  ? `What would you like to know about your ${urlPlantName}?`
                   : "Type your plant care question..."
               }
               value={question}

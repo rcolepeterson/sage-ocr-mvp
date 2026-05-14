@@ -35,6 +35,8 @@ Firebase Project: sage-swansons-e4677
 - Firebase Storage (images/media)
 - Firebase Cloud Messaging (FCM, notifications)
 
+- lottie-react (Lottie animations)
+
 ---
 
 ## Directory Structure
@@ -67,6 +69,7 @@ BottomNav.tsx # Mobile-first bottom nav, role-aware
 /ui
 Button.tsx # Shared button component
 NotificationBanner.tsx # FCM permission banner
+/ui/LottieAnimation.tsx # Reusable, SSR-safe Lottie wrapper
 /lib
 /firebase
 config.ts # Firebase initialization + App Check
@@ -87,6 +90,8 @@ googleVision.ts
 schema.ts # Zod schema for LLM plant output + tags
 /data
 plants.json # Seeded plant catalog
+/animations/placeholder.json # Lottie animation asset
+/onboarding/OnboardingModal.tsx # Onboarding modal logic, Firestore, preview mode
 
 ---
 
@@ -178,8 +183,8 @@ specialty?: string
 
 /threads
 /{threadId}
-plantId: string
-plantName: string
+plantId?: string
+plantName?: string
 userId: string
 question: string
 status: "pending" | "answered" | "needs-followup"
@@ -267,6 +272,33 @@ createdAt: timestamp
 ### VAPID Key
 
 - Stored in NEXT_PUBLIC_FIREBASE_VAPID_KEY
+
+---
+
+## Onboarding Modal
+
+- Component: /components/onboarding/OnboardingModal.tsx
+- Shows once per user via Firestore flag (onboardingCompletedAt)
+- Preview mode: /?onboarding=preview — always shows, never writes to Firestore
+- Reset: /debug page → Reset Onboarding button
+
+---
+
+## LottieAnimation Component
+
+- Component: /components/ui/LottieAnimation.tsx
+- Usage: <LottieAnimation animationData={json} loop autoplay className="w-36 h-36" />
+- Animation JSON files go in /lib/animations/
+- Has 'use client' — no dynamic import needed
+
+---
+
+## Ask an Expert
+
+- Customers can ask with or without a plant associated
+- /ask has cascading optional dropdowns: space → plant
+- If navigated from plant profile (?plantId=&plantName=), dropdowns are hidden
+- plantId and plantName are optional on threads
 
 ---
 
@@ -399,6 +431,9 @@ FLORA_API_KEY
 - Compress images before upload using compressImage() from /lib/utils/imageCompression.ts
 - params in Next.js 15+ are Promises — always unwrap with React.use()
 
+- Lottie animation JSON files go in /lib/animations/
+- Font variables must be on <html> for Tailwind v4 compatibility
+
 ---
 
 ## Do
@@ -483,117 +518,6 @@ npm install # Install dependencies
 npm run dev # Start local dev server
 npm run build # Build for production
 npx vercel --prod # Deploy to Vercel
-
----
-
-## Implemented ✅
-
-### Authentication
-
-- Google Sign-In (popup) ✅
-- Email + Password ✅
-- Phone Number (SMS) ✅
-- Forgot Password ✅
-- Create Account ✅
-- Protected Routes ✅
-- RBAC (customer/staff/admin) ✅
-- User documents in Firestore ✅
-- Unauthorized page ✅
-- Sign In page (/signin) ✅
-- T&C acceptance at sign-up ✅
-- Onboarding — name capture for email/phone users ✅
-- Display name editing in Account popup (non-Google users) ✅
-
-### Security
-
-- Firebase App Check with reCAPTCHA Enterprise ✅
-- phoneEnforcementState: ENFORCE ✅
-- App Check enforced for Authentication ✅
-- Debug token configured for local development ✅
-
-### Navigation
-
-- Bottom nav bar (role-aware) ✅
-- Ask removed from Staff/Admin nav ✅
-- Dashboard link for admin ✅
-- Account popup + sign out ✅
-- Google profile photo ✅
-- Nav hidden on /terms and /onboarding ✅
-
-### Scanning & Plants
-
-- Scan page with camera ✅
-- OCR via Google Vision ✅
-- LLM plant info (Gemini streaming) ✅
-- Structured lightLevel from LLM ✅
-- AI plant tagging (30+ tags across 9 categories) ✅
-- Save plant to space ✅
-- Spaces (indoor/outdoor) ✅
-- My Plants page (/plants) ✅
-- Plant profile page (/plant/[spaceId]/[id]) ✅
-- Tags displayed on plant profile page ✅
-- Delete plant ✅
-- Ask about specific plant ✅
-- Photo upload with compression ✅
-- Styled photo upload button ✅
-
-### Threads & Expert Chat
-
-- Ask an Expert (/ask) ✅
-- Thread detail (/ask/[threadId]) ✅
-- Real-time messaging ✅
-- Photo sharing in threads ✅
-- Image compression before upload ✅
-- Staff inbox (/admin/inbox) ✅
-- Desktop split pane + mobile stacked ✅
-- Thread status management ✅
-- Auto needs-followup on customer reply ✅
-- Plant name in staff inbox ✅
-- Customer name in staff inbox ✅
-
-### Admin Dashboard
-
-- Admin dashboard (/admin/dashboard) ✅
-- Thread Queue tab with stat cards ✅
-- Filter pills (All, Unassigned, Urgent, Pending, Needs Followup, Answered) ✅
-- Assign/Reassign threads to staff ✅
-- Urgent flag toggle ✅
-- Staff Workload tab ✅
-- Send Notifications tab (stubbed) ✅
-- Staff specialty field ✅
-
-### Notifications (FCM)
-
-- Firebase App Check + reCAPTCHA Enterprise ✅
-- Service worker at /firebase-messaging-sw.js ✅
-- FCM token saved to Firestore ✅
-- NotificationBanner component ✅
-- Permission requested via user gesture only ✅
-- Staff notified on new thread ✅
-- Staff notified on customer reply ✅
-- Customer notified on staff reply ✅
-- Foreground + background notifications ✅
-- Stale token cleanup ✅
-
-### Infrastructure
-
-- Firebase project: sage-swansons-e4677 ✅
-- Firestore database ✅
-- Firebase Storage (CORS + rules configured) ✅
-- Firebase App Check (reCAPTCHA Enterprise) ✅
-- Deployed: sage-ocr-mvp-one.vercel.app ✅
-
-### Onboarding Modal
-
-- First-time onboarding modal ✅
-- Shows once per user (Firestore flag) ✅
-- Preview mode via ?onboarding=preview ✅
-- Reset tool on /debug page ✅
-
-### Dev Tools
-
-- Debug page (/debug) — admin only ✅
-- Clear display name tool (non-Google users) ✅
 
 ---
 
