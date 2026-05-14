@@ -15,7 +15,7 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = "font-medium transition-all duration-200";
+  const baseStyles = "font-body font-medium transition-all duration-200";
 
   const variants = {
     primary:
