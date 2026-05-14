@@ -29,21 +29,11 @@ function OnboardingModalInner() {
   const searchParams = useSearchParams();
   const preview = searchParams.get("onboarding") === "preview";
 
-  const [visible, setVisible] = useState(() => preview);
+  // Always show modal for design/testing
+  const [visible, setVisible] = useState(true);
   const [step, setStep] = useState(0);
 
-  useEffect(() => {
-    if (!user || preview) return;
-
-    const check = async () => {
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists() && !snap.data().onboardingCompletedAt) {
-        setVisible(true);
-      }
-    };
-
-    check();
-  }, [user, preview]);
+  // Skip onboardingCompletedAt check for design/testing
 
   const dismiss = async () => {
     setVisible(false);
