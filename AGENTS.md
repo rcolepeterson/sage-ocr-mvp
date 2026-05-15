@@ -450,7 +450,9 @@ FLORA_API_KEY
 ## Don't
 
 - Use hardcoded Tailwind colour classes (text-green-600, text-gray-500 etc)
-  — always use Swansons theme colours (text-swansons-green, text-swansons-muted etc)
+  — always use Swansons theme colours:
+  text-swansons-green, text-swansons-green-light, text-swansons-green-muted,
+  text-swansons-navy, text-swansons-cream, text-swansons-muted
 - Call Google Vision from the client
 - Hardcode credentials
 - Return unstructured LLM output
