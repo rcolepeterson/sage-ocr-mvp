@@ -16,6 +16,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/firebase/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import BottomNav from "@/components/nav/BottomNav";
+import HamburgerMenu from "@/components/nav/HamburgerMenu";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
           ) : (
             <ProtectedRoute>{children}</ProtectedRoute>
           )}
+          <HamburgerMenu />
           <BottomNav />
         </AuthProvider>
       </body>
