@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/ui/Logo";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
@@ -141,14 +142,7 @@ export default function Home() {
       <main className="min-h-screen px-4 pt-6 pb-28 max-w-lg mx-auto">
         {/* Logo */}
         <div className="flex items-center justify-center mb-8">
-          <div className="text-center">
-            <h1 className="text-5xl font-heading text-swansons-navy leading-none">
-              sage
-            </h1>
-            <p className="text-xs font-body font-semibold tracking-[0.2em] uppercase text-swansons-navy mt-1">
-              Swansons Nursery
-            </p>
-          </div>
+          <Logo />
         </div>
 
         {/* Welcome */}

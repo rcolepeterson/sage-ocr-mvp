@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Logo } from "@/components/ui/Logo";
 import { useState, useEffect, useRef, useContext } from "react";
 import { usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -136,7 +137,7 @@ export default function HamburgerMenu() {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-8 pb-6 border-b border-gray-100">
-          <span className="font-heading text-2xl text-swansons-navy">sage</span>
+          <Logo width={100} height={50} />
           <button
             onClick={() => setOpen(false)}
             className="p-1 text-swansons-muted hover:text-swansons-navy transition-colors"

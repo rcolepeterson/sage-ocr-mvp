@@ -59,7 +59,7 @@ function OnboardingModalInner() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-6"
       onClick={(e) => {
         if (!preview && e.target === e.currentTarget) dismiss();
       }}
