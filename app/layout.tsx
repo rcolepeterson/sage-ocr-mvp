@@ -62,7 +62,7 @@ export default function RootLayout({
     >
       <body className="antialiased">
         <AuthProvider>
-          <div className="max-w-lg mx-auto min-h-screen bg-swansons-cream relative shadow-xl">
+          <div className="max-w-lg mx-auto min-h-screen bg-swansons-cream relative">
             {isSignInPage ? (
               children
             ) : (
