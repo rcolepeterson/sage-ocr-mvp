@@ -10,7 +10,10 @@ import { compressImage } from "@/lib/utils/imageCompression";
 import { uploadPlantPhoto } from "@/lib/firebase/storage";
 import { notFound } from "next/navigation";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { Button } from "@/components/ui/Button";
+import { getSpace } from "@/lib/firebase/spaces";
 
+/* ─── Tag Badges — staff/admin only ─────────────────────────────────────── */
 const TAG_CATEGORIES = [
   {
     label: "Plant Type",
@@ -130,40 +133,38 @@ const TAG_CATEGORIES = [
 ];
 
 function TagBadges({ tags }: { tags: string[] }) {
+  if (!tags || tags.length === 0) return null;
   return (
-    <div className="mt-4">
-      <div className="text-xs font-semibold mb-2">
-        🏷️ AI Tags (staff/admin testing)
+    <div className="mt-6 bg-white rounded-2xl p-4">
+      <p className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted mb-3">
+        🏷️ AI Tags — staff/admin
+      </p>
+      <div className="flex flex-col gap-2">
+        {TAG_CATEGORIES.map((cat) => {
+          const catTags = tags.filter((t) => cat.tags.includes(t));
+          if (catTags.length === 0) return null;
+          return (
+            <div key={cat.label}>
+              <span className="text-xs font-body font-bold text-swansons-text mr-2">
+                {cat.label}:
+              </span>
+              {catTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-block bg-swansons-green-muted text-swansons-navy rounded-full px-2 py-0.5 text-xs font-body mr-1 mb-1"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          );
+        })}
       </div>
-      {!tags || tags.length === 0 ? (
-        <div className="text-xs text-gray-400 italic">
-          No tags assigned yet.
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {TAG_CATEGORIES.map((cat) => {
-            const catTags = tags.filter((t) => cat.tags.includes(t));
-            if (catTags.length === 0) return null;
-            return (
-              <div key={cat.label}>
-                <span className="text-xs font-bold mr-2">{cat.label}:</span>
-                {catTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-block bg-green-100 text-green-800 rounded-full px-2 py-0.5 text-xs font-medium mr-1 mb-1 border border-green-200"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
 
+/* ─── Plant Profile ──────────────────────────────────────────────────────── */
 function PlantProfilePage({
   params,
 }: {
@@ -172,6 +173,7 @@ function PlantProfilePage({
   const { spaceId, id } = use(params);
   const { user } = useAuth();
   const [plant, setPlant] = useState<any>(null);
+  const [space, setSpace] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -181,9 +183,7 @@ function PlantProfilePage({
     if (!user || !spaceId || !id) return;
     const ref = doc(db, `users/${user.uid}/spaces/${spaceId}/plants/${id}`);
     const snap = await getDoc(ref);
-    if (snap.exists()) {
-      setPlant({ id: snap.id, ...snap.data() });
-    }
+    if (snap.exists()) setPlant({ id: snap.id, ...snap.data() });
     setLoading(false);
   }
 
@@ -191,6 +191,11 @@ function PlantProfilePage({
     fetchPlantDoc();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, spaceId, id]);
+
+  useEffect(() => {
+    if (!user || !spaceId) return;
+    getSpace(user.uid, spaceId).then(setSpace);
+  }, [user, spaceId]);
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -204,26 +209,176 @@ function PlantProfilePage({
         spaceId,
         id,
         compressed,
-        (progress) => setUploadProgress(progress),
+        (p) => setUploadProgress(p),
       );
-      // Update Firestore with new photo URL
       const ref = doc(db, `users/${user.uid}/spaces/${spaceId}/plants/${id}`);
       await setDoc(ref, { photo: photoUrl }, { merge: true });
       await fetchPlantDoc();
     } catch (err) {
-      // Optionally handle error
-      // eslint-disable-next-line no-console
       console.error("Photo upload error", err);
     }
     setUploading(false);
   }
 
-  if (loading) return <div className="text-center mt-10">Loading...</div>;
+  // Derive space tags from available plant data
+  const spaceTags: string[] = [];
+  if (plant?.indoor !== undefined) {
+    spaceTags.push(plant.indoor ? "Indoor" : "Outdoor");
+  }
+  if (plant?.lightLevel) {
+    const lightMap: Record<string, string> = {
+      high: "Full sun",
+      medium: "Part shade",
+      low: "Full shade",
+    };
+    spaceTags.push(lightMap[plant.lightLevel] || plant.lightLevel);
+  }
+  if (plant?.container !== undefined) {
+    spaceTags.push(plant.container ? "Container" : "In-ground");
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin w-8 h-8 border-2 border-swansons-green border-t-transparent rounded-full" />
+      </div>
+    );
+  }
   if (!plant) return notFound();
 
   return (
-    <main className="max-w-md mx-auto mt-8 p-6 pb-24 bg-white rounded shadow">
-      {/* Hidden file input for photo update */}
+    <main className="min-h-screen bg-swansons-cream pb-28">
+      <div className="px-4 pt-8 max-w-lg mx-auto">
+        {/* ── Photo circle ── */}
+        <div className="flex justify-center mb-5">
+          <div className="relative">
+            <div className="w-32 h-32 rounded-full ring-4 ring-swansons-green overflow-hidden bg-swansons-green-muted flex items-center justify-center">
+              {plant.photo ? (
+                <img
+                  src={plant.photo}
+                  alt={plant.commonName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-5xl">🌱</span>
+              )}
+              {uploading && (
+                <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center rounded-full">
+                  <span className="text-xs font-body text-swansons-green">
+                    {uploadProgress.toFixed(0)}%
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* Edit pencil */}
+            <button
+              onClick={() => !uploading && photoInputRef.current?.click()}
+              className="absolute bottom-0 right-0 w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shadow-md"
+              aria-label="Change plant photo"
+            >
+              <span className="text-white text-xs">✏️</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── Name ── */}
+        <h1 className="font-heading text-3xl font-bold text-swansons-navy text-center mb-1">
+          {plant.commonName}
+        </h1>
+        <p className="font-body italic text-swansons-muted text-center mb-5">
+          {plant.latinName}
+        </p>
+
+        {/* ── Description ── */}
+        {plant.careInfo?.description && (
+          <p className="font-body text-swansons-text text-center leading-relaxed mb-6">
+            {plant.careInfo.description}
+          </p>
+        )}
+
+        {/* ── Light / Shade card ── */}
+        <div className="bg-white rounded-2xl p-5 mb-4">
+          <div className="flex items-start justify-between mb-2">
+            <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted">
+              Light / Shade
+            </span>
+            <span className="text-xl">⛅</span>
+          </div>
+          <p className="font-body text-swansons-text text-sm leading-relaxed">
+            {plant.careInfo?.light || plant.lightLevel || "—"}
+          </p>
+        </div>
+
+        {/* ── Water / Soil card ── */}
+        <div className="bg-white rounded-2xl p-5 mb-6">
+          <div className="flex items-start justify-between mb-2">
+            <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted">
+              Water / Soil
+            </span>
+            <span className="text-xl">💧</span>
+          </div>
+          <p className="font-body text-swansons-text text-sm leading-relaxed">
+            {plant.careInfo?.water || "—"}
+          </p>
+        </div>
+
+        {/* ── Care Tips ── */}
+        {plant.careInfo?.careTips?.length > 0 && (
+          <div className="mb-6">
+            <div className="flex justify-center mb-4">
+              <span className="bg-swansons-navy text-white font-body text-xs font-semibold uppercase tracking-widest px-6 py-2 rounded-full">
+                Care Tips
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {plant.careInfo.careTips.map((tip: string, i: number) => (
+                <div key={i} className="bg-white rounded-2xl p-4">
+                  <p className="font-body text-swansons-text text-sm leading-relaxed">
+                    {tip}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Space name + tags ── */}
+        {space && (
+          <div className="mb-6">
+            <p className="font-body font-bold text-swansons-navy uppercase tracking-widest text-sm mb-3">
+              {space.name}
+            </p>
+            {spaceTags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {spaceTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-swansons-navy text-white font-body text-sm px-4 py-1.5 rounded-full"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── AI Tags — staff/admin ── */}
+        <TagBadges tags={plant.tags || []} />
+
+        {/* ── Ask An Expert ── */}
+        <div className="mt-6">
+          <Link
+            href={`/ask?plantId=${spaceId}_${id}&plantName=${encodeURIComponent(plant.commonName)}`}
+          >
+            <Button variant="primary" size="lg" className="w-full rounded-full">
+              Ask An Expert
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Hidden file input */}
       <input
         type="file"
         accept="image/*"
@@ -233,72 +388,11 @@ function PlantProfilePage({
         onChange={handlePhotoChange}
         disabled={uploading}
       />
-      {/* Plant photo or placeholder, clickable */}
-      <div
-        className="relative cursor-pointer group"
-        onClick={() => !uploading && photoInputRef.current?.click()}
-        tabIndex={0}
-        role="button"
-        aria-label="Change plant photo"
-      >
-        {plant.photo ? (
-          <img
-            src={plant.photo}
-            alt={plant.commonName}
-            className="w-full h-48 object-cover rounded mb-2 border border-gray-200 group-hover:opacity-80 transition"
-          />
-        ) : (
-          <div className="w-full h-48 bg-gray-100 rounded mb-2 flex items-center justify-center text-5xl border border-gray-200 group-hover:opacity-80 transition">
-            🌱
-          </div>
-        )}
-        {/* Progress overlay */}
-        {uploading && (
-          <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center rounded">
-            <div className="text-green-700 text-lg font-semibold mb-1">
-              Uploading...
-            </div>
-            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="bg-green-500 h-2 rounded-full transition-all"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {uploadProgress.toFixed(0)}%
-            </div>
-          </div>
-        )}
-      </div>
-      {/* Tap to change photo hint */}
-      <div className="text-xs text-gray-500 text-center mb-2 flex items-center justify-center gap-1 select-none">
-        <span className="text-base">📷</span> Tap to change photo
-      </div>
-      <h1 className="text-2xl font-bold mb-1">{plant.commonName}</h1>
-      <p className="italic text-gray-500 mb-4">{plant.latinName}</p>
-      <div className="flex flex-col gap-2 text-sm mb-4">
-        <div>
-          <span className="font-semibold">Light: </span>
-          {plant.careInfo?.light || plant.lightLevel || "—"}
-        </div>
-        <div>
-          <span className="font-semibold">Water: </span>
-          {plant.water || plant.careInfo?.water || "—"}
-        </div>
-      </div>
-      <TagBadges tags={plant.tags || []} />
-      <div className="mt-6">
-        <Link
-          href={`/ask?plantId=${spaceId}_${id}&plantName=${encodeURIComponent(plant.commonName)}`}
-          className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold text-lg text-center block hover:bg-green-800 transition"
-        >
-          💬 Ask an Expert
-        </Link>
-      </div>
     </main>
   );
 }
 
+/* ─── Wrapper ────────────────────────────────────────────────────────────── */
 export default function PlantPageWrapper({
   params,
 }: {
