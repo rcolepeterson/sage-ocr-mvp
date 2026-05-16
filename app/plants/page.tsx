@@ -9,6 +9,7 @@ import {
 } from "@/lib/firebase/spaces";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 export default function MyPlantsPage() {
   const { user, loading } = useAuth();
@@ -17,109 +18,170 @@ export default function MyPlantsPage() {
   const [spacesLoading, setSpacesLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const loadSpacesAndPlants = async (uid: string) => {
-      const fetchedSpaces = await getSpaces(uid);
-      setSpaces(fetchedSpaces);
-      const allPlants: Record<string, any[]> = {};
-      for (const space of fetchedSpaces) {
-        const plants = await getPlantsInSpace(uid, space.id);
-        allPlants[space.id] = plants;
-      }
-      setPlantsBySpace(allPlants);
-      setSpacesLoading(false);
-    };
-
-    loadSpacesAndPlants(user.uid);
-  }, [user]);
-
-  const handleDeletePlant = async (spaceId: string, plantId: string) => {
-    if (!user) return;
-    const confirm = window.confirm("Remove this plant?");
-    if (!confirm) return;
-    setDeletingId(plantId);
-    await deletePlant(user.uid, spaceId, plantId);
-
-    // Reload plants after delete
-    const fetchedSpaces = await getSpaces(user.uid);
+  async function loadAll(uid: string) {
+    const fetchedSpaces = await getSpaces(uid);
     setSpaces(fetchedSpaces);
     const allPlants: Record<string, any[]> = {};
     for (const space of fetchedSpaces) {
-      const plants = await getPlantsInSpace(user.uid, space.id);
-      allPlants[space.id] = plants;
+      allPlants[space.id] = await getPlantsInSpace(uid, space.id);
     }
     setPlantsBySpace(allPlants);
-    setDeletingId(null);
-  };
+    setSpacesLoading(false);
+  }
 
-  if (loading || spacesLoading)
-    return <p className="text-center mt-10">Loading...</p>;
+  useEffect(() => {
+    if (!user) return;
+    loadAll(user.uid);
+  }, [user]);
+
+  async function handleDeletePlant(spaceId: string, plantId: string) {
+    if (!user) return;
+    if (!window.confirm("Remove this plant?")) return;
+    setDeletingId(plantId);
+    await deletePlant(user.uid, spaceId, plantId);
+    await loadAll(user.uid);
+    setDeletingId(null);
+  }
+
+  // Derive space tags from available data
+  function getSpaceTags(space: any): string[] {
+    const tags: string[] = [];
+    if (space.type === "indoor") tags.push("Indoor");
+    if (space.type === "outdoor") tags.push("Outdoor");
+    // lightLevel + containment will be added once Space schema is updated
+    return tags;
+  }
+
+  if (loading || spacesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin w-8 h-8 border-2 border-swansons-green border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen bg-swansons-cream px-4 py-8 pb-20">
-        <h1 className="text-xl font-semibold mb-6">My Plants</h1>
+      <main className="min-h-screen bg-swansons-cream px-4 pt-8 pb-28">
+        <h1 className="font-heading text-3xl font-bold text-swansons-navy mb-8 pb-4 border-b border-swansons-navy">
+          Your spaces
+        </h1>
+
         {spaces.length === 0 ? (
-          <div className="text-gray-500 text-center">No plants yet.</div>
+          <div className="bg-white rounded-2xl p-8 text-center">
+            <p className="font-body text-swansons-muted">
+              No spaces yet — scan a plant tag to get started.
+            </p>
+          </div>
         ) : (
-          spaces.map((space) => (
-            <section key={space.id} className="mb-8">
-              <h2 className="text-lg font-bold mb-2">
-                {space.name}{" "}
-                <span className="text-xs text-gray-500">({space.type})</span>
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {(plantsBySpace[space.id] || []).length === 0 ? (
-                  <div className="text-gray-400 italic">
-                    No plants in this space.
+          spaces.map((space) => {
+            const plants = plantsBySpace[space.id] || [];
+            const spaceTags = getSpaceTags(space);
+
+            return (
+              <section key={space.id} className="mb-10">
+                {/* ── Space header ── */}
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="font-body font-bold text-swansons-navy uppercase tracking-widest text-sm mb-2">
+                      {space.name}
+                    </p>
+                    {spaceTags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {spaceTags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="bg-swansons-green-dark text-white font-body text-xs px-3 py-1 rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Edit space — placeholder until edit space page exists */}
+                  <button className="w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shrink-0 ml-3">
+                    <span className="text-white text-xs">✏️</span>
+                  </button>
+                </div>
+
+                {/* ── Plant cards ── */}
+                {plants.length === 0 ? (
+                  <div className="bg-white rounded-2xl p-5 text-center">
+                    <p className="font-body text-swansons-muted text-sm italic">
+                      No plants in this space yet.
+                    </p>
                   </div>
                 ) : (
-                  plantsBySpace[space.id].map((plant) => (
-                    <div
-                      key={plant.id}
-                      className="bg-white rounded p-4 shadow flex flex-col gap-2"
-                    >
-                      <div className="h-24 w-full bg-gray-100 rounded mb-2 flex items-center justify-center text-3xl overflow-hidden">
-                        {plant.photo ? (
-                          <img
-                            src={plant.photo}
-                            alt={plant.commonName || "Plant photo"}
-                            className="w-full h-full object-cover"
-                            style={{ aspectRatio: "1/1", maxHeight: "6rem" }}
-                          />
-                        ) : (
-                          "🌱"
-                        )}
-                      </div>
-                      <div className="font-semibold">{plant.commonName}</div>
-                      <Link
-                        href={`/plant/${space.id}/${plant.id}`}
-                        className="text-xs text-green-700 hover:text-green-900 underline transition"
+                  <div className="flex flex-col gap-4">
+                    {plants.map((plant) => (
+                      <div
+                        key={plant.id}
+                        className="bg-white rounded-2xl p-4 relative"
                       >
-                        View plant details
-                      </Link>
-                      <div className="text-xs text-gray-500 italic">
-                        {plant.latinName}
+                        {/* Edit plant button */}
+                        <Link
+                          href={`/plant/${space.id}/${plant.id}`}
+                          className="absolute top-3 right-3 w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center"
+                        >
+                          <span className="text-white text-xs">✏️</span>
+                        </Link>
+
+                        {/* Plant info row */}
+                        <div className="flex items-center gap-4 mb-4 pr-10">
+                          {/* Circular photo */}
+                          <div className="w-16 h-16 rounded-full overflow-hidden bg-swansons-green-muted shrink-0 flex items-center justify-center">
+                            {plant.photo ? (
+                              <img
+                                src={plant.photo}
+                                alt={plant.commonName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-2xl">🌱</span>
+                            )}
+                          </div>
+
+                          {/* Name */}
+                          <div>
+                            <p className="font-heading font-semibold text-swansons-navy leading-tight">
+                              {plant.commonName}
+                            </p>
+                            <p className="font-body italic text-swansons-muted text-sm">
+                              {plant.latinName}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Ask An Expert button */}
+                        <Link
+                          href={`/ask?plantId=${space.id}_${plant.id}&plantName=${encodeURIComponent(plant.commonName)}`}
+                        >
+                          <Button
+                            variant="primary"
+                            className="w-full rounded-full"
+                          >
+                            Ask An Expert
+                          </Button>
+                        </Link>
+
+                        {/* Delete — subtle, below button */}
+                        <button
+                          onClick={() => handleDeletePlant(space.id, plant.id)}
+                          disabled={deletingId === plant.id}
+                          className="w-full text-center font-body text-xs text-swansons-muted mt-2 hover:text-red-400 transition"
+                        >
+                          {deletingId === plant.id
+                            ? "Removing..."
+                            : "Remove plant"}
+                        </button>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {space.type} / {plant.indoor ? "Indoor" : "Outdoor"}
-                      </div>
-                      <button
-                        onClick={() => handleDeletePlant(space.id, plant.id)}
-                        disabled={deletingId === plant.id}
-                        className="mt-2 text-xs text-red-400 hover:text-red-600 transition cursor-pointer"
-                      >
-                        {deletingId === plant.id ? "Removing..." : "🗑 Remove"}
-                      </button>
-                      {/* Ask about this plant link removed; now on plant profile page */}
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
-              </div>
-            </section>
-          ))
+              </section>
+            );
+          })
         )}
       </main>
     </ProtectedRoute>

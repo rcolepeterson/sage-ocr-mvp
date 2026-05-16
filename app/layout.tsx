@@ -63,11 +63,13 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           <div className="max-w-lg mx-auto min-h-screen bg-swansons-cream relative">
-            {isSignInPage ? (
-              children
-            ) : (
-              <ProtectedRoute>{children}</ProtectedRoute>
-            )}
+            <div className="pt-14">
+              {isSignInPage ? (
+                children
+              ) : (
+                <ProtectedRoute>{children}</ProtectedRoute>
+              )}
+            </div>
             <HamburgerMenu />
             <BackButton />
             <BottomNav />
