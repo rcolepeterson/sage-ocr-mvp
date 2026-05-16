@@ -314,49 +314,47 @@ export default function ScanPage() {
     <main className="min-h-screen bg-swansons-cream">
       {/* Camera — mounted during idle + scanning */}
       {(step === "idle" || step === "scanning") && (
-        <div className="px-4 pt-4">
-          <div className="rounded-2xl overflow-hidden bg-black">
+        <div className="px-4 pt-4 relative">
+          <div className="rounded-2xl overflow-hidden bg-black ">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               className="w-full h-auto"
             />
-            {/* Camera flip icon — bottom right of video */}
-            <button
-              onClick={() => {
-                const next = facingMode === "user" ? "environment" : "user";
-                setFacingMode(next);
-                initCamera(next);
-              }}
-              className="absolute bottom-3 right-3 w-10 h-10 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center transition cursor-pointer"
-              aria-label="Flip camera"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20 7h-3a2 2 0 0 1-2-2V2" />
-                <path d="M9 2H5a2 2 0 0 0-2 2v4" />
-                <path d="M4 17v3a2 2 0 0 0 2 2h3" />
-                <path d="M15 22h3a2 2 0 0 0 2-2v-3" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button>
           </div>
+          {/* Camera flip icon — bottom right of video */}
+          <button
+            onClick={() => {
+              const next = facingMode === "user" ? "environment" : "user";
+              setFacingMode(next);
+              initCamera(next);
+            }}
+            className="absolute bottom-5 right-8  w-10 h-10 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center transition cursor-pointer"
+            aria-label="Flip camera"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M1 4v6h6" />
+              <path d="M23 20v-6h-6" />
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15" />
+            </svg>
+          </button>
         </div>
       )}
 
       {/* ── IDLE ─────────────────────────────────────────────────────────── */}
       {step === "idle" && (
-        <div className="px-4 pt-6 pb-28 flex flex-col items-center justify-center">
-          <p className="font-body text-center text-swansons-muted mb-8 text-sm leading-relaxed">
+        <div className="px-4 pt-4 pb-28 flex flex-col items-center justify-center">
+          <p className="font-body text-center text-swansons-black mb-8 text-sm leading-relaxed px-8">
             Hold plant tag or label in front of camera, tap &apos;Scan&apos;
             button below and hold still as plant data is captured.
           </p>
@@ -364,7 +362,7 @@ export default function ScanPage() {
           <Button
             onClick={() => handleScan()}
             variant="primary"
-            className="w-full rounded-full py-4"
+            className="w-full rounded-full py-2"
           >
             Scan Plant Tag/Label
           </Button>
