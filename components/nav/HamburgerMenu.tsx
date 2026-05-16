@@ -1,22 +1,65 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/auth";
-import { useAuth } from "@/lib/firebase/AuthContext";
+import { useAuth, AuthContext } from "@/lib/firebase/AuthContext";
+import { updateUserDisplayName } from "@/lib/firebase/users";
 
-// Routes where the hamburger should not appear
 const HIDDEN_ROUTES = ["/signin", "/unauthorized", "/terms", "/onboarding"];
 
+const NAV_ITEMS = {
+  customer: [
+    { label: "Home", href: "/" },
+    { label: "My Plants", href: "/plants" },
+    { label: "Scan a Plant", href: "/scan" },
+    { label: "Ask an Expert", href: "/ask" },
+  ],
+  staff: [
+    { label: "Home", href: "/" },
+    { label: "My Plants", href: "/plants" },
+    { label: "Scan a Plant", href: "/scan" },
+    { label: "Inbox", href: "/admin/inbox" },
+  ],
+  admin: [
+    { label: "Home", href: "/" },
+    { label: "My Plants", href: "/plants" },
+    { label: "Scan a Plant", href: "/scan" },
+    { label: "Inbox", href: "/admin/inbox" },
+    { label: "Dashboard", href: "/admin/dashboard" },
+    { label: "Debug", href: "/debug" },
+  ],
+};
+
+function getNavItems(role: string | null) {
+  if (role === "admin") return NAV_ITEMS.admin;
+  if (role === "staff") return NAV_ITEMS.staff;
+  return NAV_ITEMS.customer;
+}
+
 export default function HamburgerMenu() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const authCtx = useContext(AuthContext);
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
+  /* name editing */
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(user?.displayName || "");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const isGoogleUser = user?.providerData?.some(
+    (p: { providerId: string }) => p.providerId === "google.com",
+  );
+
+  /* close on outside click */
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
@@ -28,7 +71,7 @@ export default function HamburgerMenu() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  // Close on Escape
+  /* close on Escape */
   useEffect(() => {
     if (!open) return;
     function handleKey(e: KeyboardEvent) {
@@ -38,12 +81,31 @@ export default function HamburgerMenu() {
     return () => document.removeEventListener("keydown", handleKey);
   }, [open]);
 
-  // Hide on public routes or when not logged in
+  const handleSaveName = async () => {
+    if (!user || !nameInput.trim()) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await updateUserDisplayName(user.uid, nameInput.trim());
+      if (authCtx && typeof authCtx.setUser === "function") {
+        authCtx.setUser({ ...user, displayName: nameInput.trim() });
+      }
+      setEditingName(false);
+      setMessage({ type: "success", text: "Name updated!" });
+    } catch {
+      setMessage({ type: "error", text: "Failed to update name." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!user || HIDDEN_ROUTES.includes(pathname)) return null;
+
+  const navItems = getNavItems(role);
 
   return (
     <>
-      {/* Hamburger button — fixed top-right */}
+      {/* Hamburger button */}
       <button
         className="fixed top-5 right-4 z-50 flex flex-col gap-1.5 p-2"
         aria-label={open ? "Close menu" : "Open menu"}
@@ -72,6 +134,7 @@ export default function HamburgerMenu() {
         ref={menuRef}
         className={`fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
       >
+        {/* Header */}
         <div className="flex items-center justify-between px-6 pt-8 pb-6 border-b border-gray-100">
           <span className="font-heading text-2xl text-swansons-navy">sage</span>
           <button
@@ -90,25 +153,108 @@ export default function HamburgerMenu() {
           </button>
         </div>
 
-        <nav className="flex flex-col px-6 py-6 gap-1 flex-1">
-          {[
-            { label: "My Plants", href: "/plants" },
-            { label: "Scan a Plant", href: "/scan" },
-            { label: "Ask an Expert", href: "/ask" },
-            { label: "Account", href: "#" },
-          ].map(({ label, href }) => (
-            <Link
-              key={label}
-              href={href}
-              onClick={() => setOpen(false)}
-              className="font-body text-base text-swansons-navy py-3 border-b border-gray-100 hover:text-swansons-green transition-colors"
+        {/* Account section */}
+        <div className="px-6 py-5 border-b border-gray-100">
+          <div className="flex items-center gap-3 mb-1">
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt="avatar"
+                className="w-10 h-10 rounded-full shrink-0"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-swansons-green-muted flex items-center justify-center shrink-0">
+                <span className="text-swansons-navy text-lg">👤</span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              {editingName ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    className="text-sm font-body border border-gray-200 rounded px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-swansons-green"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    disabled={saving}
+                    maxLength={40}
+                    autoFocus
+                  />
+                  <button
+                    className="text-swansons-green text-xs font-body font-semibold px-2 py-1 rounded hover:bg-swansons-green-muted disabled:opacity-50"
+                    onClick={handleSaveName}
+                    disabled={saving || !nameInput.trim()}
+                  >
+                    {saving ? "..." : "Save"}
+                  </button>
+                  <button
+                    className="text-swansons-muted text-xs font-body px-1 py-1 rounded hover:bg-gray-100"
+                    onClick={() => {
+                      setEditingName(false);
+                      setNameInput(user?.displayName || "");
+                      setMessage(null);
+                    }}
+                    disabled={saving}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <p className="font-body font-medium text-swansons-navy text-sm truncate">
+                    {user?.displayName}
+                  </p>
+                  {!isGoogleUser && (
+                    <button
+                      className="text-swansons-muted hover:text-swansons-green text-xs"
+                      onClick={() => {
+                        setEditingName(true);
+                        setNameInput(user?.displayName || "");
+                        setMessage(null);
+                      }}
+                    >
+                      ✏️
+                    </button>
+                  )}
+                </div>
+              )}
+              <p className="font-body text-xs text-swansons-muted truncate">
+                {user?.email}
+              </p>
+            </div>
+          </div>
+          {message && (
+            <p
+              className={`text-xs font-body mt-1 ${message.type === "success" ? "text-swansons-green" : "text-red-500"}`}
             >
-              {label}
-            </Link>
-          ))}
+              {message.text}
+            </p>
+          )}
+        </div>
+
+        {/* Nav items */}
+        <nav className="flex flex-col px-6 py-4 gap-1 flex-1 overflow-y-auto">
+          {navItems.map(({ label, href }) => {
+            const isActive =
+              pathname === href || (href !== "/" && pathname.startsWith(href));
+            return (
+              <Link
+                key={label}
+                href={href}
+                onClick={() => setOpen(false)}
+                className={`font-body text-base py-3 border-b border-gray-100 transition-colors ${
+                  isActive
+                    ? "text-swansons-green font-semibold"
+                    : "text-swansons-navy hover:text-swansons-green"
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="px-6 pb-10">
+        {/* Sign out */}
+        <div className="px-6 pb-10 pt-4">
           <button
             onClick={() => signOut(auth)}
             className="w-full text-sm font-body text-swansons-muted underline underline-offset-2 hover:text-swansons-navy transition-colors"

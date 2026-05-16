@@ -15,7 +15,7 @@ const dmSerifDisplay = DM_Serif_Display({
 import "./globals.css";
 import { AuthProvider } from "@/lib/firebase/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import BottomNav from "@/components/nav/BottomNav";
+//import BottomNav from "@/components/nav/BottomNav";
 import HamburgerMenu from "@/components/nav/HamburgerMenu";
 import BackButton from "@/components/nav/BackButton";
 
@@ -72,7 +72,7 @@ export default function RootLayout({
             </div>
             <HamburgerMenu />
             <BackButton />
-            <BottomNav />
+            {/* <BottomNav /> */}
           </div>
         </AuthProvider>
       </body>
