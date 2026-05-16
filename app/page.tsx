@@ -176,7 +176,7 @@ export default function Home() {
           <Link href="/scan" className="flex-1">
             <Button
               variant="primary"
-              size="lg"
+              size="md"
               className="w-full rounded-full text-base"
             >
               Add A Plant
@@ -185,7 +185,7 @@ export default function Home() {
           <Link href="/ask" className="flex-1">
             <Button
               variant="primary"
-              size="lg"
+              size="md"
               className="w-full rounded-full text-base"
             >
               Ask An Expert

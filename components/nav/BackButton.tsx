@@ -15,7 +15,7 @@ export default function BackButton() {
     <button
       aria-label="Back"
       onClick={() => router.back()}
-      className="fixed top-4 left-4 z-40 text-swansons-navy p-2"
+      className="fixed top-4 left-2 z-40 text-swansons-navy p-2"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
