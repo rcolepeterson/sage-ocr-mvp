@@ -122,3 +122,13 @@
          transition-all duration-200;
   }
 }
+
+@keyframes scanline {
+  0%,
+  100% {
+    top: 0;
+  }
+  50% {
+    top: calc(100% - 2px);
+  }
+}

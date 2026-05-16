@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import { useSpaces } from "@/lib/hooks/useSpaces";
 import { useState } from "react";
 
 // ─── Latest Plant placeholder ──────────────────────────────────────────────
@@ -57,43 +58,74 @@ function NotificationsCard() {
   );
 }
 
-// ─── Spaces / conversations placeholder ───────────────────────────────────
-const PLACEHOLDER_SPACES = [
-  { id: "1", name: "North Yard Bed", count: 5 },
-  { id: "2", name: "Front Porch Tall Pots", count: 1 },
-  { id: "3", name: "Backyard Raised Shade Bed", count: 2 },
-];
-
+// ─── Spaces list — real data from Firestore ────────────────────────────────
 function SpacesList() {
+  const { spaces, plantCounts, loading } = useSpaces();
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-3">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="bg-white rounded-2xl shadow-sm px-5 py-4 h-16 animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (spaces.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm px-5 py-6 text-center">
+        <p className="font-body text-swansons-muted text-sm">
+          No spaces yet — scan a plant tag to get started.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
-      {PLACEHOLDER_SPACES.map((space) => (
-        <div
-          key={space.id}
-          className="bg-white rounded-2xl shadow-sm px-5 py-4 flex items-center justify-between"
-        >
-          <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-text">
-            {space.name}
-          </span>
-          <div className="flex items-center">
-            <div className="flex -space-x-2">
-              {[...Array(Math.min(space.count, 3))].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 rounded-full bg-swansons-green-muted border-2 border-white flex items-center justify-center text-base"
-                >
-                  🌱
+      {spaces.map((space) => {
+        const count = plantCounts[space.id] ?? 0;
+        return (
+          <Link href="/plants" key={space.id}>
+            <div className="bg-white rounded-2xl shadow-sm px-5 py-4 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-text">
+                  {space.name}
+                </span>
+                <p className="text-xs font-body text-swansons-muted mt-0.5">
+                  {count} {count === 1 ? "plant" : "plants"}
+                </p>
+              </div>
+              <div className="flex items-center">
+                <div className="flex -space-x-2">
+                  {[...Array(Math.min(count, 3))].map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-8 h-8 rounded-full bg-swansons-green-muted border-2 border-white flex items-center justify-center text-base"
+                    >
+                      🌱
+                    </div>
+                  ))}
                 </div>
-              ))}
+                {count > 3 && (
+                  <span className="ml-1 bg-swansons-navy text-white text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center">
+                    +{count - 3}
+                  </span>
+                )}
+                {count === 0 && (
+                  <span className="text-xs font-body text-swansons-muted">
+                    No plants yet
+                  </span>
+                )}
+              </div>
             </div>
-            {space.count > 3 && (
-              <span className="ml-1 bg-swansons-navy text-white text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center">
-                +{space.count - 3}
-              </span>
-            )}
-          </div>
-        </div>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -161,7 +193,7 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Spaces / Conversations */}
+        {/* Spaces */}
         <SpacesList />
       </main>
     </ProtectedRoute>

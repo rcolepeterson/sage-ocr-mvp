@@ -1,13 +1,9 @@
-// app/scan/page.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useCompletion } from "@ai-sdk/react";
 import { parsePartialJson } from "ai";
-import plantsData from "../../data/plants.json";
-import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import {
   getSpaces,
@@ -18,16 +14,49 @@ import {
 import { uploadPlantPhoto } from "@/lib/firebase/storage";
 import { compressImage } from "@/lib/utils/imageCompression";
 
+/* ─── Types ─────────────────────────────────────────────────────────────── */
+type ScanStep = "idle" | "scanning" | "space-select" | "create-space";
+type LightLevel = "full-sun" | "partial-sun" | "dappled-shade" | "full-shade";
+type Containment = "container" | "in-ground" | "raised-bed";
+
+/* ─── Scanning animation ─────────────────────────────────────────────────── */
+function ScanningOverlay() {
+  return (
+    <div className="flex flex-col items-center justify-center py-12">
+      <div className="relative w-48 h-32 border-2 border-swansons-navy rounded-lg overflow-hidden mb-8">
+        <div
+          className="absolute w-full h-0.5 bg-swansons-navy"
+          style={{ animation: "scanline 1.5s ease-in-out infinite" }}
+        />
+      </div>
+      <p className="font-heading text-2xl font-bold text-swansons-navy">
+        Hold Still
+      </p>
+      <p className="font-body text-swansons-muted mt-2">Scanning in progress</p>
+      <style>{`
+      @keyframes scanline {
+        0%, 100% { top: 0; }
+        50% { top: calc(100% - 2px); }
+      }
+    `}</style>
+    </div>
+  );
+}
+
+/* ─── Page ───────────────────────────────────────────────────────────────── */
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  // Ref for hidden photo input
   const photoInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const router = useRouter();
 
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [query, setQuery] = useState("");
+  /* step */
+  const [step, setStep] = useState<ScanStep>("idle");
+  const [showManual, setShowManual] = useState(true);
+  const [manualQuery, setManualQuery] = useState("");
+
+  /* OCR / LLM */
   const [llmResult, setLlmResult] = useState<{
     commonName?: string | null;
     latinName?: string | null;
@@ -37,28 +66,36 @@ export default function ScanPage() {
     careTips?: string[];
     warnings?: string[];
     tags?: string[];
-  } | null>();
+  } | null>(null);
   const [debug, setDebug] = useState<string[]>([]);
+
+  /* camera */
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
     "environment",
   );
 
-  // Save plant state
+  /* spaces */
   const [spaces, setSpaces] = useState<Space[]>([]);
-  const [selectedSpaceId, setSelectedSpaceId] = useState<string>("");
+  const [selectedSpaceId, setSelectedSpaceId] = useState("");
+
+  /* new space form */
   const [newSpaceName, setNewSpaceName] = useState("");
-  const [isIndoor, setIsIndoor] = useState(true);
+  const [spaceLight, setSpaceLight] = useState<LightLevel | "">("");
+  const [spaceLocation, setSpaceLocation] = useState<"indoor" | "outdoor">(
+    "outdoor",
+  );
+  const [spaceContainment, setSpaceContainment] = useState<Containment | "">(
+    "",
+  );
+
+  /* saving */
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [showNewSpace, setShowNewSpace] = useState(false);
 
-  // Photo upload state
+  /* photo */
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>("");
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
-
-  const router = useRouter();
 
   const addDebug = (msg: string) =>
     setDebug((d) =>
@@ -74,10 +111,11 @@ export default function ScanPage() {
     streamProtocol: "text",
     onError(err) {
       addDebug(`LLM error: ${err?.message || String(err)}`);
-      console.error("LLM error:", err);
+      setStep("idle");
     },
   });
 
+  /* parse streaming LLM output */
   useEffect(() => {
     if (!completion) return;
     parsePartialJson(completion).then(({ value }) => {
@@ -87,110 +125,41 @@ export default function ScanPage() {
     });
   }, [completion]);
 
+  /* advance to space-select when LLM finishes */
+  useEffect(() => {
+    if (!llmLoading && llmResult?.latinName && step === "scanning") {
+      setStep("space-select");
+    }
+  }, [llmLoading, llmResult, step]);
+
+  /* read ?manual=true from URL */
+  useEffect(() => {
+    // const params = new URLSearchParams(window.location.search);
+    // setShowManual(params.get("manual") === "true");
+  }, []);
+
+  /* load spaces */
+  useEffect(() => {
+    if (!user) return;
+    getSpaces(user.uid).then((fetched) => {
+      setSpaces(fetched);
+      if (fetched.length > 0) setSelectedSpaceId(fetched[0].id);
+    });
+  }, [user]);
+
+  /* init camera */
   useEffect(() => {
     initCamera("environment");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-    getSpaces(user.uid).then((fetchedSpaces) => {
-      setSpaces(fetchedSpaces);
-      if (fetchedSpaces.length > 0) {
-        setSelectedSpaceId(fetchedSpaces[0].id);
-        setShowNewSpace(false);
-      } else {
-        setShowNewSpace(true);
-      }
-    });
-  }, [user]);
-
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-    }
-  }
-
-  async function handleSavePlant() {
-    if (!user || !llmResult?.latinName) return;
-    setSaving(true);
-    setUploading(false);
-    setUploadProgress(0);
-    let photoUrl = "";
-
-    try {
-      let spaceId = selectedSpaceId;
-
-      if (showNewSpace && newSpaceName.trim()) {
-        spaceId = await createSpace(
-          user.uid,
-          newSpaceName.trim(),
-          isIndoor ? "indoor" : "outdoor",
-        );
-      }
-
-      if (!spaceId) {
-        alert("Please select or create a space first.");
-        setSaving(false);
-        return;
-      }
-
-      if (photoFile) {
-        setUploading(true);
-        const compressed = await compressImage(photoFile);
-        photoUrl = await uploadPlantPhoto(
-          user.uid,
-          spaceId,
-          llmResult.latinName.replace(/\s+/g, "_"),
-          compressed,
-          (progress) => setUploadProgress(progress),
-        );
-        setUploading(false);
-      }
-
-      await savePlantToSpace(
-        user.uid,
-        spaceId,
-        {
-          commonName: llmResult.commonName || "",
-          latinName: llmResult.latinName || "",
-          photo: photoUrl,
-          lightLevel:
-            llmResult.lightLevel ||
-            (() => {
-              const l = (llmResult.light || "").toLowerCase();
-              if (l.includes("full sun") || l.includes("high")) return "high";
-              if (l.includes("shade") || l.includes("low")) return "low";
-              return "medium";
-            })(),
-          container: false,
-          indoor: isIndoor,
-          careInfo: llmResult,
-          tags: (llmResult as any).tags || [],
-        },
-        photoUrl,
-      );
-
-      setSaved(true);
-      setPhotoFile(null);
-      setPhotoPreview("");
-      setUploadProgress(0);
-    } catch (e) {
-      console.error("Error saving plant:", e);
-    }
-
-    setSaving(false);
-    setUploading(false);
-  }
-
   async function initCamera(mode: "user" | "environment" = facingMode) {
     addDebug(`initCamera(${mode})`);
     try {
       if (videoRef.current?.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((t) => t.stop());
+        (videoRef.current.srcObject as MediaStream)
+          .getTracks()
+          .forEach((t) => t.stop());
       }
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: mode },
@@ -208,408 +177,453 @@ export default function ScanPage() {
     const { width, height } = canvas;
     if (width <= maxWidth) return;
     const scale = maxWidth / width;
-    const newWidth = maxWidth;
-    const newHeight = height * scale;
     const tmp = document.createElement("canvas");
-    tmp.width = newWidth;
-    tmp.height = newHeight;
-    const tmpCtx = tmp.getContext("2d");
-    if (!tmpCtx) return;
-    tmpCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
-    canvas.width = newWidth;
-    canvas.height = newHeight;
+    tmp.width = maxWidth;
+    tmp.height = height * scale;
+    tmp.getContext("2d")?.drawImage(canvas, 0, 0, tmp.width, tmp.height);
+    canvas.width = tmp.width;
+    canvas.height = tmp.height;
     ctx.drawImage(tmp, 0, 0);
   }
 
-  async function handleScan() {
-    if (!videoRef.current || !canvasRef.current) return;
-    setLoading(true);
+  async function handleScan(queryOverride?: string) {
+    if (!queryOverride && (!videoRef.current || !canvasRef.current)) return;
+    setStep("scanning");
+    setLlmResult(null);
     addDebug("handleScan()");
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-    downscaleCanvas(canvas, 1280);
-    const imageBase64 = canvas.toDataURL("image/jpeg", 0.7);
-    addDebug(`image captured, len=${imageBase64.length}`);
-    const res = await fetch("/api/ocr", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageBase64 }),
-    });
-    addDebug(`OCR status: ${res.status}`);
-    const data = await res.json();
-    const ocrText = data.text || "";
-    setText(ocrText);
-    addDebug(`OCR text len=${ocrText.length}`);
-    const match = plantsData.find(
-      (plant) =>
-        ocrText.toLowerCase().includes(plant.commonName.toLowerCase()) ||
-        ocrText.toLowerCase().includes(plant.latinName.toLowerCase()),
-    );
-    if (match) {
-      addDebug(`match found: ${match.id}`);
-      setQuery(match.commonName);
-      setTimeout(() => router.push(`/plant/${match.id}`), 800);
-    } else {
-      addDebug("no match found");
-      setQuery(ocrText.replace(/\s+/g, " ").trim());
+
+    let query = queryOverride || "";
+
+    if (!queryOverride) {
+      const video = videoRef.current!;
+      const canvas = canvasRef.current!;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      downscaleCanvas(canvas, 1280);
+      const imageBase64 = canvas.toDataURL("image/jpeg", 0.7);
+      addDebug(`image captured, len=${imageBase64.length}`);
+
+      const res = await fetch("/api/ocr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64 }),
+      });
+      const data = await res.json();
+      query = data.text || "";
+      addDebug(`OCR text len=${query.length}`);
     }
-    setLoading(false);
+
+    addDebug(`LLM submit: "${query.slice(0, 60)}..."`);
+    complete(query);
   }
 
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  }
+
+  async function saveToSpace(spaceId: string) {
+    if (!user || !llmResult?.latinName) return;
+    setSaving(true);
+    setUploading(false);
+    setUploadProgress(0);
+    let photoUrl = "";
+
+    try {
+      if (photoFile) {
+        setUploading(true);
+        const compressed = await compressImage(photoFile);
+        photoUrl = await uploadPlantPhoto(
+          user.uid,
+          spaceId,
+          llmResult.latinName.replace(/\s+/g, "_"),
+          compressed,
+          (p) => setUploadProgress(p),
+        );
+        setUploading(false);
+      }
+
+      const plantId = await savePlantToSpace(
+        user.uid,
+        spaceId,
+        {
+          commonName: llmResult.commonName || "",
+          latinName: llmResult.latinName || "",
+          photo: photoUrl,
+          lightLevel:
+            llmResult.lightLevel ||
+            (() => {
+              const l = (llmResult.light || "").toLowerCase();
+              if (l.includes("full sun") || l.includes("high")) return "high";
+              if (l.includes("shade") || l.includes("low")) return "low";
+              return "medium";
+            })(),
+          container: spaceContainment === "container",
+          indoor: spaceLocation === "indoor",
+          careInfo: llmResult,
+          tags: (llmResult as any).tags || [],
+        },
+        photoUrl,
+      );
+
+      router.push(`/plant/${spaceId}/${plantId}`);
+    } catch (e) {
+      console.error("Error saving plant:", e);
+      setSaving(false);
+      setUploading(false);
+    }
+  }
+
+  async function handleCreateAndSave() {
+    if (!user || !newSpaceName.trim()) return;
+    setSaving(true);
+    try {
+      // Note: lightLevel + containment will be added to Space schema later
+      const spaceId = await createSpace(
+        user.uid,
+        newSpaceName.trim(),
+        spaceLocation,
+      );
+      await saveToSpace(spaceId);
+    } catch (e) {
+      console.error("Error creating space:", e);
+      setSaving(false);
+    }
+  }
+
+  function handleCancel() {
+    setStep("idle");
+    setLlmResult(null);
+    setNewSpaceName("");
+    setSpaceLight("");
+    setSpaceContainment("");
+    setPhotoFile(null);
+    setPhotoPreview("");
+    setSaving(false);
+  }
+
+  /* ─── Render ─────────────────────────────────────────────────────────── */
   return (
-    <main className="min-h-screen bg-swansons-cream pb-20">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🌿</span>
-            <h1 className="text-xl">Scan Plant Tag</h1>
+    <main className="min-h-screen bg-swansons-cream">
+      {/* Camera — mounted during idle + scanning */}
+      {(step === "idle" || step === "scanning") && (
+        <div className="px-4 pt-4">
+          <div className="rounded-2xl overflow-hidden bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-auto"
+            />
           </div>
-          <Link
-            href="/"
-            className="text-swansons-green hover:underline text-sm"
+        </div>
+      )}
+
+      {/* ── IDLE ─────────────────────────────────────────────────────────── */}
+      {step === "idle" && (
+        <div className="px-4 pt-6 pb-28">
+          <p className="font-body text-center text-swansons-muted mb-8 text-sm leading-relaxed">
+            Hold plant tag or label in front of camera, tap &apos;Scan&apos;
+            button below and hold still as plant data is captured.
+          </p>
+
+          <button
+            onClick={() => handleScan()}
+            className="w-full bg-swansons-navy text-white font-body font-semibold py-4 rounded-full text-base mb-4"
           >
-            ← Back
-          </Link>
-        </div>
-      </header>
+            Scan Plant Tag/Label
+          </button>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Camera + Controls */}
-          <div className="flex-1 min-w-0">
-            <div className="card overflow-hidden">
-              <div className="bg-swansons-navy">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-auto"
-                />
-              </div>
-            </div>
+          <button
+            onClick={() => {
+              const next = facingMode === "user" ? "environment" : "user";
+              setFacingMode(next);
+              initCamera(next);
+            }}
+            className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-4 rounded-full text-base mb-6"
+          >
+            {facingMode === "user"
+              ? "↩ Use Rear Camera"
+              : "🤳 Use Selfie Camera"}
+          </button>
 
-            <Button
-              onClick={handleScan}
-              disabled={loading}
-              variant="primary"
-              size="lg"
-              className="mt-4 w-full"
-            >
-              {loading ? "📷 Scanning..." : "📷 Scan"}
-            </Button>
-
-            <Button
-              onClick={() => {
-                const next = facingMode === "user" ? "environment" : "user";
-                setFacingMode(next);
-                initCamera(next);
-              }}
-              variant="secondary"
-              className="mt-2 w-full"
-            >
-              {facingMode === "user"
-                ? "↩️ Use Rear Camera"
-                : "🤳 Use Selfie Camera"}
-            </Button>
-
-            <div className="mt-4 card p-4">
-              <h3 className="text-sm font-medium text-swansons-muted mb-2">
-                OCR Result
-              </h3>
-              <div className="bg-swansons-navy text-swansons-green-light p-4 rounded-swansons min-h-[100px] text-sm font-mono whitespace-pre-wrap">
-                {text || "No OCR text yet — scan a plant tag to begin"}
-              </div>
-            </div>
-
-            <div className="mt-4 card p-4">
-              <label className="text-sm font-medium text-swansons-muted mb-2 block">
-                Plant name (edit if needed)
-              </label>
+          {/* Dev only — manual entry */}
+          {showManual && (
+            <div className="bg-white rounded-2xl p-4 mb-4">
+              <p className="text-xs font-body text-swansons-muted mb-2">
+                🛠 Manual entry (dev only)
+              </p>
               <input
-                className="input"
-                placeholder="Edit plant name before lookup"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                className="input w-full mb-3"
+                placeholder="Enter plant name manually..."
+                value={manualQuery}
+                onChange={(e) => setManualQuery(e.target.value)}
               />
-              <Button
-                onClick={() => {
-                  const q = query || text;
-                  addDebug(`LLM submit: "${q}"`);
-                  if (!q) return;
-                  setLlmResult(null);
-                  setSaved(false);
-                  complete(q);
-                }}
-                disabled={llmLoading || !(query || text)}
-                variant="secondary"
-                className="mt-3 w-full"
+              <button
+                onClick={() => handleScan(manualQuery)}
+                disabled={!manualQuery.trim()}
+                className="w-full bg-swansons-navy text-white font-body py-3 rounded-full text-sm disabled:opacity-50"
               >
-                {llmLoading
-                  ? "🔍 Streaming LLM..."
-                  : "🔍 Find Plant Info (LLM)"}
-              </Button>
+                Submit Manual Query
+              </button>
+            </div>
+          )}
+
+          {showManual && (
+            <p className="text-center font-body text-sm text-swansons-muted underline cursor-pointer">
+              Can&apos;t find tag or label?
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── SCANNING ─────────────────────────────────────────────────────── */}
+      {step === "scanning" && (
+        <div className="px-4 pb-28">
+          <ScanningOverlay />
+        </div>
+      )}
+
+      {/* ── SPACE SELECT ─────────────────────────────────────────────────── */}
+      {step === "space-select" && (
+        <div className="px-4 pt-8 pb-36 max-w-lg mx-auto">
+          {/* Success badge */}
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-swansons-navy rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-3xl">✓</span>
             </div>
           </div>
 
-          {/* Right: LLM Results */}
-          <div className="flex-1 min-w-0">
-            {/* Loading State */}
-            {llmLoading && (
-              <div className="card p-4 border-2 border-swansons-green bg-swansons-green-muted">
-                <div className="flex items-center gap-3 text-swansons-navy">
-                  <div className="animate-spin h-5 w-5 border-2 border-swansons-green border-t-transparent rounded-full"></div>
-                  <span className="font-medium">Streaming plant info...</span>
-                </div>
-              </div>
+          <h2 className="font-heading text-3xl font-bold text-swansons-navy text-center mb-8 leading-tight">
+            Where is your{" "}
+            <span className="italic">{llmResult?.commonName}</span> going?
+          </h2>
+
+          {/* Create new space */}
+          <button
+            onClick={() => setStep("create-space")}
+            className="w-full bg-swansons-navy text-white font-body font-semibold py-4 rounded-full text-base mb-4 flex items-center justify-center gap-2"
+          >
+            <span className="text-xl leading-none">+</span> Create a New Space
+          </button>
+
+          {/* Select existing space */}
+          {spaces.length > 0 && (
+            <select
+              className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-4 rounded-full text-base bg-transparent px-6 mb-6"
+              value={selectedSpaceId}
+              onChange={(e) => setSelectedSpaceId(e.target.value)}
+            >
+              <option value="">Select Existing Space</option>
+              {spaces.map((space) => (
+                <option key={space.id} value={space.id}>
+                  {space.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Optional photo */}
+          <div className="bg-white rounded-2xl p-4 mb-6">
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              ref={photoInputRef}
+              onChange={handlePhotoChange}
+            />
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-swansons-green text-swansons-muted font-body py-3 rounded-xl text-sm flex items-center justify-center gap-2"
+            >
+              📷 {photoFile ? "Change photo" : "Add a photo (optional)"}
+            </button>
+            {photoPreview && (
+              <img
+                src={photoPreview}
+                alt="Plant preview"
+                className="rounded-xl mt-3 w-full object-cover max-h-40"
+              />
             )}
-
-            {/* Results Card */}
-            {llmResult?.latinName && (
-              <>
-                <div className="card p-6">
-                  <div className="text-center mb-4 pb-4 border-b border-gray-100">
-                    <span className="text-4xl mb-2 block">🌱</span>
-                    <h2 className="text-xl mb-1">{llmResult.commonName}</h2>
-                    <p className="italic text-swansons-muted">
-                      {llmResult.latinName}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
-                      <span className="text-xl block mb-1">☀️</span>
-                      <span className="text-xs font-medium text-swansons-muted block">
-                        Light
-                      </span>
-                      <span className="text-sm text-swansons-text">
-                        {llmResult.light}
-                      </span>
-                    </div>
-                    <div className="bg-swansons-green-muted rounded-swansons p-3 text-center">
-                      <span className="text-xl block mb-1">💧</span>
-                      <span className="text-xs font-medium text-swansons-muted block">
-                        Water
-                      </span>
-                      <span className="text-sm text-swansons-text">
-                        {llmResult.water}
-                      </span>
-                    </div>
-                  </div>
-
-                  {llmResult.careTips && llmResult.careTips.length > 0 && (
-                    <div className="mb-4">
-                      <h3 className="text-sm font-semibold text-swansons-navy mb-2">
-                        🌿 Care Tips
-                      </h3>
-                      <ul className="space-y-2">
-                        {llmResult.careTips.map((t: string, i: number) => (
-                          <li
-                            key={i}
-                            className="text-sm text-swansons-text bg-swansons-cream p-2 rounded-swansons"
-                          >
-                            {t}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {llmResult.warnings && llmResult.warnings.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-swansons p-3">
-                      <h3 className="text-sm font-semibold text-red-700 mb-2">
-                        ⚠️ Warnings
-                      </h3>
-                      <ul className="space-y-1">
-                        {llmResult.warnings.map((w: string, i: number) => (
-                          <li key={i} className="text-sm text-red-600">
-                            {w}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* Save Plant Section */}
-                {!saved ? (
-                  <div className="card p-6 mt-4">
-                    <h3 className="text-sm font-semibold mb-1">
-                      💾 Save to My Plants
-                    </h3>
-
-                    {spaces.length === 0 && (
-                      <p className="text-xs text-gray-400 mb-3">
-                        First, give your space a name — like &quot;Living
-                        Room&quot; or &quot;Back Deck&quot; — then save your
-                        plant to it.
-                      </p>
-                    )}
-
-                    {spaces.length > 0 && !showNewSpace && (
-                      <div className="mb-3">
-                        <label className="text-xs text-gray-500 mb-1 block">
-                          Select a space
-                        </label>
-                        <select
-                          className="input w-full"
-                          value={selectedSpaceId}
-                          onChange={(e) => setSelectedSpaceId(e.target.value)}
-                        >
-                          {spaces.map((space) => (
-                            <option key={space.id} value={space.id}>
-                              {space.name} ({space.type})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      className="text-xs text-swansons-green underline mb-3 block"
-                      onClick={() => setShowNewSpace(!showNewSpace)}
-                    >
-                      {showNewSpace
-                        ? "← Use existing space"
-                        : spaces.length === 0
-                          ? "📍 Name your space first"
-                          : "+ Create new space"}
-                    </button>
-
-                    {showNewSpace && (
-                      <div className="mb-3 space-y-2">
-                        <input
-                          className="input w-full"
-                          placeholder="Space name (e.g. Front Deck)"
-                          value={newSpaceName}
-                          onChange={(e) => setNewSpaceName(e.target.value)}
-                        />
-                      </div>
-                    )}
-
-                    {/* Photo Upload */}
-                    <div className="mb-4">
-                      <label className="block text-xs text-gray-500 mb-1">
-                        Optional: Add a photo
-                      </label>
-                      {/* Hidden file input */}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        ref={photoInputRef}
-                        onChange={handlePhotoChange}
-                        disabled={saving || uploading}
-                      />
-                      {/* Styled button to trigger file input */}
-                      <button
-                        type="button"
-                        onClick={() => photoInputRef.current?.click()}
-                        disabled={saving || uploading}
-                        className="w-full border-2 border-dashed border-gray-300 rounded-lg py-4 text-sm text-gray-500 hover:border-green-600 hover:text-green-700 transition flex items-center justify-center gap-2"
-                      >
-                        📷{" "}
-                        {photoFile ? "Change photo" : "Add a photo (optional)"}
-                      </button>
-                      {photoPreview && (
-                        <div className="mt-2 w-full flex justify-center">
-                          <img
-                            src={photoPreview}
-                            alt="Plant preview"
-                            className="rounded object-cover max-h-40 border"
-                          />
-                        </div>
-                      )}
-                      {uploading && (
-                        <div className="mt-2 text-xs text-swansons-green">
-                          Uploading photo... {uploadProgress.toFixed(0)}%
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2 mb-4">
-                      <button
-                        type="button"
-                        className={`flex-1 rounded-full py-1.5 text-sm border transition ${
-                          isIndoor
-                            ? "bg-green-700 text-white border-green-700"
-                            : "bg-white text-gray-600 border-gray-200"
-                        }`}
-                        onClick={() => setIsIndoor(true)}
-                      >
-                        🏠 Indoor
-                      </button>
-                      <button
-                        type="button"
-                        className={`flex-1 rounded-full py-1.5 text-sm border transition ${
-                          !isIndoor
-                            ? "bg-green-700 text-white border-green-700"
-                            : "bg-white text-gray-600 border-gray-200"
-                        }`}
-                        onClick={() => setIsIndoor(false)}
-                      >
-                        🌤️ Outdoor
-                      </button>
-                    </div>
-
-                    <Button
-                      onClick={handleSavePlant}
-                      disabled={
-                        saving ||
-                        uploading ||
-                        (showNewSpace && !newSpaceName.trim()) ||
-                        (!showNewSpace && !selectedSpaceId)
-                      }
-                      variant="primary"
-                      className="w-full"
-                    >
-                      {saving || uploading ? "Saving..." : "Save Plant 🌱"}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="card p-6 mt-4 text-center">
-                    <span className="text-3xl mb-2 block">🎉</span>
-                    <p className="font-medium text-green-700">Plant saved!</p>
-                    <button
-                      className="text-sm text-swansons-green underline mt-2"
-                      onClick={() => router.push("/plants")}
-                    >
-                      View My Plants →
-                    </button>
-                  </div>
-                )}
-              </>
+            {uploading && (
+              <p className="text-xs text-swansons-green font-body mt-2">
+                Uploading... {uploadProgress.toFixed(0)}%
+              </p>
             )}
+          </div>
 
-            {/* Empty State */}
-            {!llmLoading && !llmResult && (
-              <div className="card p-8 text-center">
-                <span className="text-4xl mb-3 block opacity-50">🌿</span>
-                <p className="text-swansons-muted">
-                  Plant info will appear here after lookup
-                </p>
-              </div>
-            )}
-
-            {/* Debug Panel */}
-            <details className="mt-6">
-              <summary className="text-sm text-swansons-muted cursor-pointer hover:text-swansons-green">
-                🛠 Debug Log
-              </summary>
-              <div className="mt-2 bg-swansons-navy text-swansons-green-light p-3 rounded-swansons text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
-                {debug.length ? debug.join("\n") : "debug log empty"}
-              </div>
-            </details>
+          {/* Fixed bottom bar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
+            <button
+              onClick={() => selectedSpaceId && saveToSpace(selectedSpaceId)}
+              disabled={saving || !selectedSpaceId}
+              className="w-full max-w-sm bg-white text-swansons-navy font-body font-semibold py-3 rounded-full disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={handleCancel}
+              className="font-body text-white text-sm underline"
+            >
+              Cancel Plant Profile
+            </button>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* ── CREATE SPACE ─────────────────────────────────────────────────── */}
+      {step === "create-space" && (
+        <div className="px-4 pt-8 pb-36 max-w-lg mx-auto">
+          <h2 className="font-heading text-3xl font-bold text-swansons-navy mb-8">
+            Create a new space
+          </h2>
+
+          {/* Name */}
+          <div className="mb-6">
+            <label className="font-body text-sm text-swansons-text mb-2 block">
+              Create a name for your space
+            </label>
+            <input
+              className="input w-full"
+              placeholder="eg. Backyard bed"
+              value={newSpaceName}
+              onChange={(e) => setNewSpaceName(e.target.value)}
+            />
+          </div>
+
+          {/* Light level */}
+          <div className="mb-6">
+            <p className="font-body text-sm text-swansons-text mb-3">
+              Light level of space
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  ["full-sun", "Full sun"],
+                  ["dappled-shade", "Dappled shade"],
+                  ["partial-sun", "Partial sun"],
+                  ["full-shade", "Full shade"],
+                ] as [LightLevel, string][]
+              ).map(([val, label]) => (
+                <label
+                  key={val}
+                  className="flex items-center gap-2 font-body text-sm text-swansons-text cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="lightLevel"
+                    value={val}
+                    checked={spaceLight === val}
+                    onChange={() => setSpaceLight(val)}
+                    className="accent-swansons-navy"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="mb-6">
+            <p className="font-body text-sm text-swansons-text mb-3">
+              Location of space
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  ["indoor", "Indoor"],
+                  ["outdoor", "Outdoor"],
+                ] as ["indoor" | "outdoor", string][]
+              ).map(([val, label]) => (
+                <label
+                  key={val}
+                  className="flex items-center gap-2 font-body text-sm text-swansons-text cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="location"
+                    value={val}
+                    checked={spaceLocation === val}
+                    onChange={() => setSpaceLocation(val)}
+                    className="accent-swansons-navy"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Containment */}
+          <div className="mb-8">
+            <p className="font-body text-sm text-swansons-text mb-3">
+              Containment of space
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  ["container", "Container"],
+                  ["in-ground", "In-ground"],
+                  ["raised-bed", "Raised bed"],
+                ] as [Containment, string][]
+              ).map(([val, label]) => (
+                <label
+                  key={val}
+                  className="flex items-center gap-2 font-body text-sm text-swansons-text cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="containment"
+                    value={val}
+                    checked={spaceContainment === val}
+                    onChange={() => setSpaceContainment(val)}
+                    className="accent-swansons-navy"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Fixed bottom bar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
+            <button
+              onClick={handleCreateAndSave}
+              disabled={saving || !newSpaceName.trim()}
+              className="w-full max-w-sm bg-white text-swansons-navy font-body font-semibold py-3 rounded-full disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={handleCancel}
+              className="font-body text-white text-sm underline"
+            >
+              Cancel Plant Profile
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Debug — dev only */}
+      {showManual && (
+        <div className="px-4 pb-8">
+          <details>
+            <summary className="text-sm font-body text-swansons-muted cursor-pointer">
+              🛠 Debug Log
+            </summary>
+            <div className="mt-2 bg-swansons-navy text-swansons-green-light p-3 rounded-xl text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
+              {debug.length ? debug.join("\n") : "debug log empty"}
+            </div>
+          </details>
+        </div>
+      )}
 
       <canvas ref={canvasRef} className="hidden" />
     </main>

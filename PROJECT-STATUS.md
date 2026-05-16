@@ -112,7 +112,9 @@
 
 ---
 
-## Planned 🔲
+## Planned
+
+- Add lightLevel + containment fields to Space schema in Firestore + spaces.ts
 
 ### High Priority
 

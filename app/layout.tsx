@@ -17,6 +17,7 @@ import { AuthProvider } from "@/lib/firebase/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import BottomNav from "@/components/nav/BottomNav";
 import HamburgerMenu from "@/components/nav/HamburgerMenu";
+import BackButton from "@/components/nav/BackButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,13 +62,16 @@ export default function RootLayout({
     >
       <body className="antialiased">
         <AuthProvider>
-          {isSignInPage ? (
-            children
-          ) : (
-            <ProtectedRoute>{children}</ProtectedRoute>
-          )}
-          <HamburgerMenu />
-          <BottomNav />
+          <div className="max-w-lg mx-auto min-h-screen bg-swansons-cream relative shadow-xl">
+            {isSignInPage ? (
+              children
+            ) : (
+              <ProtectedRoute>{children}</ProtectedRoute>
+            )}
+            <HamburgerMenu />
+            <BackButton />
+            <BottomNav />
+          </div>
         </AuthProvider>
       </body>
     </html>
