@@ -13,6 +13,7 @@ import {
 } from "@/lib/firebase/spaces";
 import { uploadPlantPhoto } from "@/lib/firebase/storage";
 import { compressImage } from "@/lib/utils/imageCompression";
+import { Button } from "@/components/ui/Button";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type ScanStep = "idle" | "scanning" | "space-select" | "create-space";
@@ -321,41 +322,56 @@ export default function ScanPage() {
               playsInline
               className="w-full h-auto"
             />
+            {/* Camera flip icon — bottom right of video */}
+            <button
+              onClick={() => {
+                const next = facingMode === "user" ? "environment" : "user";
+                setFacingMode(next);
+                initCamera(next);
+              }}
+              className="absolute bottom-3 right-3 w-10 h-10 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center transition cursor-pointer"
+              aria-label="Flip camera"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 7h-3a2 2 0 0 1-2-2V2" />
+                <path d="M9 2H5a2 2 0 0 0-2 2v4" />
+                <path d="M4 17v3a2 2 0 0 0 2 2h3" />
+                <path d="M15 22h3a2 2 0 0 0 2-2v-3" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
 
       {/* ── IDLE ─────────────────────────────────────────────────────────── */}
       {step === "idle" && (
-        <div className="px-4 pt-6 pb-28">
+        <div className="px-4 pt-6 pb-28 flex flex-col items-center justify-center">
           <p className="font-body text-center text-swansons-muted mb-8 text-sm leading-relaxed">
             Hold plant tag or label in front of camera, tap &apos;Scan&apos;
             button below and hold still as plant data is captured.
           </p>
 
-          <button
+          <Button
             onClick={() => handleScan()}
-            className="w-full bg-swansons-navy text-white font-body font-semibold py-4 rounded-full text-base mb-4"
+            variant="primary"
+            className="w-full rounded-full py-4"
           >
             Scan Plant Tag/Label
-          </button>
-
-          <button
-            onClick={() => {
-              const next = facingMode === "user" ? "environment" : "user";
-              setFacingMode(next);
-              initCamera(next);
-            }}
-            className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-4 rounded-full text-base mb-6"
-          >
-            {facingMode === "user"
-              ? "↩ Use Rear Camera"
-              : "🤳 Use Selfie Camera"}
-          </button>
+          </Button>
 
           {/* Dev only — manual entry */}
           {showManual && (
-            <div className="bg-white rounded-2xl p-4 mb-4">
+            <div className="bg-white rounded-2xl p-4 my-4 ">
               <p className="text-xs font-body text-swansons-muted mb-2">
                 🛠 Manual entry (dev only)
               </p>
@@ -365,13 +381,14 @@ export default function ScanPage() {
                 value={manualQuery}
                 onChange={(e) => setManualQuery(e.target.value)}
               />
-              <button
+              <Button
                 onClick={() => handleScan(manualQuery)}
                 disabled={!manualQuery.trim()}
-                className="w-full bg-swansons-navy text-white font-body py-3 rounded-full text-sm disabled:opacity-50"
+                variant="primary"
+                className="w-full rounded-full"
               >
                 Submit Manual Query
-              </button>
+              </Button>
             </div>
           )}
 
@@ -406,12 +423,13 @@ export default function ScanPage() {
           </h2>
 
           {/* Create new space */}
-          <button
+          <Button
             onClick={() => setStep("create-space")}
-            className="w-full bg-swansons-navy text-white font-body font-semibold py-4 rounded-full text-base mb-4 flex items-center justify-center gap-2"
+            variant="primary"
+            className="w-full rounded-full py-4"
           >
-            <span className="text-xl leading-none">+</span> Create a New Space
-          </button>
+            + Create a New Space
+          </Button>
 
           {/* Select existing space */}
           {spaces.length > 0 && (
@@ -462,19 +480,25 @@ export default function ScanPage() {
 
           {/* Fixed bottom bar */}
           <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
-            <button
+            {/* Space select bottom bar */}
+            <Button
               onClick={() => selectedSpaceId && saveToSpace(selectedSpaceId)}
               disabled={saving || !selectedSpaceId}
-              className="w-full max-w-sm bg-white text-swansons-navy font-body font-semibold py-3 rounded-full disabled:opacity-50"
+              variant="inverted"
+              className="w-full max-w-sm rounded-full"
             >
               {saving ? "Saving..." : "Save"}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="font-body text-white text-sm underline"
+            </Button>
+
+            {/* Create space bottom bar */}
+            <Button
+              onClick={handleCreateAndSave}
+              disabled={saving || !newSpaceName.trim()}
+              variant="inverted"
+              className="w-full max-w-sm rounded-full"
             >
-              Cancel Plant Profile
-            </button>
+              {saving ? "Saving..." : "Save"}
+            </Button>
           </div>
         </div>
       )}
@@ -601,12 +625,13 @@ export default function ScanPage() {
             >
               {saving ? "Saving..." : "Save"}
             </button>
-            <button
+            <Button
               onClick={handleCancel}
-              className="font-body text-white text-sm underline"
+              variant="text"
+              className="text-white"
             >
               Cancel Plant Profile
-            </button>
+            </Button>
           </div>
         </div>
       )}

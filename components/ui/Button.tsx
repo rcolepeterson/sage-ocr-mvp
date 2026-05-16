@@ -2,7 +2,7 @@
 import { ButtonHTMLAttributes, ReactNode } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "text" | "disabled";
+  variant?: "primary" | "secondary" | "text" | "disabled" | "inverted";
   size?: "sm" | "md" | "lg";
   children: ReactNode;
 }
@@ -25,12 +25,14 @@ export function Button({
     text: "text-[var(--color-swansons-navy)] underline underline-offset-4 hover:opacity-80 cursor-pointer",
     disabled:
       "bg-[var(--color-swansons-cream)] text-[var(--color-swansons-green-muted)] border border-[var(--color-swansons-green-muted)] cursor-not-allowed",
+    inverted:
+      "bg-white text-[var(--color-swansons-navy)] hover:bg-gray-100 active:scale-[0.98] cursor-pointer",
   };
 
   const sizes = {
-    sm: "px-4 py-2 text-sm rounded-full",
-    md: "px-6 py-3 text-base rounded-full",
-    lg: "px-8 py-4 text-lg rounded-full",
+    sm: "px-4 py-2 text-sm rounded-full max-w-[400px]",
+    md: "px-6 py-3 text-base rounded-full max-w-[400px]",
+    lg: "px-8 py-4 text-lg rounded-full max-w-[400px]",
   };
 
   // Auto-apply disabled variant if disabled prop is true
