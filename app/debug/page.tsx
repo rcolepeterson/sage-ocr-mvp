@@ -3,6 +3,7 @@
 
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { resetOnboarding } from "@/lib/firebase/users";
+import { auth } from "firebase-admin";
 import { useState } from "react";
 function ResetOnboardingTool() {
   const { user } = useAuth();
@@ -164,4 +165,7 @@ export default function DebugPage() {
       </main>
     </ProtectedRoute>
   );
+}
+function doc(db: any, arg1: string, uid: string) {
+  throw new Error("Function not implemented.");
 }

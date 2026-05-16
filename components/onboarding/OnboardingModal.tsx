@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import cn from "classnames";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/firebase/AuthContext";
+import Image from "next/image";
 import { markOnboardingComplete } from "@/lib/firebase/users";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/firestore";
@@ -13,14 +14,17 @@ const STEPS = [
   {
     title: "Scan your plant\ntags & labels",
     body: "Point your camera at any plant tag or label and we'll instantly identify your plant and build a personalised care plan.",
+    image: "/images/ScanPlantTagorLabel.png",
   },
   {
     title: "Create your\nplant spaces",
     body: "Organise your plants by space — indoors, outdoors, or anywhere in between. Keep your whole garden in one place.",
+    image: "/images/CreateYourGardenSpaces.png",
   },
   {
     title: "Get expert\nadvice & tips",
     body: "Ask our nursery experts any question about your plants and get real answers from people who know plants.",
+    image: "/images/ExpertPlantAdvice.png",
   },
 ];
 
@@ -70,10 +74,14 @@ function OnboardingModalInner() {
           {current.title}
         </h2>
         {/* Illustration */}
-        <div className="bg-gray-100 h-56 flex items-center justify-center">
-          <span className="text-gray-400 text-sm italic">
-            Illustration placeholder — step {step + 1}
-          </span>
+        <div className="h-56 w-full relative overflow-hidden">
+          <Image
+            src={current.image}
+            alt={current.title}
+            fill
+            className="object-cover"
+            priority
+          />
         </div>
         <div className="px-6 pt-5 pb-7 flex flex-col items-center">
           {/* Step dots (scrolling indicator) commented out for design */}
