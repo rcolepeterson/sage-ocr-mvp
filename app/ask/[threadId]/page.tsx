@@ -8,28 +8,27 @@ import { subscribeToThread, addReply } from "@/lib/firebase/threads";
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { useParams } from "next/navigation";
 
-const getCustomerStatus = (status: string) => {
-  switch (status) {
-    case "new":
-    case "assigned":
-    case "needs-followup":
-      return "⏳ Sent";
-    case "waiting-on-customer":
-      return "💬 Replied";
-    case "closed":
-      return "✅ Closed";
-    default:
-      return "⏳ Waiting for expert";
-  }
-};
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
+function formatTimeAgo(timestamp: any): string {
+  if (!timestamp) return "";
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const diffMs = Date.now() - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  const days = Math.floor(diffMs / 86400000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}hrs ago`;
+  return `${days} day${days > 1 ? "s" : ""} ago`;
+}
 
+/* ─── Page ───────────────────────────────────────────────────────────────── */
 export default function ThreadDetailPage() {
   const { user, loading } = useAuth();
   const { threadId } = useParams() as { threadId: string };
   const [thread, setThread] = useState<any>(null);
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  // Photo upload state
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -37,14 +36,12 @@ export default function ThreadDetailPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Real time listener for thread + replies
   useEffect(() => {
     if (!threadId) return;
     const unsub = subscribeToThread(threadId, setThread);
     return () => unsub();
   }, [threadId]);
 
-  // Auto scroll to bottom when replies update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [thread?.replies]);
@@ -59,11 +56,8 @@ export default function ThreadDetailPage() {
     try {
       if (photoFile) {
         setUploading(true);
-        photoURL = await uploadThreadPhoto(
-          user.uid,
-          threadId,
-          photoFile,
-          (progress) => setUploadProgress(progress),
+        photoURL = await uploadThreadPhoto(user.uid, threadId, photoFile, (p) =>
+          setUploadProgress(p),
         );
         setUploading(false);
       }
@@ -79,13 +73,12 @@ export default function ThreadDetailPage() {
       setPhotoPreview("");
       setUploadProgress(0);
     } catch (e) {
-      // Optionally handle error
+      console.error(e);
     }
     setSubmitting(false);
     setUploading(false);
   };
 
-  // Handle file input change
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
@@ -94,92 +87,66 @@ export default function ThreadDetailPage() {
     }
   }
 
-  if (loading || !thread)
-    return <p className="text-center mt-10">Loading...</p>;
+  if (loading || !thread) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin w-8 h-8 border-2 border-swansons-green border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <ProtectedRoute>
-      <main className="h-[calc(100vh-4rem)] flex flex-col bg-swansons-cream overflow-hidden">
-        <div className="flex flex-col h-full w-full max-w-5xl mx-auto bg-white shadow-sm">
-          {/* Fixed Header */}
-          <div className="shrink-0 px-4 py-4 border-b border-gray-200 bg-white">
-            <p className="font-medium text-sm">{thread.question}</p>
-            <span
-              className={`text-xs p-2 rounded mt-1 inline-block ${
-                thread.status === "closed"
-                  ? "bg-green-100 text-green-700"
-                  : thread.status === "waiting-on-customer"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-yellow-100 text-yellow-700"
-              }`}
-            >
-              {getCustomerStatus(thread.status)}
-            </span>
-          </div>
-
-          {/* Scrollable Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 flex flex-col">
-            {thread.replies && thread.replies.length > 0 ? (
+      <main
+        className="flex flex-col bg-swansons-cream"
+        style={{ height: "calc(100vh - 56px)" }}
+      >
+        <div className="flex flex-col h-full max-w-lg mx-auto w-full">
+          {/* ── Scrollable messages ── */}
+          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+            {thread.replies?.length > 0 ? (
               thread.replies.map((r: any) => (
                 <div
                   key={r.id}
-                  className={`flex flex-col max-w-xs ${
-                    r.isStaff ? "self-start" : "self-end ml-auto"
-                  }`}
+                  className="border-l-4 border-swansons-navy pl-4"
                 >
-                  <span className="text-xs text-gray-400 mb-1 px-1">
-                    {r.isStaff ? "Swansons Expert" : "You"}
-                  </span>
-                  <div
-                    className={`rounded-2xl px-4 py-2 text-sm ${
-                      r.isStaff
-                        ? "bg-gray-100 text-gray-800"
-                        : "bg-green-700 text-white"
-                    }`}
-                  >
+                  <p className="font-body text-swansons-text text-base leading-relaxed">
                     {r.message}
-                  </div>
+                  </p>
                   {r.photoURL && (
                     <a
                       href={r.photoURL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2"
                     >
                       <img
                         src={r.photoURL}
-                        alt="Attached photo"
-                        className="rounded object-cover max-h-48 border"
-                        style={{ width: "100%", marginTop: 4 }}
+                        alt="Attached"
+                        className="rounded-xl mt-3 max-h-48 object-cover"
                       />
                     </a>
                   )}
+                  <p className="font-body text-xs text-swansons-muted mt-2">
+                    {r.isStaff ? "Swansons Expert" : "You"} •{" "}
+                    {formatTimeAgo(r.createdAt)}
+                  </p>
                 </div>
               ))
             ) : (
-              <p className="text-center text-gray-400 text-sm mt-8">
+              <p className="font-body text-center text-swansons-muted text-sm mt-8">
                 No replies yet. A Swansons expert will respond soon. 🌿
               </p>
             )}
             <div ref={bottomRef} />
           </div>
 
-          {/* Fixed Bottom Input */}
-          <div className="shrink-0 px-4 py-4 border-t border-gray-200 bg-white">
-            <form onSubmit={handleReply} className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label="Attach photo"
-                  className="text-2xl px-2 py-1 bg-gray-100 rounded-full hover:bg-gray-200 focus:outline-none"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={submitting || uploading}
-                >
-                  📎
-                </button>
+          {/* ── Reply input ── */}
+          <div className="shrink-0 px-4 py-4 bg-white border-t border-gray-100">
+            <form onSubmit={handleReply}>
+              <div className="border border-gray-200 rounded-2xl p-4">
                 <textarea
-                  className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-600 min-h-15"
-                  placeholder="Send a message..."
+                  className="w-full font-body text-swansons-text placeholder:text-swansons-muted text-base resize-none focus:outline-none min-h-16 bg-transparent"
+                  placeholder="Send a reply"
                   value={reply}
                   onChange={(e) => setReply(e.target.value)}
                   onKeyDown={(e) => {
@@ -190,28 +157,49 @@ export default function ThreadDetailPage() {
                   }}
                   disabled={submitting || uploading}
                 />
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                  disabled={submitting || uploading}
-                />
+                <div className="flex items-center justify-between mt-2">
+                  {/* + attach button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={submitting || uploading}
+                    className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
+                  >
+                    <span className="text-xl leading-none">+</span>
+                  </button>
+
+                  {/* Send button */}
+                  <button
+                    type="submit"
+                    disabled={
+                      submitting || uploading || (!reply.trim() && !photoFile)
+                    }
+                    className="w-9 h-9 rounded-full bg-swansons-navy flex items-center justify-center text-white disabled:opacity-40 hover:opacity-90 transition"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 19V5M5 12l7-7 7 7"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              {/* Photo preview and progress */}
+
+              {/* Photo preview */}
               {photoPreview && (
-                <div className="flex flex-col items-center mt-2">
+                <div className="mt-3">
                   <img
                     src={photoPreview}
                     alt="Preview"
-                    className="rounded object-cover max-h-48 border mb-2"
-                    style={{ width: "auto", maxWidth: "100%" }}
+                    className="rounded-xl max-h-32 object-cover"
                   />
                   <button
                     type="button"
-                    className="text-xs text-red-500 underline mb-1"
+                    className="text-xs font-body text-red-400 mt-1 block"
                     onClick={() => {
                       setPhotoFile(null);
                       setPhotoPreview("");
@@ -221,20 +209,22 @@ export default function ThreadDetailPage() {
                   </button>
                 </div>
               )}
+
               {uploading && (
-                <div className="text-xs text-green-700 mt-1">
-                  Uploading photo... {uploadProgress.toFixed(0)}%
-                </div>
+                <p className="text-xs font-body text-swansons-green mt-2">
+                  Uploading... {uploadProgress.toFixed(0)}%
+                </p>
               )}
-              <button
-                type="submit"
-                className="w-full rounded-full bg-green-700 text-white py-2 text-sm font-medium hover:bg-green-800 transition disabled:opacity-50"
-                disabled={
-                  submitting || uploading || (!reply.trim() && !photoFile)
-                }
-              >
-                {submitting || uploading ? "Sending..." : "Send Message"}
-              </button>
+
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handlePhotoChange}
+                disabled={submitting || uploading}
+              />
             </form>
           </div>
         </div>
