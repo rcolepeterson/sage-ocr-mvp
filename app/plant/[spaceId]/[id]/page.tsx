@@ -374,7 +374,7 @@ function PlantProfilePage({
             <Button
               variant="primary"
               size="lg"
-              className="rounded-full min-w-[220px]"
+              className="rounded-full min-w-55"
             >
               Ask An Expert
             </Button>

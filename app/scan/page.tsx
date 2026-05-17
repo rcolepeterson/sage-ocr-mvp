@@ -428,7 +428,7 @@ export default function ScanPage() {
             <Button
               onClick={() => setStep("create-space")}
               variant="primary"
-              className="w-[260px]"
+              className="w-65"
             >
               <span className="flex items-center gap-6">
                 <span className="text-2xl leading-none">+</span>
@@ -438,7 +438,7 @@ export default function ScanPage() {
 
             {/* Select existing space */}
             {spaces.length > 0 && (
-              <div className="relative w-[260px]">
+              <div className="relative w-65">
                 <select
                   className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-[13px] rounded-full text-base bg-transparent px-6 appearance-none"
                   value={selectedSpaceId}
