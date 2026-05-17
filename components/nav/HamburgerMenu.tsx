@@ -113,13 +113,13 @@ export default function HamburgerMenu() {
         onClick={() => setOpen((v) => !v)}
       >
         <span
-          className={`block w-6 h-0.5 bg-swansons-navy rounded transition-all duration-300 origin-center ${open ? "rotate-45 translate-y-2" : ""}`}
+          className={`block w-6 h-1 bg-swansons-navy rounded transition-all duration-300 origin-center ${open ? "rotate-45 translate-y-2" : ""}`}
         />
         <span
-          className={`block w-6 h-0.5 bg-swansons-navy rounded transition-all duration-300 ${open ? "opacity-0 scale-x-0" : ""}`}
+          className={`block w-6 h-1 bg-swansons-navy rounded transition-all duration-300 ${open ? "opacity-0 scale-x-0" : ""}`}
         />
         <span
-          className={`block h-0.5 bg-swansons-navy rounded transition-all duration-300 origin-center ${open ? "w-6 -rotate-45 -translate-y-2" : "w-4"}`}
+          className={`block h-1 bg-swansons-navy rounded transition-all duration-300 origin-center ${open ? "w-6 -rotate-45 -translate-y-2" : "w-4"}`}
         />
       </button>
 

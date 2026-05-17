@@ -285,7 +285,7 @@ function PlantProfilePage({
         <h1 className="font-heading text-3xl font-bold text-swansons-navy text-center mb-1">
           {plant.commonName}
         </h1>
-        <p className="font-body italic text-swansons-muted text-center mb-5">
+        <p className="font-body italic text-swansons-black font-bold text-center mb-5">
           {plant.latinName}
         </p>
 
@@ -326,7 +326,7 @@ function PlantProfilePage({
         {plant.careInfo?.careTips?.length > 0 && (
           <div className="mb-6">
             <div className="flex justify-center mb-4">
-              <span className="bg-swansons-navy text-white font-body text-xs font-semibold uppercase tracking-widest px-6 py-2 rounded-full">
+              <span className="bg-swansons-green-dark text-white font-body text-xs font-semibold uppercase tracking-widest px-6 py-2 rounded-full">
                 Care Tips
               </span>
             </div>
@@ -353,7 +353,7 @@ function PlantProfilePage({
                 {spaceTags.map((tag) => (
                   <span
                     key={tag}
-                    className="bg-swansons-navy text-white font-body text-sm px-4 py-1.5 rounded-full"
+                    className="bg-swansons-green-dark text-white font-body text-sm px-4 py-1.5 rounded-full"
                   >
                     {tag}
                   </span>
@@ -367,11 +367,15 @@ function PlantProfilePage({
         <TagBadges tags={plant.tags || []} />
 
         {/* ── Ask An Expert ── */}
-        <div className="mt-6">
+        <div className="mt-6 flex justify-center">
           <Link
             href={`/ask?plantId=${spaceId}_${id}&plantName=${encodeURIComponent(plant.commonName)}`}
           >
-            <Button variant="primary" size="lg" className="w-full rounded-full">
+            <Button
+              variant="primary"
+              size="lg"
+              className="rounded-full min-w-[220px]"
+            >
               Ask An Expert
             </Button>
           </Link>
