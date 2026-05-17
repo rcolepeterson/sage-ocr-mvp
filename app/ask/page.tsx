@@ -37,9 +37,9 @@ function getStatusBadge(status: string): { label: string; className: string } {
       return { label: "Sent", className: "bg-orange-400 text-white" };
     case "closed":
     case "answered":
-      return { label: "Closed", className: "bg-white/20 text-white" };
+      return { label: "Closed", className: "bg-gray-200 text-gray-500" }; // ← fixed
     default:
-      return { label: status, className: "bg-white/20 text-white" };
+      return { label: status, className: "bg-gray-200 text-gray-500" };
   }
 }
 
@@ -111,15 +111,13 @@ function AskPageInner() {
       <main className="min-h-screen bg-swansons-cream flex flex-col">
         {/* ── Top section ── */}
         <div className="px-4 pt-4 pb-6">
-          {/* Logo */}
+          {/* Logo — smaller to match design */}
           <div className="flex justify-center mb-6">
-            <Logo width={140} height={70} />
+            <Logo width={100} height={50} />
           </div>
 
           {/* Heading */}
-          <h1 className="font-heading text-3xl font-bold text-swansons-navy text-center mb-1">
-            Ask an expert
-          </h1>
+          <h1 className="text-swansons-navy text-center mb-1">Ask an expert</h1>
           <p className="font-body text-swansons-muted text-center text-sm mb-5">
             Choose a space & plant (optional)
           </p>
@@ -139,7 +137,7 @@ function AskPageInner() {
             </div>
           ) : (
             <>
-              {/* Always render — data populates after fetch */}
+              {/* Space dropdown */}
               <div className="relative mb-3">
                 <select
                   className="w-full border-2 border-swansons-navy text-swansons-navy font-body py-3 px-5 rounded-full bg-transparent appearance-none"
@@ -158,7 +156,8 @@ function AskPageInner() {
                 </span>
               </div>
 
-              <div className="relative mb-3">
+              {/* Plant dropdown — disabled until space selected */}
+              <div className="relative mb-4">
                 <select
                   className="w-full border-2 border-swansons-navy text-swansons-navy font-body py-3 px-5 rounded-full bg-transparent appearance-none disabled:opacity-40"
                   value={selectedPlantId}
@@ -180,12 +179,19 @@ function AskPageInner() {
                   ▾
                 </span>
               </div>
+
+              {/* Botanical illustration — swap for <img> when asset arrives */}
+              {/* <div className="w-full h-32 bg-swansons-green-muted rounded-2xl mb-4 flex items-center justify-center">
+                <span className="font-body text-xs text-swansons-muted italic">
+                  Botanical illustration — coming soon
+                </span>
+              </div> */}
             </>
           )}
 
           {/* Input area */}
           <form onSubmit={handleSubmit}>
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <div className="bg-white p-4 shadow-sm">
               <textarea
                 className="w-full font-body text-swansons-text placeholder:text-swansons-muted text-base resize-none focus:outline-none min-h-20 bg-transparent"
                 placeholder={
@@ -197,19 +203,16 @@ function AskPageInner() {
                 onChange={(e) => setQuestion(e.target.value)}
               />
               <div className="flex items-center justify-between mt-2">
-                {/* + button — placeholder for future photo attach */}
                 <button
                   type="button"
-                  className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
+                  className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition cursor-pointer"
                 >
-                  <span className="text-xl leading-none">+</span>
+                  <span className="text-4xl leading-none">+</span>
                 </button>
-
-                {/* Send button */}
                 <button
                   type="submit"
                   disabled={submitting || !question.trim()}
-                  className="w-9 h-9 rounded-full bg-swansons-navy flex items-center justify-center text-white disabled:opacity-40 hover:opacity-90 transition"
+                  className="w-9 h-9 rounded-full bg-swansons-navy flex items-center justify-center text-white disabled:opacity-40 hover:opacity-90 transition cursor-pointer"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path
@@ -249,9 +252,10 @@ function AskPageInner() {
                 const badge = getStatusBadge(thread.status);
                 return (
                   <Link key={thread.id} href={`/ask/${thread.id}`}>
-                    <div className="bg-white/10 hover:bg-white/15 transition rounded-2xl px-4 py-4">
+                    {/* ← solid white cards */}
+                    <div className="bg-white hover:bg-gray-50 transition rounded-2xl px-4 py-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-body text-xs text-white/50">
+                        <span className="font-body text-xs text-swansons-muted">
                           {formatDate(thread.createdAt)}
                         </span>
                         <span
@@ -260,11 +264,11 @@ function AskPageInner() {
                           {badge.label}
                         </span>
                       </div>
-                      <p className="font-body text-white text-sm truncate">
+                      <p className="font-body text-swansons-navy text-sm truncate">
                         {thread.question}
                       </p>
                       {thread.plantName && (
-                        <p className="font-body text-white/50 text-xs mt-1 truncate">
+                        <p className="font-body text-swansons-muted text-xs mt-1 truncate">
                           🌱 {thread.plantName}
                         </p>
                       )}
@@ -272,7 +276,7 @@ function AskPageInner() {
                   </Link>
                 );
               })}
-              <button className="font-body text-white/50 text-sm text-center mt-2 underline underline-offset-2">
+              <button className="font-body text-white/50 text-sm text-center mt-2 underline underline-offset-2 cursor-pointer">
                 Load More
               </button>
             </div>
