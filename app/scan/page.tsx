@@ -483,14 +483,14 @@ export default function ScanPage() {
 
       {/* ── CREATE SPACE ─────────────────────────────────────────────────── */}
       {step === "create-space" && (
-        <div className="px-4 pt-8 pb-36 max-w-lg mx-auto">
-          <h2 className="font-heading text-3xl font-bold text-swansons-navy mb-8">
-            Create a new space
+        <div className="px-4 pt-2 pb-36 max-w-lg mx-auto">
+          <h2 className="text-swansons-navy text-center mb-8">
+            Create a new <br></br>space
           </h2>
 
           {/* Name */}
           <div className="mb-6">
-            <label className="font-body text-sm text-swansons-text mb-2 block">
+            <label className="font-body text-lg text-swansons-green-dark mb-2 block">
               Create a name for your space
             </label>
             <input
@@ -503,7 +503,7 @@ export default function ScanPage() {
 
           {/* Light level */}
           <div className="mb-6">
-            <p className="font-body text-sm text-swansons-text mb-3">
+            <p className="font-body text-lg text-swansons-green-dark mb-3">
               Light level of space
             </p>
             <div className="grid grid-cols-2 gap-3">
@@ -517,7 +517,7 @@ export default function ScanPage() {
               ).map(([val, label]) => (
                 <label
                   key={val}
-                  className="flex items-center gap-2 font-body text-sm text-swansons-text cursor-pointer"
+                  className="flex items-center gap-2 font-body text-lg text-swansons-green-dark cursor-pointer"
                 >
                   <input
                     type="radio"
@@ -525,7 +525,7 @@ export default function ScanPage() {
                     value={val}
                     checked={spaceLight === val}
                     onChange={() => setSpaceLight(val)}
-                    className="accent-swansons-navy"
+                    className="accent-swansons-green-dark"
                   />
                   {label}
                 </label>
@@ -535,7 +535,7 @@ export default function ScanPage() {
 
           {/* Location */}
           <div className="mb-6">
-            <p className="font-body text-sm text-swansons-text mb-3">
+            <p className="font-body text-lg text-swansons-green-dark mb-3">
               Location of space
             </p>
             <div className="grid grid-cols-2 gap-3">
@@ -547,7 +547,7 @@ export default function ScanPage() {
               ).map(([val, label]) => (
                 <label
                   key={val}
-                  className="flex items-center gap-2 font-body text-sm text-swansons-text cursor-pointer"
+                  className="flex items-center gap-2 font-body text-lg text-swansons-green-dark cursor-pointer"
                 >
                   <input
                     type="radio"
@@ -555,7 +555,7 @@ export default function ScanPage() {
                     value={val}
                     checked={spaceLocation === val}
                     onChange={() => setSpaceLocation(val)}
-                    className="accent-swansons-navy"
+                    className="accent-swansons-green-dark"
                   />
                   {label}
                 </label>
@@ -565,7 +565,7 @@ export default function ScanPage() {
 
           {/* Containment */}
           <div className="mb-8">
-            <p className="font-body text-sm text-swansons-text mb-3">
+            <p className="font-body text-lg text-swansons-green-dark mb-3">
               Containment of space
             </p>
             <div className="grid grid-cols-2 gap-3">
@@ -578,7 +578,7 @@ export default function ScanPage() {
               ).map(([val, label]) => (
                 <label
                   key={val}
-                  className="flex items-center gap-2 font-body text-sm text-swansons-text cursor-pointer"
+                  className="flex items-center gap-2 font-body text-lg text-swansons-green-dark cursor-pointer"
                 >
                   <input
                     type="radio"
@@ -586,7 +586,7 @@ export default function ScanPage() {
                     value={val}
                     checked={spaceContainment === val}
                     onChange={() => setSpaceContainment(val)}
-                    className="accent-swansons-navy"
+                    className="accent-swansons-green-dark"
                   />
                   {label}
                 </label>
@@ -596,13 +596,14 @@ export default function ScanPage() {
 
           {/* Fixed bottom bar */}
           <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
-            <button
+            <Button
               onClick={handleCreateAndSave}
               disabled={saving || !newSpaceName.trim()}
-              className="w-full max-w-sm bg-white text-swansons-navy font-body font-semibold py-3 rounded-full disabled:opacity-50"
+              variant="inverted"
+              className="w-full"
             >
               {saving ? "Saving..." : "Save"}
-            </button>
+            </Button>
             <Button
               onClick={handleCancel}
               variant="text"
