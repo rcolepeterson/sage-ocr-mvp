@@ -2,7 +2,14 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/firebase/AuthContext";
 
-const HIDE_ON = ["/", "/signin", "/unauthorized", "/terms", "/onboarding"];
+const HIDE_ON = [
+  "/",
+  "/signin",
+  "/unauthorized",
+  "/terms",
+  "/onboarding",
+  "/ask",
+];
 
 export default function BackButton() {
   const router = useRouter();

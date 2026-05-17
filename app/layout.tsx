@@ -1,3 +1,4 @@
+import ClientLayout from "@/components/ClientLayout";
 import type { Metadata } from "next";
 import {
   Geist,
@@ -6,18 +7,19 @@ import {
   Poppins,
   DM_Serif_Display,
 } from "next/font/google";
-const dmSerifDisplay = DM_Serif_Display({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  display: "swap",
-  weight: "400", // ← add this
-});
 import "./globals.css";
 import { AuthProvider } from "@/lib/firebase/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 //import BottomNav from "@/components/nav/BottomNav";
 import HamburgerMenu from "@/components/nav/HamburgerMenu";
 import BackButton from "@/components/nav/BackButton";
+
+const dmSerifDisplay = DM_Serif_Display({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  display: "swap",
+  weight: "400", // ← add this
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,9 +54,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Exclude /signin from protection to avoid redirect loop
-  const isSignInPage =
-    typeof window !== "undefined" && window.location.pathname === "/signin";
   return (
     <html
       lang="en"
@@ -63,13 +62,9 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           <div className="max-w-lg mx-auto min-h-screen bg-swansons-cream relative">
-            <div className="pt-14">
-              {isSignInPage ? (
-                children
-              ) : (
-                <ProtectedRoute>{children}</ProtectedRoute>
-              )}
-            </div>
+            <ClientLayout>
+              <ProtectedRoute>{children}</ProtectedRoute>
+            </ClientLayout>
             <HamburgerMenu />
             <BackButton />
             {/* <BottomNav /> */}
