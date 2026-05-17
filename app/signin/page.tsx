@@ -15,6 +15,7 @@ import { auth } from "@/lib/firebase/auth";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/ui/Logo";
 
 type Mode = "signin" | "signup" | "reset";
 
@@ -41,7 +42,6 @@ export default function SignInPage() {
     if (!loading && user) router.push("/");
   }, [user, loading, router]);
 
-  // Initialize on mount so it has time to load
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!(window as any).recaptchaVerifier) {
@@ -53,7 +53,6 @@ export default function SignInPage() {
     }
   }, []);
 
-  // Recreate if cleared after an error
   const getRecaptchaVerifier = () => {
     if (!(window as any).recaptchaVerifier) {
       (window as any).recaptchaVerifier = new RecaptchaVerifier(
@@ -159,24 +158,24 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
-      {/* Always in DOM so RecaptchaVerifier can find it */}
+    <main className="min-h-screen flex items-center justify-center px-4 bg-swansons-cream">
       <div id="recaptcha-container" />
 
       {loading ? (
-        <p className="text-center mt-10">Loading...</p>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin w-8 h-8 border-2 border-swansons-green border-t-transparent rounded-full" />
+        </div>
       ) : (
         <div className="card p-8 w-full max-w-md text-center">
-          <span className="text-5xl mb-3 block">🌿</span>
-          <h1 className="text-2xl mb-1">Welcome to Sage</h1>
-          <p className="text-swansons-muted mb-8">
+          <div className="flex justify-center mb-4">
+            <Logo width={120} height={60} />
+          </div>
+          {/* <p className="font-body text-swansons-black mb-8">
             Swansons Nursery Plant Care
-          </p>
+          </p> */}
 
-          {/* ── SIGN IN / SIGN UP ── */}
           {(mode === "signin" || mode === "signup") && (
             <>
-              {/* Phone */}
               <form
                 onSubmit={
                   phoneStep === "input"
@@ -185,7 +184,7 @@ export default function SignInPage() {
                 }
                 className="mb-5"
               >
-                <label className="block text-xs font-medium mb-1 text-gray-600 text-left">
+                <label className="block text-xs font-medium mb-1 text-swansons-black text-left">
                   Phone Number
                 </label>
                 {phoneStep === "input" && (
@@ -209,7 +208,7 @@ export default function SignInPage() {
                 )}
                 {phoneStep === "code" && (
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs text-gray-500 text-left">
+                    <p className="text-xs text-swansons-black text-left">
                       Code sent to {phone}
                     </p>
                     <input
@@ -229,7 +228,7 @@ export default function SignInPage() {
                     </button>
                     <button
                       type="button"
-                      className="text-xs text-gray-400 underline"
+                      className="text-xs text-swansons-black underline"
                       onClick={() => {
                         setPhoneStep("input");
                         setPhoneCode("");
@@ -248,7 +247,6 @@ export default function SignInPage() {
 
               {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 
-              {/* Google */}
               <button
                 onClick={signInWithGoogle}
                 className="w-full rounded-full bg-swansons-navy text-white px-6 py-3 hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] transition mb-4"
@@ -256,17 +254,15 @@ export default function SignInPage() {
                 Sign in with Google
               </button>
 
-              {/* Divider */}
               <div className="my-4 flex items-center">
                 <div className="flex-1 h-px bg-gray-200" />
-                <span className="mx-3 text-gray-400 text-xs">or</span>
+                <span className="mx-3 text-swansons-black text-xs">or</span>
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
 
-              {/* Email/Password */}
               <form onSubmit={handleEmailAuth} className="space-y-3 text-left">
                 <div>
-                  <label className="block text-xs font-medium mb-1 text-gray-600">
+                  <label className="block text-xs font-medium mb-1 text-swansons-black">
                     Email
                   </label>
                   <input
@@ -278,7 +274,7 @@ export default function SignInPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1 text-gray-600">
+                  <label className="block text-xs font-medium mb-1 text-swansons-black">
                     Password
                   </label>
                   <input
@@ -329,11 +325,12 @@ export default function SignInPage() {
             </>
           )}
 
-          {/* ── FORGOT PASSWORD ── */}
           {mode === "reset" && (
             <>
-              <h2 className="text-lg font-medium mb-2">Reset Password</h2>
-              <p className="text-sm text-gray-500 mb-6">
+              <h2 className="text-lg font-medium mb-2 text-swansons-black">
+                Reset Password
+              </h2>
+              <p className="text-sm text-swansons-black mb-6">
                 Enter your email and we&apos;ll send you a reset link.
               </p>
               {resetSent ? (
@@ -342,7 +339,7 @@ export default function SignInPage() {
                   <p className="text-green-700 font-medium mb-2">
                     Reset email sent!
                   </p>
-                  <p className="text-xs text-gray-500 mb-6">
+                  <p className="text-xs text-swansons-black mb-6">
                     Check your inbox for the reset link.
                   </p>
                   <button
@@ -359,7 +356,7 @@ export default function SignInPage() {
               ) : (
                 <form onSubmit={handleReset} className="space-y-3 text-left">
                   <div>
-                    <label className="block text-xs font-medium mb-1 text-gray-600">
+                    <label className="block text-xs font-medium mb-1 text-swansons-black">
                       Email
                     </label>
                     <input
@@ -384,7 +381,7 @@ export default function SignInPage() {
                       setMode("signin");
                       setError(null);
                     }}
-                    className="w-full text-sm text-gray-500 mt-2 cursor-pointer"
+                    className="w-full text-sm text-swansons-black mt-2 cursor-pointer"
                   >
                     ← Back to Sign In
                   </button>
@@ -393,7 +390,7 @@ export default function SignInPage() {
             </>
           )}
 
-          <p className="text-xs text-gray-400 mt-6">
+          <p className="text-xs text-swansons-black mt-6">
             On iPhone? If you see passkey options, tap{" "}
             <span className="font-medium">&quot;Other accounts&quot;</span> to
             sign in with Google.
