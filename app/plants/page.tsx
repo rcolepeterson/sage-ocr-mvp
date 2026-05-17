@@ -1,6 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import {
   getSpaces,
@@ -18,7 +19,7 @@ export default function MyPlantsPage() {
   const [spacesLoading, setSpacesLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  async function loadAll(uid: string) {
+  const loadAll = useCallback(async (uid: string) => {
     const fetchedSpaces = await getSpaces(uid);
     setSpaces(fetchedSpaces);
     const allPlants: Record<string, any[]> = {};
@@ -27,12 +28,12 @@ export default function MyPlantsPage() {
     }
     setPlantsBySpace(allPlants);
     setSpacesLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
     loadAll(user.uid);
-  }, [user]);
+  }, [user, loadAll]);
 
   async function handleDeletePlant(spaceId: string, plantId: string) {
     if (!user) return;
@@ -43,12 +44,10 @@ export default function MyPlantsPage() {
     setDeletingId(null);
   }
 
-  // Derive space tags from available data
   function getSpaceTags(space: any): string[] {
     const tags: string[] = [];
     if (space.type === "indoor") tags.push("Indoor");
     if (space.type === "outdoor") tags.push("Outdoor");
-    // lightLevel + containment will be added once Space schema is updated
     return tags;
   }
 
@@ -63,7 +62,7 @@ export default function MyPlantsPage() {
   return (
     <ProtectedRoute>
       <main className="min-h-screen bg-swansons-cream px-4 pt-8 pb-28">
-        <h1 className=" mb-8 pb-10 border-b border-swansons-navy">
+        <h1 className="mb-8 pb-10 border-b border-swansons-navy">
           Your spaces
         </h1>
 
@@ -80,7 +79,6 @@ export default function MyPlantsPage() {
 
             return (
               <section key={space.id} className="mb-10">
-                {/* ── Space header ── */}
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <p className="font-body font-bold text-swansons-navy uppercase tracking-widest text-sm mb-2">
@@ -99,13 +97,11 @@ export default function MyPlantsPage() {
                       </div>
                     )}
                   </div>
-                  {/* Edit space — placeholder until edit space page exists */}
                   <button className="w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shrink-0 ml-3">
                     <span className="text-white text-xs">✏️</span>
                   </button>
                 </div>
 
-                {/* ── Plant cards ── */}
                 {plants.length === 0 ? (
                   <div className="bg-white rounded-2xl p-5 text-center">
                     <p className="font-body text-swansons-muted text-sm italic">
@@ -119,7 +115,6 @@ export default function MyPlantsPage() {
                         key={plant.id}
                         className="bg-white rounded-2xl p-4 relative"
                       >
-                        {/* Edit plant button */}
                         <Link
                           href={`/plant/${space.id}/${plant.id}`}
                           className="absolute top-3 right-3 w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center"
@@ -127,9 +122,7 @@ export default function MyPlantsPage() {
                           <span className="text-white text-xs">✏️</span>
                         </Link>
 
-                        {/* Plant info row */}
                         <div className="flex items-center gap-4 mb-4 pr-10">
-                          {/* Circular photo */}
                           <div className="w-16 h-16 rounded-full overflow-hidden bg-swansons-green-muted shrink-0 flex items-center justify-center">
                             {plant.photo ? (
                               <img
@@ -141,8 +134,6 @@ export default function MyPlantsPage() {
                               <span className="text-2xl">🌱</span>
                             )}
                           </div>
-
-                          {/* Name */}
                           <div>
                             <p className="font-heading font-semibold text-swansons-navy leading-tight">
                               {plant.commonName}
@@ -153,19 +144,17 @@ export default function MyPlantsPage() {
                           </div>
                         </div>
 
-                        {/* Ask An Expert button */}
                         <Link
                           href={`/ask?plantId=${space.id}_${plant.id}&plantName=${encodeURIComponent(plant.commonName)}`}
                         >
                           <Button
                             variant="primary"
-                            className="w-full rounded-full"
+                            className="w-full rounded-full mx-auto block"
                           >
                             Ask An Expert
                           </Button>
                         </Link>
 
-                        {/* Delete — subtle, below button */}
                         <button
                           onClick={() => handleDeletePlant(space.id, plant.id)}
                           disabled={deletingId === plant.id}

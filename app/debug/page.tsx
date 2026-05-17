@@ -3,8 +3,13 @@
 
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { resetOnboarding } from "@/lib/firebase/users";
-import { auth } from "firebase-admin";
+import { auth } from "@/lib/firebase/auth";
+import { db } from "@/lib/firebase/firestore";
+import { updateProfile } from "firebase/auth";
+import { doc, updateDoc, deleteField } from "firebase/firestore";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useState } from "react";
+
 function ResetOnboardingTool() {
   const { user } = useAuth();
   const [done, setDone] = useState(false);
@@ -43,7 +48,6 @@ export default function DebugPage() {
   const { user } = useAuth();
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Email test state
   const [email, setEmail] = useState("");
   const [emailResult, setEmailResult] = useState<string | null>(null);
   const [emailLoading, setEmailLoading] = useState(false);
@@ -83,11 +87,9 @@ export default function DebugPage() {
     setError(null);
     try {
       if (!user?.uid) throw new Error("No user UID");
-      // Clear displayName in Firebase Auth
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: null });
       }
-      // Delete displayName from Firestore
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, { displayName: deleteField() });
       setStatus("Display name cleared. Reloading...");
@@ -104,7 +106,7 @@ export default function DebugPage() {
       <main className="min-h-screen flex flex-col items-center justify-start px-4 pt-10">
         <div className="card p-6 w-full max-w-md text-center">
           <ResetOnboardingTool />
-          {/* Email Test Section */}
+
           <div className="border border-gray-200 rounded-lg p-4 mb-4 text-left">
             <h2 className="font-semibold text-gray-700 mb-2">📧 Email Test</h2>
             <p className="text-xs text-gray-500 mb-3">
@@ -132,6 +134,7 @@ export default function DebugPage() {
               <div className="mt-2 text-sm text-center">{emailResult}</div>
             )}
           </div>
+
           <h1 className="text-2xl font-bold mb-4 text-red-600">DEV TOOLS</h1>
 
           <div className="border border-gray-200 rounded-lg p-4 mb-4 text-left">
@@ -142,7 +145,6 @@ export default function DebugPage() {
               Clears your display name from Firebase Auth and Firestore,
               triggering the onboarding flow on reload.
             </p>
-
             {isGoogleUser ? (
               <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded p-3">
                 ⚠️ You are signed in with Google. Clearing your display name
@@ -165,7 +167,4 @@ export default function DebugPage() {
       </main>
     </ProtectedRoute>
   );
-}
-function doc(db: any, arg1: string, uid: string) {
-  throw new Error("Function not implemented.");
 }
