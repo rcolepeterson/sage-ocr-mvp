@@ -68,20 +68,14 @@ function OnboardingModalInner() {
         if (!preview && e.target === e.currentTarget) dismiss();
       }}
     >
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden px-4">
         {/* Heading — now at the top */}
-        <h2 className="text-center px-6 pt-6 pb-4 whitespace-pre-line leading-snug">
+        <h2 className="text-center px-0 pt-6 pb-4 whitespace-pre-line leading-snug">
           {current.title}
         </h2>
         {/* Illustration */}
-        <div className="h-56 w-full relative overflow-hidden">
-          <Image
-            src={current.image}
-            alt={current.title}
-            fill
-            className="object-cover"
-            priority
-          />
+        <div className="h-50 w-full relative overflow-hidden">
+          <Image src={current.image} alt={current.title} fill priority />
         </div>
         <div className="px-6 pt-5 pb-7 flex flex-col items-center">
           {/* Step dots (scrolling indicator) commented out for design */}
@@ -99,7 +93,7 @@ function OnboardingModalInner() {
           </div>
           */}
           {/* Body */}
-          <p className="text-center text-black text-base leading-snug mb-7 w-[80%] mx-auto">
+          <p className="text-center text-black text-base leading-snug mb-7 mx-auto">
             {current.body}
           </p>
           {/* CTA button */}
