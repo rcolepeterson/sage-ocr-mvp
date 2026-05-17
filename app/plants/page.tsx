@@ -32,6 +32,7 @@ export default function MyPlantsPage() {
 
   useEffect(() => {
     if (!user) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll(user.uid);
   }, [user, loadAll]);
 
