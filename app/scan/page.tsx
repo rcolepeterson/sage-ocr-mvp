@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useRef, useState, useEffect } from "react";
@@ -410,69 +411,58 @@ export default function ScanPage() {
         <div className="px-4 pt-8 pb-36 max-w-lg mx-auto">
           {/* Success badge */}
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-swansons-navy rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-3xl">✓</span>
-            </div>
+            <img
+              src="/images/add_plant_check_mark.png"
+              alt="Success"
+              width={100}
+              height={100}
+            />
           </div>
 
           <h2 className="font-heading text-3xl font-bold text-swansons-navy text-center mb-8 leading-tight">
             Where is your{" "}
             <span className="italic">{llmResult?.commonName}</span> going?
           </h2>
-
-          {/* Create new space */}
-          <Button
-            onClick={() => setStep("create-space")}
-            variant="primary"
-            className="w-full rounded-full py-4"
-          >
-            + Create a New Space
-          </Button>
-
-          {/* Select existing space */}
-          {spaces.length > 0 && (
-            <select
-              className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-4 rounded-full text-base bg-transparent px-6 mb-6"
-              value={selectedSpaceId}
-              onChange={(e) => setSelectedSpaceId(e.target.value)}
+          <div className="flex flex-col items-center gap-4 mb-6">
+            {/* Create new space */}
+            <Button
+              onClick={() => setStep("create-space")}
+              variant="primary"
+              className="w-[260px]"
             >
-              <option value="">Select Existing Space</option>
-              {spaces.map((space) => (
-                <option key={space.id} value={space.id}>
-                  {space.name}
-                </option>
-              ))}
-            </select>
-          )}
+              <span className="flex items-center gap-6">
+                <span className="text-2xl leading-none">+</span>
+                <span>Create a New Space</span>
+              </span>
+            </Button>
 
-          {/* Optional photo */}
-          <div className="bg-white rounded-2xl p-4 mb-6">
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              ref={photoInputRef}
-              onChange={handlePhotoChange}
-            />
-            <button
-              type="button"
-              onClick={() => photoInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-swansons-green text-swansons-muted font-body py-3 rounded-xl text-sm flex items-center justify-center gap-2"
-            >
-              📷 {photoFile ? "Change photo" : "Add a photo (optional)"}
-            </button>
-            {photoPreview && (
-              <img
-                src={photoPreview}
-                alt="Plant preview"
-                className="rounded-xl mt-3 w-full object-cover max-h-40"
-              />
-            )}
-            {uploading && (
-              <p className="text-xs text-swansons-green font-body mt-2">
-                Uploading... {uploadProgress.toFixed(0)}%
-              </p>
+            {/* Select existing space */}
+            {spaces.length > 0 && (
+              <div className="relative w-[260px]">
+                <select
+                  className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-[13px] rounded-full text-base bg-transparent px-6 appearance-none"
+                  value={selectedSpaceId}
+                  onChange={(e) => setSelectedSpaceId(e.target.value)}
+                >
+                  <option value="">Select Existing Space</option>
+                  {spaces.map((space) => (
+                    <option key={space.id} value={space.id}>
+                      {space.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-swansons-navy pointer-events-none">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M6 9l6 6 6-6"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </div>
             )}
           </div>
 
@@ -483,17 +473,7 @@ export default function ScanPage() {
               onClick={() => selectedSpaceId && saveToSpace(selectedSpaceId)}
               disabled={saving || !selectedSpaceId}
               variant="inverted"
-              className="w-full max-w-sm rounded-full"
-            >
-              {saving ? "Saving..." : "Save"}
-            </Button>
-
-            {/* Create space bottom bar */}
-            <Button
-              onClick={handleCreateAndSave}
-              disabled={saving || !newSpaceName.trim()}
-              variant="inverted"
-              className="w-full max-w-sm rounded-full"
+              className=""
             >
               {saving ? "Saving..." : "Save"}
             </Button>

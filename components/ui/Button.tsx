@@ -26,13 +26,13 @@ export function Button({
     disabled:
       "bg-[var(--color-swansons-cream)] text-[var(--color-swansons-green-muted)] border border-[var(--color-swansons-green-muted)] cursor-not-allowed",
     inverted:
-      "bg-white text-[var(--color-swansons-navy)] hover:bg-gray-100 active:scale-[0.98] cursor-pointer",
+      "bg-transparent text-white border-2 border-white hover:bg-white/10 active:scale-[0.98] cursor-pointer",
   };
 
   const sizes = {
-    sm: "px-4 py-2 text-sm rounded-full max-w-[260px]",
-    md: "px-6 py-3 text-base rounded-full max-w-[260px]",
-    lg: "px-8 py-4 text-lg rounded-full max-w-[260px]",
+    sm: "px-4 py-2 text-sm rounded-full w-[260px]",
+    md: "px-6 py-3 text-base rounded-full w-[260px]",
+    lg: "px-8 py-4 text-lg rounded-full w-[260px]",
   };
 
   // Auto-apply disabled variant if disabled prop is true
