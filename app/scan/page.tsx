@@ -363,7 +363,7 @@ export default function ScanPage() {
           <Button
             onClick={() => handleScan()}
             variant="primary"
-            className="w-full rounded-full py-2"
+            className="py-2"
           >
             Scan Plant Tag/Label
           </Button>

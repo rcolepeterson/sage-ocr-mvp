@@ -9,6 +9,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/auth";
 import { useAuth, AuthContext } from "@/lib/firebase/AuthContext";
 import { updateUserDisplayName } from "@/lib/firebase/users";
+import EditIcon from "@/components/ui/EditIcon";
 
 const HIDDEN_ROUTES = ["/signin", "/unauthorized", "/terms", "/onboarding"];
 
@@ -214,7 +215,7 @@ export default function HamburgerMenu() {
                         setMessage(null);
                       }}
                     >
-                      ✏️
+                      <EditIcon width={16} height={16} />
                     </button>
                   )}
                 </div>

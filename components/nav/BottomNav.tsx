@@ -1,4 +1,6 @@
 "use client";
+import EditIcon from "@/components/ui/EditIcon";
+
 import { useAuth, AuthContext } from "@/lib/firebase/AuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -136,7 +138,7 @@ export default function BottomNav() {
                     }}
                   >
                     <span role="img" aria-label="Edit">
-                      ✏️
+                      <EditIcon width={16} height={16} />
                     </span>
                   </button>
                 )}

@@ -12,6 +12,7 @@ import { uploadPlantPhoto } from "@/lib/firebase/storage";
 import { notFound } from "next/navigation";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/Button";
+import EditIcon from "@/components/ui/EditIcon";
 import { getSpace } from "@/lib/firebase/spaces";
 
 /* ─── Tag Badges — staff/admin only ─────────────────────────────────────── */
@@ -277,7 +278,7 @@ function PlantProfilePage({
               className="absolute bottom-0 right-0 w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shadow-md"
               aria-label="Change plant photo"
             >
-              <span className="text-white text-xs">✏️</span>
+              <EditIcon width={16} height={16} />
             </button>
           </div>
         </div>

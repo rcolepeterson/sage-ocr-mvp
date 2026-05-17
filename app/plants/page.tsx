@@ -10,6 +10,7 @@ import {
 } from "@/lib/firebase/spaces";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
+import EditIcon from "@/components/ui/EditIcon";
 import { Button } from "@/components/ui/Button";
 
 export default function MyPlantsPage() {
@@ -99,7 +100,7 @@ export default function MyPlantsPage() {
                     )}
                   </div>
                   <button className="w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shrink-0 ml-3">
-                    <span className="text-white text-xs">✏️</span>
+                    <EditIcon width={16} height={16} />
                   </button>
                 </div>
 
@@ -120,7 +121,7 @@ export default function MyPlantsPage() {
                           href={`/plant/${space.id}/${plant.id}`}
                           className="absolute top-3 right-3 w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center"
                         >
-                          <span className="text-white text-xs">✏️</span>
+                          <EditIcon width={16} height={16} />
                         </Link>
 
                         <div className="flex items-center gap-4 mb-4 pr-10">
