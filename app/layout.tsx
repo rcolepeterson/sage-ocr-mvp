@@ -1,4 +1,5 @@
 import ClientLayout from "@/components/ClientLayout";
+import ScrollToTop from "@/components/ScrollToTop";
 import type { Metadata } from "next";
 import {
   Geist,
@@ -63,6 +64,7 @@ export default function RootLayout({
         <AuthProvider>
           <div className="max-w-lg mx-auto min-h-screen bg-swansons-cream relative">
             <ClientLayout>
+              <ScrollToTop />
               <ProtectedRoute>{children}</ProtectedRoute>
             </ClientLayout>
             <HamburgerMenu />

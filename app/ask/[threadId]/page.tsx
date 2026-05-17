@@ -98,42 +98,59 @@ export default function ThreadDetailPage() {
   return (
     <ProtectedRoute>
       <main
-        className="flex flex-col bg-swansons-cream"
+        className="flex flex-col bg-swansons-navy"
         style={{ height: "calc(100vh - 56px)" }}
       >
         <div className="flex flex-col h-full max-w-lg mx-auto w-full">
           {/* ── Scrollable messages ── */}
           <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
             {thread.replies?.length > 0 ? (
-              thread.replies.map((r: any) => (
-                <div
-                  key={r.id}
-                  className="border-l-4 border-swansons-navy pl-4"
-                >
-                  <p className="font-body text-swansons-text text-base leading-relaxed">
-                    {r.message}
-                  </p>
-                  {r.photoURL && (
-                    <a
-                      href={r.photoURL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        src={r.photoURL}
-                        alt="Attached"
-                        className="rounded-xl mt-3 max-h-48 object-cover"
-                      />
-                    </a>
-                  )}
-                  <p className="font-body text-xs text-swansons-muted mt-2">
-                    {r.isStaff ? "Swansons Expert" : "You"} •{" "}
-                    {formatTimeAgo(r.createdAt)}
-                  </p>
-                </div>
-              ))
+              thread.replies.map((r: any) => {
+                const isStaff = r.isStaff;
+                // TODO: Replace with actual staffName and specialty if available
+                const staffName = r.staffName || "Swansons Expert";
+                const specialty = r.specialty;
+                return (
+                  <div
+                    key={r.id}
+                    className={
+                      isStaff
+                        ? "border-l-4 border-swansons-green pl-4"
+                        : "border-l-4 border-orange-400 pl-4"
+                    }
+                  >
+                    <p className="font-body text-white text-base leading-relaxed">
+                      {r.message}
+                    </p>
+                    {r.photoURL && (
+                      <a
+                        href={r.photoURL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img
+                          src={r.photoURL}
+                          alt="Attached"
+                          className="rounded-xl mt-3 max-h-48 object-cover"
+                        />
+                      </a>
+                    )}
+                    <p className="font-body text-xs text-white/50 mt-2">
+                      {isStaff ? (
+                        <>
+                          {staffName}
+                          {specialty ? ` • ${specialty}` : ""} •{" "}
+                          {formatTimeAgo(r.createdAt)}
+                        </>
+                      ) : (
+                        <>You • {formatTimeAgo(r.createdAt)}</>
+                      )}
+                    </p>
+                  </div>
+                );
+              })
             ) : (
-              <p className="font-body text-center text-swansons-muted text-sm mt-8">
+              <p className="font-body text-center text-white/50 text-sm mt-8">
                 No replies yet. A Swansons expert will respond soon. 🌿
               </p>
             )}
@@ -165,7 +182,7 @@ export default function ThreadDetailPage() {
                     disabled={submitting || uploading}
                     className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
                   >
-                    <span className="text-xl leading-none">+</span>
+                    <span className="text-4xl leading-none">+</span>
                   </button>
 
                   {/* Send button */}

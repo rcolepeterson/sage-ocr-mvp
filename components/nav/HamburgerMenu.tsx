@@ -140,7 +140,7 @@ export default function HamburgerMenu() {
           <Logo width={100} height={50} />
           <button
             onClick={() => setOpen(false)}
-            className="p-1 text-swansons-muted hover:text-swansons-navy transition-colors"
+            className="p-1 text-swansons-muted hover:text-swansons-navy transition-colors -mt-[60px]"
             aria-label="Close menu"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
