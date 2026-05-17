@@ -152,7 +152,15 @@ function AskPageInner() {
                   ))}
                 </select>
                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-swansons-navy pointer-events-none">
-                  ▾
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M6 9l6 6 6-6"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </span>
               </div>
 
@@ -176,7 +184,15 @@ function AskPageInner() {
                   ))}
                 </select>
                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-swansons-navy pointer-events-none">
-                  ▾
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M6 9l6 6 6-6"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </span>
               </div>
 
