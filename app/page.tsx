@@ -35,7 +35,12 @@ function LatestPlantCard() {
 function NotificationsCard() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div className="relative bg-white rounded-2xl shadow-sm overflow-visible">
+      {/* Badge — half on/half off top right */}
+      <span className=" pb-0.5  absolute -top-2 -right-2 bg-swansons-navy text-white text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center z-10">
+        3
+      </span>
+
       <button
         className="w-full flex items-center justify-between px-5 py-4"
         onClick={() => setOpen((v) => !v)}
@@ -43,12 +48,7 @@ function NotificationsCard() {
         <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted">
           Notifications
         </span>
-        <div className="flex items-center gap-3">
-          <span className="bg-swansons-navy text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-            3
-          </span>
-          <span className="text-swansons-navy text-xl leading-none">+</span>
-        </div>
+        <span className="text-swansons-navy text-3xl leading-none">+</span>
       </button>
       {open && (
         <div className="px-5 pb-4 text-sm text-swansons-muted">
