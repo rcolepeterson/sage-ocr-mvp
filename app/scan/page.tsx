@@ -440,7 +440,7 @@ export default function ScanPage() {
             {spaces.length > 0 && (
               <div className="relative w-65">
                 <select
-                  className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-[13px] rounded-full text-base bg-transparent px-6 appearance-none"
+                  className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-3.25 rounded-full text-base bg-transparent px-6 appearance-none"
                   value={selectedSpaceId}
                   onChange={(e) => setSelectedSpaceId(e.target.value)}
                 >

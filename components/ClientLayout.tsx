@@ -13,24 +13,24 @@ const NO_TOP_PADDING = [
 ];
 const NO_MAX_WIDTH = ["/admin"];
 
-const PLANTS = [
-  { src: "/images/TestPlants1.png" },
-  { src: "/images/TestPlants2.png" },
-  { src: "/images/TestPlants3.png" },
-  { src: "/images/TestPlants4.png" },
-  { src: "/images/TestPlants5.png" },
-  { src: "/images/TestPlants6.png" },
-  { src: "/images/TestPlants7.png" },
-];
+// const PLANTS = [
+//   { src: "/images/TestPlants1.png" },
+//   { src: "/images/TestPlants2.png" },
+//   { src: "/images/TestPlants3.png" },
+//   { src: "/images/TestPlants4.png" },
+//   { src: "/images/TestPlants5.png" },
+//   { src: "/images/TestPlants6.png" },
+//   { src: "/images/TestPlants7.png" },
+// ];
 
-const PAGE_PLANTS = {
-  "/": { src: "/images/TestPlants1.png" },
-  "/plants": { src: "/images/TestPlants2.png" },
-  "/ask": { src: "/images/TestPlants3.png" },
-  "/scan": { src: "/images/TestPlants4.png" },
-  "/onboarding": { src: "/images/TestPlants2.png" },
-  "/signin": { src: "/images/TestPlants6.png" },
-};
+// const PAGE_PLANTS = {
+//   "/": { src: "/images/TestPlants1.png" },
+//   "/plants": { src: "/images/TestPlants2.png" },
+//   "/ask": { src: "/images/TestPlants3.png" },
+//   "/scan": { src: "/images/TestPlants4.png" },
+//   "/onboarding": { src: "/images/TestPlants2.png" },
+//   "/signin": { src: "/images/TestPlants6.png" },
+// };
 
 export default function ClientLayout({
   children,
@@ -43,18 +43,18 @@ export default function ClientLayout({
     pathname.startsWith(route),
   );
   const isAdmin = pathname.startsWith("/admin");
-  const plantIndex =
-    Math.abs(pathname.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)) %
-    PLANTS.length;
-  //const plant = PLANTS[plantIndex];
+  // const plantIndex =
+  //   Math.abs(pathname.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)) %
+  //   PLANTS.length;
+  // //const plant = PLANTS[plantIndex];
 
-  const plant =
-    PAGE_PLANTS[pathname as keyof typeof PAGE_PLANTS] ??
-    PLANTS[
-      Math.abs(
-        pathname.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0),
-      ) % PLANTS.length
-    ];
+  // const plant =
+  //   PAGE_PLANTS[pathname as keyof typeof PAGE_PLANTS] ??
+  //   PLANTS[
+  //     Math.abs(
+  //       pathname.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0),
+  //     ) % PLANTS.length
+  //   ];
 
   return (
     <div
