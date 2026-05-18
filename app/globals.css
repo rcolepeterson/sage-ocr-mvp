@@ -42,6 +42,15 @@
     font-family: var(--font-body);
   }
 
+  @layer base {
+    button,
+    [role="button"],
+    select,
+    a {
+      cursor: pointer;
+    }
+  }
+
   body {
     @apply bg-swansons-cream text-swansons-text font-body;
   }
