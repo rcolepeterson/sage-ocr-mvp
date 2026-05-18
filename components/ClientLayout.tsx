@@ -14,13 +14,13 @@ const NO_TOP_PADDING = [
 const NO_MAX_WIDTH = ["/admin"];
 
 const PLANTS = [
-  { src: "/images/TestPlants1.png", side: "left" },
-  { src: "/images/TestPlants2.png", side: "right" },
-  { src: "/images/TestPlants3.png", side: "left" },
-  { src: "/images/TestPlants4.png", side: "left" },
-  { src: "/images/TestPlants5.png", side: "left" },
-  { src: "/images/TestPlants6.png", side: "left" },
-  { src: "/images/TestPlants7.png", side: "left" },
+  { src: "/images/TestPlants1.png" },
+  { src: "/images/TestPlants2.png" },
+  { src: "/images/TestPlants3.png" },
+  { src: "/images/TestPlants4.png" },
+  { src: "/images/TestPlants5.png" },
+  { src: "/images/TestPlants6.png" },
+  { src: "/images/TestPlants7.png" },
 ];
 
 export default function ClientLayout({
@@ -46,20 +46,21 @@ export default function ClientLayout({
           ? "max-w-lg mx-auto min-h-screen bg-swansons-cream relative"
           : "min-h-screen bg-swansons-cream relative"
       }
-      style={
-        !isAdmin
-          ? {
-              backgroundImage: `url(${plant.src})`,
-              backgroundRepeat: "no-repeat",
-              backgroundAttachment: "fixed",
-              backgroundPosition:
-                plant.side === "right" ? "bottom right" : "bottom left",
-              backgroundSize: "160px",
-            }
-          : undefined
-      }
     >
-      <div className={needsPadding ? "pt-14" : ""}>{children}</div>
+      {!isAdmin && (
+        <div
+          className="fixed bottom-0 w-40 md:w-56 pointer-events-none select-none"
+          style={{ left: "max(0px, calc(50vw - 256px))" }}
+        >
+          <img src={plant.src} alt="" className="w-full h-auto" />
+        </div>
+      )}
+      <div
+        style={{ position: "relative", zIndex: 1 }}
+        className={needsPadding ? "pt-14" : ""}
+      >
+        {children}
+      </div>
     </div>
   );
 }
