@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { updateUserDisplayName } from "@/lib/firebase/users";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, Suspense } from "react";
 
-export default function OnboardingPage() {
+function OnboardingForm() {
   const { user } = useAuth();
   const authCtx = useContext(AuthContext);
   const router = useRouter();
@@ -97,5 +97,13 @@ export default function OnboardingPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense>
+      <OnboardingForm />
+    </Suspense>
   );
 }
