@@ -312,7 +312,7 @@ export default function ScanPage() {
 
   /* ─── Render ─────────────────────────────────────────────────────────── */
   return (
-    <main className="min-h-screen bg-swansons-cream">
+    <main className="min-h-screen ">
       {/* Camera — mounted during idle + scanning */}
       {(step === "idle" || step === "scanning") && (
         <div className="px-4 pt-4 relative">

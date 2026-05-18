@@ -63,7 +63,7 @@ export default function MyPlantsPage() {
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen bg-swansons-cream px-4 pt-8 pb-28">
+      <main className="min-h-screen px-4 pt-8 pb-28">
         <h1 className="mb-8 pb-10 border-b border-swansons-navy">
           Your spaces
         </h1>

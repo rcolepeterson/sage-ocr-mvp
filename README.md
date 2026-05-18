@@ -33,4 +33,5 @@ https://imagine.wpp.ai/chat/vBtXbYvXSfQgVSuvitMA8/foundational?resultId=vCn7AIib
 
 https://imagine.wpp.ai/chat/6jQJv4kOvypySOa1V4LYj/foundational?resultId=8VPoHKuC2eIHGNAYiK4x3
 
-this is a test
+this is debug URLS
+http://localhost:3000/onboarding?onboarding=preview

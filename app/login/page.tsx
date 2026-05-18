@@ -25,7 +25,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-swansons-cream flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-4">
       <form onSubmit={handleSubmit} className="card p-8 w-full max-w-sm">
         {/* Logo / Title */}
         <div className="text-center mb-8">

@@ -38,7 +38,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-swansons-cream px-4 pt-6 overflow-hidden relative">
+    <main className="min-h-screen px-4 pt-6 overflow-hidden relative">
       {/* Logo */}
       <div className="flex justify-center mb-16">
         <Logo width={160} height={80} />

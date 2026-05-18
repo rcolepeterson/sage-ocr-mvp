@@ -249,7 +249,7 @@ function PlantProfilePage({
   if (!plant) return notFound();
 
   return (
-    <main className="min-h-screen bg-swansons-cream pb-28">
+    <main className="min-h-screen  pb-28">
       <div className="px-4 pt-8 max-w-lg mx-auto">
         {/* ── Photo circle ── */}
         <div className="flex justify-center mb-5">

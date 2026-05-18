@@ -130,7 +130,7 @@ function AskPageInner() {
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen bg-swansons-cream flex flex-col">
+      <main className="min-h-screen flex flex-col">
         {/* ── Top section ── */}
         <div className="px-4 pt-4 pb-6">
           {/* Logo */}

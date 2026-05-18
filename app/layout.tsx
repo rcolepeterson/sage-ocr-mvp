@@ -62,7 +62,7 @@ export default function RootLayout({
     >
       <body className="antialiased">
         <AuthProvider>
-          <div className="min-h-screen bg-swansons-cream relative">
+          <div className="min-h-screen relative">
             <ClientLayout>
               <ScrollToTop />
               <ProtectedRoute>{children}</ProtectedRoute>
