@@ -74,13 +74,20 @@ function OnboardingModalInner() {
           {current.title}
         </h2>
         {/* Illustration */}
-        <div className="h-50 w-full relative overflow-hidden">
-          <Image src={current.image} alt={current.title} fill priority />
+        <div className="w-full flex justify-center py-2">
+          <Image
+            src={current.image}
+            alt={current.title}
+            width={300}
+            height={250}
+            className="w-full h-auto max-h-48 lg:max-h-none object-contain"
+            priority
+          />
         </div>
         <div className="px-6 pt-5 pb-7 flex flex-col items-center">
-          {/* Step dots (scrolling indicator) commented out for design */}
-          {/**
-          <div className="flex gap-2 mb-5">
+          {/**Step dots (scrolling indicator) commented out for design */}
+
+          {/* <div className="flex gap-2 mb-5">
             {STEPS.map((_, i) => (
               <div
                 key={i}
@@ -90,8 +97,8 @@ function OnboardingModalInner() {
                 )}
               />
             ))}
-          </div>
-          */}
+          </div> */}
+
           {/* Body */}
           <p className="text-center text-black text-base leading-snug mb-7 mx-auto">
             {current.body}
