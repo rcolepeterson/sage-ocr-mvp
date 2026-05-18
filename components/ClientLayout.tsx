@@ -66,10 +66,15 @@ export default function ClientLayout({
     >
       {!isAdmin && (
         <div
-          className="fixed bottom-0 w-40 md:w-56 pointer-events-none select-none"
+          className="fixed top-0 w-full pointer-events-none select-none"
           style={{ left: "max(0px, calc(50vw - 256px))" }}
         >
-          <img src={plant.src} alt="" className="w-full h-auto" />
+          {/* <img src={plant.src} alt="" className="w-full h-auto" /> */}
+          <img
+            src="/images/FullWidthTest.png"
+            alt=""
+            className="w-full h-auto"
+          />
         </div>
       )}
       <div
