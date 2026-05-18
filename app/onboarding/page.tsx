@@ -1,51 +1,63 @@
 "use client";
 import { useAuth, AuthContext } from "@/lib/firebase/AuthContext";
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/ui/Logo";
 import { updateUserDisplayName } from "@/lib/firebase/users";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useContext, useEffect } from "react";
 
 export default function OnboardingPage() {
   const { user } = useAuth();
   const authCtx = useContext(AuthContext);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preview = searchParams.get("onboarding") === "preview";
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // If user already has displayName, redirect home
-    if (user && user.displayName) {
+    if (!preview && user && user.displayName) {
       router.replace("/");
     }
-  }, [user, router]);
+  }, [user, router, preview]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !name.trim()) return;
+    if (!name.trim()) return;
     setSubmitting(true);
-    await updateUserDisplayName(user.uid, name.trim());
-    // Patch AuthContext user state immediately
-    if (authCtx && typeof authCtx.setUser === "function") {
-      authCtx.setUser({
-        ...user,
-        displayName: name.trim(),
-      });
+    if (!preview && user) {
+      await updateUserDisplayName(user.uid, name.trim());
+      if (authCtx && typeof authCtx.setUser === "function") {
+        authCtx.setUser({ ...user, displayName: name.trim() });
+      }
+      setSubmitting(false);
+      router.replace("/");
+    } else {
+      setTimeout(() => setSubmitting(false), 800);
     }
-    setSubmitting(false);
-    router.replace("/");
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-swansons-cream px-4">
-      <div className="max-w-lg w-full bg-white rounded-xl shadow p-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">Welcome!</h1>
-        <div className="prose prose-sm max-w-none mb-6 text-gray-700 text-center">
-          <p>Let’s get started. What’s your name?</p>
-        </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <main className="min-h-screen bg-swansons-cream px-4 pt-6 overflow-hidden relative">
+      {/* Logo */}
+      <div className="flex justify-center mb-16">
+        <Logo width={160} height={80} />
+      </div>
+
+      {/* Content */}
+      <div className="max-w-lg mx-auto">
+        <h1 className="text-swansons-navy text-center mb-3">Welcome</h1>
+        <p className="font-body text-swansons-text text-center mb-8">
+          Let&apos;s get started. What&apos;s your name?
+        </p>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col items-center gap-6"
+        >
           <input
-            className="input w-full text-lg px-4 py-3 rounded border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-600"
-            placeholder="Your name"
+            className="w-full bg-white border-0 border-b-2 border-swansons-navy/20 font-body text-lg px-4 py-3 focus:outline-none focus:border-swansons-navy text-swansons-text placeholder:text-swansons-muted rounded-sm"
+            placeholder="First Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={submitting}
@@ -53,15 +65,35 @@ export default function OnboardingPage() {
             required
             autoFocus
           />
+
           <Button
             type="submit"
-            className="w-full text-lg font-semibold"
+            className=""
             disabled={submitting || !name.trim()}
             size="md"
             variant="primary"
           >
-            {submitting ? "Saving..." : "Continue"}
+            {submitting
+              ? preview
+                ? "Simulating..."
+                : "Saving..."
+              : "Continue"}
           </Button>
+
+          <Button
+            type="button"
+            variant="text"
+            size="sm"
+            onClick={() => router.replace("/")}
+          >
+            Skip
+          </Button>
+
+          {preview && (
+            <span className="text-xs text-orange-400 font-medium tracking-wide uppercase">
+              Preview mode — changes not saved
+            </span>
+          )}
         </form>
       </div>
     </main>

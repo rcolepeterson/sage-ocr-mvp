@@ -17,7 +17,19 @@ interactions through a back-office console.
 Client: Swansons Nursery
 Agency: Herd of Shepherds
 Live URL: sage-ocr-mvp-one.vercel.app
+
 Firebase Project: sage-swansons-e4677
+
+---
+
+## Debug & Preview Flags
+
+- **Onboarding Modal Preview:**
+  - Add `?onboarding=preview` to any URL (e.g. `/onboarding?onboarding=preview` or `/?onboarding=preview`) to force the onboarding modal or name form to show for design/testing. No data is saved in preview mode.
+- **Dev Mode:**
+  - The app uses `process.env.NODE_ENV === "development"` to detect development mode for local/dev-only logic (see `/lib/firebase/config.ts`).
+- **Debug Tools:**
+  - Visit `/debug` for admin-only dev/debug tools (reset onboarding, test email, etc).
 
 ---
 

@@ -24,7 +24,7 @@ export function Button({
       "bg-transparent text-[var(--color-swansons-navy)] border-2 border-[var(--color-swansons-navy)] hover:bg-[var(--color-swansons-navy)] hover:text-white active:scale-[0.98] cursor-pointer",
     text: "text-[var(--color-swansons-navy)] underline underline-offset-4 hover:opacity-80 cursor-pointer",
     disabled:
-      "bg-transparent text-white/40 border-2 border-white/40 cursor-not-allowed",
+      "bg-swansons-navy/30 text-white/50 border-2 border-transparent cursor-not-allowed",
     inverted:
       "bg-transparent text-white border-2 border-white hover:bg-white/10 active:scale-[0.98] cursor-pointer",
   };
