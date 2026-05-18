@@ -23,6 +23,15 @@ const PLANTS = [
   { src: "/images/TestPlants7.png" },
 ];
 
+const PAGE_PLANTS = {
+  "/": { src: "/images/TestPlants1.png" },
+  "/plants": { src: "/images/TestPlants2.png" },
+  "/ask": { src: "/images/TestPlants3.png" },
+  "/scan": { src: "/images/TestPlants4.png" },
+  "/onboarding": { src: "/images/TestPlants2.png" },
+  "/signin": { src: "/images/TestPlants6.png" },
+};
+
 export default function ClientLayout({
   children,
 }: {
@@ -37,7 +46,15 @@ export default function ClientLayout({
   const plantIndex =
     Math.abs(pathname.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)) %
     PLANTS.length;
-  const plant = PLANTS[plantIndex];
+  //const plant = PLANTS[plantIndex];
+
+  const plant =
+    PAGE_PLANTS[pathname as keyof typeof PAGE_PLANTS] ??
+    PLANTS[
+      Math.abs(
+        pathname.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0),
+      ) % PLANTS.length
+    ];
 
   return (
     <div
