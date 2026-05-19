@@ -120,11 +120,11 @@ function SpacesList() {
               </div>
 
               <div className="flex items-center">
-                <div className="flex -space-x-2">
+                <div className="flex -space-x-3">
                   {photos.map((photo, i) => (
                     <div
                       key={i}
-                      className="w-8 h-8 rounded-full overflow-hidden border-2 border-white bg-swansons-green-muted shrink-0"
+                      className="w-10 h-10 rounded-full overflow-hidden border-2 border-white bg-swansons-green-muted shrink-0"
                     >
                       {photo ? (
                         <img
@@ -146,7 +146,7 @@ function SpacesList() {
                       (_, i) => (
                         <div
                           key={`placeholder-${i}`}
-                          className="w-8 h-8 rounded-full border-2 border-white bg-swansons-green-muted flex items-center justify-center text-sm shrink-0"
+                          className="w-10 h-10 rounded-full border-2 border-white bg-swansons-green-muted flex items-center justify-center text-sm shrink-0"
                         >
                           🌱
                         </div>
