@@ -396,7 +396,7 @@ function PlantProfilePage({
       <input
         type="file"
         accept="image/*"
-        capture="environment"
+        // capture="environment"
         className="hidden"
         ref={photoInputRef}
         onChange={handlePhotoChange}
