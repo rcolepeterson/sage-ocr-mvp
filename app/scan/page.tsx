@@ -15,6 +15,7 @@ import {
 import { uploadPlantPhoto } from "@/lib/firebase/storage";
 import { compressImage } from "@/lib/utils/imageCompression";
 import { Button } from "@/components/ui/Button";
+import { PhotoPicker } from "@/components/ui/PhotoPicker";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type ScanStep = "idle" | "scanning" | "space-select" | "create-space";
@@ -49,7 +50,6 @@ function ScanningOverlay() {
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -222,12 +222,9 @@ export default function ScanPage() {
     complete(query);
   }
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-    }
+  function handlePhotoChange(file: File) {
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   }
 
   async function saveToSpace(spaceId: string) {
@@ -463,6 +460,43 @@ export default function ScanPage() {
                   </svg>
                 </span>
               </div>
+            )}
+          </div>
+
+          {/* Photo picker */}
+          <div className="flex flex-col items-center gap-3 mb-4">
+            <PhotoPicker onFile={handlePhotoChange} disabled={saving}>
+              <button
+                type="button"
+                disabled={saving}
+                className="font-body text-swansons-navy border-2 border-swansons-navy rounded-full px-6 py-2.5 text-sm font-semibold hover:bg-swansons-navy hover:text-white transition"
+              >
+                {photoFile ? "Change Photo" : "+ Add Photo"}
+              </button>
+            </PhotoPicker>
+            {photoPreview && (
+              <div className="flex flex-col items-center gap-1">
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="rounded-xl max-h-32 object-cover"
+                />
+                <button
+                  type="button"
+                  className="text-xs font-body text-red-400"
+                  onClick={() => {
+                    setPhotoFile(null);
+                    setPhotoPreview("");
+                  }}
+                >
+                  Remove photo
+                </button>
+              </div>
+            )}
+            {uploading && (
+              <p className="text-xs font-body text-swansons-green">
+                Uploading... {uploadProgress.toFixed(0)}%
+              </p>
             )}
           </div>
 

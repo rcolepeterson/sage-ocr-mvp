@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Suspense, useRef } from "react";
+import { Suspense } from "react";
 import type { Space, Plant } from "@/lib/firebase/spaces";
 import { getSpaces, getPlantsInSpace } from "@/lib/firebase/spaces";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useState, useEffect } from "react";
+import { PhotoPicker } from "@/components/ui/PhotoPicker";
 import {
   createThread,
   subscribeToThreads,
@@ -63,7 +64,7 @@ function AskPageInner() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const searchParams = useSearchParams();
 
   const urlPlantId = searchParams.get("plantId") || "";
@@ -263,14 +264,21 @@ function AskPageInner() {
               )}
 
               <div className="flex items-center justify-between mt-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                <PhotoPicker
+                  onFile={(file) => {
+                    setPhotoFile(file);
+                    setPhotoPreview(URL.createObjectURL(file));
+                  }}
                   disabled={submitting || uploading}
-                  className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition cursor-pointer"
                 >
-                  <span className="text-4xl leading-none">+</span>
-                </button>
+                  <button
+                    type="button"
+                    disabled={submitting || uploading}
+                    className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition cursor-pointer"
+                  >
+                    <span className="text-4xl leading-none">+</span>
+                  </button>
+                </PhotoPicker>
                 <button
                   type="submit"
                   disabled={submitting || uploading || !question.trim()}
@@ -288,22 +296,6 @@ function AskPageInner() {
                 </button>
               </div>
             </div>
-
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setPhotoFile(file);
-                  setPhotoPreview(URL.createObjectURL(file));
-                }
-              }}
-              disabled={submitting || uploading}
-            />
           </form>
 
           {/* Notification banner */}

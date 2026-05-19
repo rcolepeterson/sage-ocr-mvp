@@ -8,6 +8,7 @@ import { useEffect, useState, useRef } from "react";
 import { subscribeToThread, addReply } from "@/lib/firebase/threads";
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { useParams } from "next/navigation";
+import { PhotoPicker } from "@/components/ui/PhotoPicker";
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 function formatTimeAgo(timestamp: any): string {
@@ -34,7 +35,7 @@ export default function ThreadDetailPage() {
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // kept for bottomRef pattern
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -80,12 +81,9 @@ export default function ThreadDetailPage() {
     setUploading(false);
   };
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-    }
+  function handlePhotoChange(file: File) {
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   }
 
   if (loading || !thread) {
@@ -177,14 +175,18 @@ export default function ThreadDetailPage() {
                 />
                 <div className="flex items-center justify-between mt-2">
                   {/* + attach button */}
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
+                  <PhotoPicker
+                    onFile={handlePhotoChange}
                     disabled={submitting || uploading}
-                    className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
                   >
-                    <span className="text-4xl leading-none">+</span>
-                  </button>
+                    <button
+                      type="button"
+                      disabled={submitting || uploading}
+                      className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
+                    >
+                      <span className="text-4xl leading-none">+</span>
+                    </button>
+                  </PhotoPicker>
 
                   {/* Send button */}
                   <button
@@ -233,16 +235,6 @@ export default function ThreadDetailPage() {
                   Uploading... {uploadProgress.toFixed(0)}%
                 </p>
               )}
-
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handlePhotoChange}
-                disabled={submitting || uploading}
-              />
             </form>
           </div>
         </div>
