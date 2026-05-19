@@ -347,9 +347,17 @@ function PlantProfilePage({
         {/* ── Space name + tags ── */}
         {space && (
           <div className="mb-6">
-            <p className="font-body font-bold text-swansons-navy uppercase tracking-widest text-sm mb-3">
-              {space.name}
-            </p>
+            <div className="flex items-center gap-2 mb-3">
+              <p className="font-body font-bold text-swansons-navy uppercase tracking-widest text-sm">
+                {space.name}
+              </p>
+              <Link
+                href={`/plant/${spaceId}/${id}/move`}
+                className="w-7 h-7 bg-swansons-navy rounded-full flex items-center justify-center shrink-0"
+              >
+                <EditIcon width={14} height={14} />
+              </Link>
+            </div>
             {spaceTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {spaceTags.map((tag) => (
