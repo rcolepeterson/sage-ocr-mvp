@@ -11,6 +11,7 @@ export function useSpaces() {
   const { user } = useAuth();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [plantCounts, setPlantCounts] = useState<Record<string, number>>({});
+  const [plantPhotos, setPlantPhotos] = useState<Record<string, string[]>>({});
   const [latestPlant, setLatestPlant] = useState<{
     plant: Plant;
     spaceId: string;
@@ -27,12 +28,18 @@ export function useSpaces() {
 
       let newest: { plant: Plant; spaceId: string; plantId: string } | null =
         null;
+      const counts: Record<string, number> = {};
+      const photos: Record<string, string[]> = {};
 
-      const counts = await Promise.all(
+      await Promise.all(
         fetchedSpaces.map(async (space) => {
           const plants = await getPlantsInSpace(user.uid, space.id);
+          counts[space.id] = plants.length;
+          photos[space.id] = plants
+            .slice(0, 3)
+            .map((p) => p.photo)
+            .filter(Boolean);
 
-          // Track latest plant across all spaces
           plants.forEach((plant) => {
             if (
               !newest ||
@@ -42,20 +49,17 @@ export function useSpaces() {
               newest = { plant, spaceId: space.id, plantId: plant.id };
             }
           });
-
-          return { id: space.id, count: plants.length };
         }),
       );
 
+      setPlantCounts(counts);
+      setPlantPhotos(photos);
       setLatestPlant(newest);
-      setPlantCounts(
-        counts.reduce((acc, { id, count }) => ({ ...acc, [id]: count }), {}),
-      );
       setLoading(false);
     };
 
     fetch();
   }, [user]);
 
-  return { spaces, plantCounts, latestPlant, loading };
+  return { spaces, plantCounts, plantPhotos, latestPlant, loading };
 }

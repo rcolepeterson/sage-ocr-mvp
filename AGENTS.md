@@ -61,6 +61,7 @@ Firebase Project: sage-swansons-e4677
 /api/firebase-messaging-sw/route.ts # Service worker route
 /scan/page.tsx # Camera + OCR UI + save plant flow
 /plant/[spaceId]/[id]/page.tsx # Plant profile page
+/plant/[spaceId]/[id]/move/page.tsx # Move plant to different space
 /spaces/page.tsx # My Spaces page
 /ask/page.tsx # Ask an Expert — thread list + new question
 /ask/[threadId]/page.tsx # Thread detail — customer view
@@ -78,10 +79,19 @@ ProtectedRoute.tsx # Guards all authenticated routes
 SignOutButton.tsx # Sign out button component
 /nav
 BottomNav.tsx # Mobile-first bottom nav, role-aware
+HamburgerMenu.tsx # Slide-out nav menu with role-aware links
+BackButton.tsx # Back navigation button
+/onboarding
+OnboardingModal.tsx # Onboarding modal logic, Firestore, preview mode
 /ui
 Button.tsx # Shared button component
 NotificationBanner.tsx # FCM permission banner
-/ui/LottieAnimation.tsx # Reusable, SSR-safe Lottie wrapper
+LottieAnimation.tsx # Reusable, SSR-safe Lottie wrapper
+PhotoPicker.tsx # Reusable photo picker with action sheet
+EditIcon.tsx # Edit pencil icon component
+Logo.tsx # Sage by Swansons logo component
+ClientLayout.tsx # Conditional max-width, padding, botanical bg
+ScrollToTop.tsx # Scrolls to top on route change
 /lib
 /firebase
 config.ts # Firebase initialization + App Check
@@ -89,21 +99,25 @@ auth.ts # Firebase Auth instance
 firestore.ts # Firestore instance
 AuthContext.tsx # Auth state context + provider (includes role)
 threads.ts # Thread + reply CRUD + real-time listeners
-spaces.ts # Spaces + plants CRUD
+spaces.ts # Spaces + plants CRUD + movePlantToSpace
 storage.ts # Firebase Storage upload/delete
 users.ts # User CRUD + role management
 messaging.ts # FCM token management
+/hooks
+useSpaces.ts # Spaces + plant counts + latest plant hook
 /utils
-imageCompression.ts # Client-side image compression before upload
+imageCompression.ts # Client-side image compression (512x512, q0.3)
 /ocr
 index.ts
 googleVision.ts
 /llm
 schema.ts # Zod schema for LLM plant output + tags
+/animations
+placeholder.json # Lottie animation asset
 /data
 plants.json # Seeded plant catalog
-/animations/placeholder.json # Lottie animation asset
-/onboarding/OnboardingModal.tsx # Onboarding modal logic, Firestore, preview mode
+/public
+/images # Logo, botanical illustrations, icons
 
 ---
 
@@ -235,7 +249,7 @@ createdAt: timestamp
 - CORS: configured for localhost:3000 and sage-ocr-mvp-one.vercel.app
 - Security rules: authenticated users can read/write
 - All images compressed before upload via imageCompression.ts
-- Max dimensions: 768x768, JPEG quality: 0.4
+- Max dimensions: 512x512, JPEG quality: 0.3
 
 ### Storage Paths
 
@@ -302,6 +316,16 @@ createdAt: timestamp
 - Usage: <LottieAnimation animationData={json} loop autoplay className="w-36 h-36" />
 - Animation JSON files go in /lib/animations/
 - Has 'use client' — no dynamic import needed
+
+---
+
+## PhotoPicker Component
+
+- Component: /components/ui/PhotoPicker.tsx
+- Usage: wrap any trigger element — shows action sheet with "Take Photo" and "Choose from Library"
+- Accepts: onFile: (file: File) => void, disabled?: boolean, children: ReactNode
+- Used everywhere photo upload is needed — plant profile, scan, ask, thread detail
+- Never use raw <input type="file"> for photo upload — always use PhotoPicker
 
 ---
 

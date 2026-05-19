@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
@@ -75,7 +76,7 @@ function NotificationsCard() {
 
 // ─── Spaces list — real data from Firestore ────────────────────────────────
 function SpacesList() {
-  const { spaces, plantCounts, loading } = useSpaces();
+  const { spaces, plantCounts, plantPhotos, loading } = useSpaces();
 
   if (loading) {
     return (
@@ -104,6 +105,8 @@ function SpacesList() {
     <div className="flex flex-col gap-3">
       {spaces.map((space) => {
         const count = plantCounts[space.id] ?? 0;
+        const photos = plantPhotos[space.id] ?? [];
+
         return (
           <Link href="/spaces" key={space.id}>
             <div className="bg-white rounded-2xl shadow-sm px-5 py-4 flex items-center justify-between">
@@ -115,16 +118,40 @@ function SpacesList() {
                   {count} {count === 1 ? "plant" : "plants"}
                 </p>
               </div>
+
               <div className="flex items-center">
                 <div className="flex -space-x-2">
-                  {[...Array(Math.min(count, 3))].map((_, i) => (
+                  {photos.map((photo, i) => (
                     <div
                       key={i}
-                      className="w-8 h-8 rounded-full bg-swansons-green-muted border-2 border-white flex items-center justify-center text-base"
+                      className="w-8 h-8 rounded-full overflow-hidden border-2 border-white bg-swansons-green-muted shrink-0"
                     >
-                      🌱
+                      {photo ? (
+                        <img
+                          src={photo}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-sm">
+                          🌱
+                        </div>
+                      )}
                     </div>
                   ))}
+                  {/* Placeholder circles if fewer than 3 photos but count > 0 */}
+                  {count > 0 &&
+                    photos.length < Math.min(count, 3) &&
+                    [...Array(Math.min(count, 3) - photos.length)].map(
+                      (_, i) => (
+                        <div
+                          key={`placeholder-${i}`}
+                          className="w-8 h-8 rounded-full border-2 border-white bg-swansons-green-muted flex items-center justify-center text-sm shrink-0"
+                        >
+                          🌱
+                        </div>
+                      ),
+                    )}
                 </div>
                 {count > 3 && (
                   <span className="ml-1 bg-swansons-navy text-white text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center">
