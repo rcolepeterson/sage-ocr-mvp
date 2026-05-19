@@ -1,9 +1,9 @@
 // Shared utility for compressing and converting images to base64 data URIs
 // Usage: await compressAndConvertImagesToBase64(files: File[])
 
-const MAX_WIDTH = 768;
-const MAX_HEIGHT = 768;
-const JPEG_QUALITY = 0.4;
+const MAX_WIDTH = 512;
+const MAX_HEIGHT = 512;
+const JPEG_QUALITY = 0.3;
 
 export async function compressImage(file: File): Promise<File> {
   return new Promise((resolve, reject) => {
@@ -29,7 +29,7 @@ export async function compressImage(file: File): Promise<File> {
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { willReadFrequently: false });
 
       if (!ctx) {
         reject(new Error("Failed to get canvas context"));
@@ -52,6 +52,9 @@ export async function compressImage(file: File): Promise<File> {
             type: "image/jpeg",
             lastModified: Date.now(),
           });
+          // Free canvas memory
+          canvas.width = 0;
+          canvas.height = 0;
           resolve(compressedFile);
         },
         "image/jpeg",
