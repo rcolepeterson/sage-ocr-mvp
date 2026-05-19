@@ -8,7 +8,7 @@ interface LogoProps {
 
 import Link from "next/link";
 
-export function Logo({ className = "", width = 160, height = 80 }: LogoProps) {
+export function Logo({ className = "", width = 90, height = 30 }: LogoProps) {
   return (
     <Link href="/">
       {/* eslint-disable-next-line @next/next/no-img-element */}
