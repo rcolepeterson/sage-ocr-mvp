@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { use } from "react";
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -13,6 +13,7 @@ import { notFound } from "next/navigation";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/Button";
 import EditIcon from "@/components/ui/EditIcon";
+import { PhotoPicker } from "@/components/ui/PhotoPicker";
 import { getSpace } from "@/lib/firebase/spaces";
 
 /* ─── Tag Badges — staff/admin only ─────────────────────────────────────── */
@@ -179,7 +180,6 @@ function PlantProfilePage({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const photoInputRef = useRef<HTMLInputElement>(null);
 
   async function fetchPlantDoc() {
     if (!user || !spaceId || !id) return;
@@ -199,9 +199,8 @@ function PlantProfilePage({
     getSpace(user.uid, spaceId).then(setSpace);
   }, [user, spaceId]);
 
-  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  async function handlePhotoFile(file: File) {
+    if (!user) return;
     setUploading(true);
     setUploadProgress(0);
     try {
@@ -222,11 +221,9 @@ function PlantProfilePage({
     setUploading(false);
   }
 
-  // Derive space tags from available plant data
   const spaceTags: string[] = [];
-  if (plant?.indoor !== undefined) {
+  if (plant?.indoor !== undefined)
     spaceTags.push(plant.indoor ? "Indoor" : "Outdoor");
-  }
   if (plant?.lightLevel) {
     const lightMap: Record<string, string> = {
       high: "Full sun",
@@ -235,9 +232,8 @@ function PlantProfilePage({
     };
     spaceTags.push(lightMap[plant.lightLevel] || plant.lightLevel);
   }
-  if (plant?.container !== undefined) {
+  if (plant?.container !== undefined)
     spaceTags.push(plant.container ? "Container" : "In-ground");
-  }
 
   if (loading) {
     return (
@@ -249,7 +245,7 @@ function PlantProfilePage({
   if (!plant) return notFound();
 
   return (
-    <main className="min-h-screen  pb-28">
+    <main className="min-h-screen pb-28">
       <div className="px-4 pt-8 max-w-lg mx-auto">
         {/* ── Photo circle ── */}
         <div className="flex justify-center mb-5">
@@ -272,14 +268,15 @@ function PlantProfilePage({
                 </div>
               )}
             </div>
-            {/* Edit pencil */}
-            <button
-              onClick={() => !uploading && photoInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shadow-md"
-              aria-label="Change plant photo"
-            >
-              <EditIcon width={16} height={16} />
-            </button>
+            {/* Edit pencil — uses PhotoPicker */}
+            <PhotoPicker onFile={handlePhotoFile} disabled={uploading}>
+              <button
+                className="absolute bottom-0 right-0 w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shadow-md"
+                aria-label="Change plant photo"
+              >
+                <EditIcon width={16} height={16} />
+              </button>
+            </PhotoPicker>
           </div>
         </div>
 
@@ -391,17 +388,6 @@ function PlantProfilePage({
           </Link>
         </div>
       </div>
-
-      {/* Hidden file input */}
-      <input
-        type="file"
-        accept="image/*"
-        // capture="environment"
-        className="hidden"
-        ref={photoInputRef}
-        onChange={handlePhotoChange}
-        disabled={uploading}
-      />
     </main>
   );
 }
