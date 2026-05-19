@@ -118,7 +118,7 @@ export default function MyPlantsPage() {
                         className="bg-white rounded-2xl p-4 relative"
                       >
                         <Link
-                          href={`/plant/${space.id}/${plant.id}`}
+                          href={`/plant/${space.id}/${plant.id}/move`}
                           className="absolute top-3 right-3 w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center"
                         >
                           <EditIcon width={16} height={16} />

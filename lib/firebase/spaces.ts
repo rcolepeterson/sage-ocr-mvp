@@ -44,6 +44,34 @@ export interface Plant {
   createdAt: any;
 }
 
+export async function movePlantToSpace(
+  userId: string,
+  fromSpaceId: string,
+  plantId: string,
+  toSpaceId: string,
+): Promise<string> {
+  // Get the existing plant data
+  const plantRef = doc(
+    db,
+    `users/${userId}/spaces/${fromSpaceId}/plants/${plantId}`,
+  );
+  const snap = await getDoc(plantRef);
+  if (!snap.exists()) throw new Error("Plant not found");
+
+  const plantData = snap.data() as Omit<Plant, "id">;
+
+  // Save to new space
+  const newPlantRef = doc(
+    collection(db, `users/${userId}/spaces/${toSpaceId}/plants`),
+  );
+  await setDoc(newPlantRef, { ...plantData });
+
+  // Delete from old space
+  await deleteDoc(plantRef);
+
+  return newPlantRef.id;
+}
+
 export async function createSpace(
   userId: string,
   name: string,
