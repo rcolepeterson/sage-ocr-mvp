@@ -123,29 +123,29 @@ export default function MyPlantsPage() {
                         >
                           <EditIcon width={16} height={16} />
                         </Link>
-
-                        <div className="flex items-center gap-4 mb-4 pr-10">
-                          <div className="w-16 h-16 rounded-full overflow-hidden bg-swansons-green-muted shrink-0 flex items-center justify-center">
-                            {plant.photo ? (
-                              <img
-                                src={plant.photo}
-                                alt={plant.commonName}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-2xl">🌱</span>
-                            )}
+                        <Link href={`/plant/${space.id}/${plant.id}`}>
+                          <div className="flex items-center gap-4 mb-4 pr-10">
+                            <div className="w-16 h-16 rounded-full overflow-hidden bg-swansons-green-muted shrink-0 flex items-center justify-center">
+                              {plant.photo ? (
+                                <img
+                                  src={plant.photo}
+                                  alt={plant.commonName}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-2xl">🌱</span>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-heading font-semibold text-swansons-navy leading-tight">
+                                {plant.commonName}
+                              </p>
+                              <p className="font-body italic text-swansons-muted text-sm">
+                                {plant.latinName}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-heading font-semibold text-swansons-navy leading-tight">
-                              {plant.commonName}
-                            </p>
-                            <p className="font-body italic text-swansons-muted text-sm">
-                              {plant.latinName}
-                            </p>
-                          </div>
-                        </div>
-
+                        </Link>
                         <Link
                           href={`/ask?plantId=${space.id}_${plant.id}&plantName=${encodeURIComponent(plant.commonName)}`}
                         >
