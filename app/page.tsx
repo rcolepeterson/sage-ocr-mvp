@@ -10,18 +10,32 @@ import { useState } from "react";
 
 // ─── Latest Plant placeholder ──────────────────────────────────────────────
 function LatestPlantCard() {
+  const { latestPlant } = useSpaces();
+
+  if (!latestPlant) return null;
+
+  const { plant, spaceId, plantId } = latestPlant;
+
   return (
     <div className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4">
       <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 bg-swansons-green-muted flex items-center justify-center">
-        <span className="text-3xl">🌿</span>
+        {plant.photo ? (
+          <img
+            src={plant.photo}
+            alt={plant.commonName}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span className="text-3xl">🌿</span>
+        )}
       </div>
       <div>
         <p className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted mb-1">
           Latest Plant
         </p>
-        <h3 className="text-lg leading-tight">Heartleaf Philodendron</h3>
+        <h3 className="text-lg leading-tight">{plant.commonName}</h3>
         <Link
-          href="/plants"
+          href={`/plant/${spaceId}/${plantId}`}
           className="text-sm text-swansons-navy underline underline-offset-2 mt-1 inline-block"
         >
           See plant profile
