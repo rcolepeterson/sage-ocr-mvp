@@ -105,7 +105,7 @@ function SpacesList() {
       {spaces.map((space) => {
         const count = plantCounts[space.id] ?? 0;
         return (
-          <Link href="/plants" key={space.id}>
+          <Link href="/spaces" key={space.id}>
             <div className="bg-white rounded-2xl shadow-sm px-5 py-4 flex items-center justify-between">
               <div>
                 <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-text">

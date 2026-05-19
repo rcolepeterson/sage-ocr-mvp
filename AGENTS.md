@@ -61,7 +61,7 @@ Firebase Project: sage-swansons-e4677
 /api/firebase-messaging-sw/route.ts # Service worker route
 /scan/page.tsx # Camera + OCR UI + save plant flow
 /plant/[spaceId]/[id]/page.tsx # Plant profile page
-/plants/page.tsx # My Plants page
+/spaces/page.tsx # My Spaces page
 /ask/page.tsx # Ask an Expert — thread list + new question
 /ask/[threadId]/page.tsx # Thread detail — customer view
 /admin/inbox/page.tsx # Staff inbox — split pane desktop, stacked mobile

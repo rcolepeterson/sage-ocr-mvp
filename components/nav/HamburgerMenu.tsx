@@ -16,19 +16,19 @@ const HIDDEN_ROUTES = ["/signin", "/unauthorized", "/terms", "/onboarding"];
 const NAV_ITEMS = {
   customer: [
     { label: "Home", href: "/" },
-    { label: "Spaces", href: "/plants" },
+    { label: "Spaces", href: "/spaces" },
     { label: "Add a Plant", href: "/scan" },
     { label: "Ask an Expert", href: "/ask" },
   ],
   staff: [
     { label: "Home", href: "/" },
-    { label: "Spaces", href: "/plants" },
+    { label: "Spaces", href: "/spaces" },
     { label: "Scan a Plant", href: "/scan" },
     { label: "Inbox", href: "/admin/inbox" },
   ],
   admin: [
     { label: "Home", href: "/" },
-    { label: "Spaces", href: "/plants" },
+    { label: "Spaces", href: "/spaces" },
     { label: "Scan a Plant", href: "/scan" },
     { label: "Inbox", href: "/admin/inbox" },
     { label: "Dashboard", href: "/admin/dashboard" },

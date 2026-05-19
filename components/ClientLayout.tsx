@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 const NO_TOP_PADDING = [
   "/",
   "/ask",
-  "/plants",
+  "/spaces",
   "/signin",
   "/unauthorized",
   "/terms",
@@ -25,7 +25,7 @@ const NO_MAX_WIDTH = ["/admin"];
 
 // const PAGE_PLANTS = {
 //   "/": { src: "/images/TestPlants1.png" },
-//   "/plants": { src: "/images/TestPlants2.png" },
+//   "/spaces": { src: "/images/TestPlants2.png" },
 //   "/ask": { src: "/images/TestPlants3.png" },
 //   "/scan": { src: "/images/TestPlants4.png" },
 //   "/onboarding": { src: "/images/TestPlants2.png" },

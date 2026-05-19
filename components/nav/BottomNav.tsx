@@ -11,18 +11,18 @@ import { updateUserDisplayName } from "@/lib/firebase/users";
 
 const NAV_ITEMS = {
   customer: [
-    { label: "Plants", icon: "🌱", href: "/plants" },
+    { label: "Spaces", icon: "🌱", href: "/spaces" },
     { label: "Scan", icon: "🔍", href: "/scan" },
     // Ask removed from customer nav
   ],
   staff: [
-    { label: "Plants", icon: "🌱", href: "/plants" },
+    { label: "Spaces", icon: "🌱", href: "/spaces" },
     { label: "Scan", icon: "🔍", href: "/scan" },
     { label: "Inbox", icon: "📥", href: "/admin/inbox" },
   ],
   admin: [
     { label: "Dashboard", icon: "📊", href: "/admin/dashboard" },
-    { label: "Plants", icon: "🌱", href: "/plants" },
+    { label: "Spaces", icon: "🌱", href: "/spaces" },
     { label: "Scan", icon: "🔍", href: "/scan" },
     { label: "Inbox", icon: "📥", href: "/admin/inbox" },
     { label: "Debug", icon: "🐞", href: "/debug" },
