@@ -28,6 +28,9 @@
 ### Navigation
 
 - Bottom nav bar (role-aware) ✅
+- Hamburger menu with role-aware nav ✅
+- Back button ✅
+- Scroll to top on route change ✅
 - Ask removed from Staff/Admin nav ✅
 - Dashboard link for admin ✅
 - Account popup + sign out ✅
@@ -43,12 +46,23 @@
 - AI plant tagging (30+ tags across 9 categories) ✅
 - Save plant to space ✅
 - Spaces (indoor/outdoor) ✅
-- My Plants page (/plants) ✅
+- My Spaces page (/spaces) ✅
 - Plant profile page (/plant/[spaceId]/[id]) ✅
 - Tags displayed on plant profile page ✅
 - Delete plant ✅
 - Ask about specific plant ✅
 - Photo upload with compression ✅
+- Move plant to different space (/plant/[spaceId]/[id]/move) ✅
+- Plant photos shown in space circles on home page ✅
+- PhotoPicker component (camera + photo library) ✅
+
+### UI & Design
+
+- Botanical background illustrations (per-page) ✅
+- Logo component ✅
+- EditIcon component ✅
+- Swansons colour tokens + typography system ✅
+- ClientLayout with conditional max-width + padding ✅
 
 ### Threads & Expert Chat
 
@@ -120,7 +134,7 @@
 
 - Admin user management (change roles in app)
 - QR code → direct URL sign in
-- Update plant photo after saving
+- Create standalone space (without scanning a plant)
 - Email notifications
 
 ### Medium Priority
