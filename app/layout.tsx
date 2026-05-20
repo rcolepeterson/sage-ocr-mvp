@@ -14,6 +14,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 //import BottomNav from "@/components/nav/BottomNav";
 import HamburgerMenu from "@/components/nav/HamburgerMenu";
 import BackButton from "@/components/nav/BackButton";
+import LenisProvider from "@/components/LenisProvider";
 
 const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-serif",
@@ -65,7 +66,9 @@ export default function RootLayout({
           <div className="min-h-screen relative">
             <ClientLayout>
               <ScrollToTop />
-              <ProtectedRoute>{children}</ProtectedRoute>
+              <ProtectedRoute>
+                <LenisProvider>{children}</LenisProvider>
+              </ProtectedRoute>
             </ClientLayout>
             <HamburgerMenu />
             <BackButton />
