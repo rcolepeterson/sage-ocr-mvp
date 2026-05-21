@@ -20,6 +20,7 @@ import {
 } from "@/lib/firebase/users";
 import { PlantSchema } from "@/lib/llm/schema";
 import { Logo } from "@/components/ui/Logo";
+import { Button } from "@/components/ui/Button";
 import type { User as FirebaseUser } from "firebase/auth";
 import Link from "next/link";
 
@@ -29,6 +30,16 @@ function formatCustomerName(displayName?: string | null): string {
   const parts = displayName.trim().split(" ");
   if (parts.length === 1) return parts[0];
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
+function formatTimeAgo(createdAt: any): string {
+  const diffMs = Date.now() - (createdAt?.toMillis?.() || 0);
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 /* ─── RoleBadge ─────────────────────────────────────────────────────────── */
@@ -45,6 +56,63 @@ function RoleBadge({ role }: { role: string }) {
     >
       {role}
     </span>
+  );
+}
+
+/* ─── ThreadPreviewModal ────────────────────────────────────────────────── */
+function ThreadPreviewModal({
+  thread,
+  allUsers,
+  onClose,
+}: {
+  thread: Thread;
+  allUsers: AppUser[];
+  onClose: () => void;
+}) {
+  const customer = allUsers.find((u) => u.uid === thread.userId);
+  const customerName = formatCustomerName(customer?.displayName);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="font-body font-semibold text-swansons-navy">
+              {customerName}
+            </span>
+            <span className="text-swansons-muted font-body text-sm">·</span>
+            <span className="text-swansons-muted font-body text-sm">
+              {formatTimeAgo(thread.createdAt)}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="font-body text-sm text-swansons-navy underline underline-offset-2"
+          >
+            Close
+          </button>
+        </div>
+
+        {/* Question */}
+        <p className="font-body text-swansons-text text-sm leading-relaxed mb-6">
+          {thread.question}
+        </p>
+
+        {/* Open Thread button */}
+        <Link href={`/admin/inbox`}>
+          <Button variant="primary" className="rounded-full">
+            Open Thread
+          </Button>
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -244,12 +312,9 @@ function Sidebar({ user, onTab, tab }: SidebarProps) {
 
   return (
     <aside className="hidden md:flex flex-col items-center w-20 bg-swansons-navy min-h-screen py-6 gap-6 shrink-0">
-      {/* Logo */}
       <div className="mb-2">
         <Logo width={44} height={44} />
       </div>
-
-      {/* Profile photo */}
       <div className="relative mb-4">
         <div className="w-12 h-12 rounded-full overflow-hidden bg-swansons-green-muted flex items-center justify-center">
           {photoURL ? (
@@ -265,11 +330,8 @@ function Sidebar({ user, onTab, tab }: SidebarProps) {
             </span>
           )}
         </div>
-        {/* Online dot */}
         <span className="absolute bottom-0 right-0 w-3 h-3 bg-swansons-green rounded-full border-2 border-swansons-navy" />
       </div>
-
-      {/* Nav icons */}
       <nav className="flex flex-col items-center gap-2 flex-1">
         {NAV_ICONS.map(({ label, svg, disabled }, i) => (
           <button
@@ -293,7 +355,7 @@ function Sidebar({ user, onTab, tab }: SidebarProps) {
   );
 }
 
-/* ─── StatCard — coloured bottom bar ────────────────────────────────────── */
+/* ─── StatCard ──────────────────────────────────────────────────────────── */
 type StatCardProps = {
   label: string;
   value: number | string;
@@ -395,6 +457,8 @@ function ThreadQueueTab({
   filters,
   setFilters,
 }: ThreadQueueTabProps) {
+  const [previewThread, setPreviewThread] = useState<Thread | null>(null);
+
   const unassigned = threads.filter((t) => !t.assignedTo && t.status === "new");
   const urgent = threads.filter((t) => t.urgent && t.status !== "closed");
   const open = threads.filter((t) => t.status !== "closed");
@@ -495,7 +559,7 @@ function ThreadQueueTab({
               <th className="px-4 py-3 text-left">Urgent</th>
               <th className="px-4 py-3 text-left">Wait (hrs)</th>
               <th className="px-4 py-3 text-left">Assigned</th>
-              <th className="px-4 py-3 text-left ">Action</th>
+              <th className="px-4 py-3 text-left">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -570,11 +634,10 @@ function ThreadQueueTab({
                         staffUsers={staffUsers}
                         onAssign={onAssign}
                       />
-                      {/* Eye icon — view thread */}
-                      <Link
-                        href={`/admin/inbox`}
+                      <button
+                        onClick={() => setPreviewThread(t)}
                         className="w-9 h-9 bg-swansons-navy rounded-full flex items-center justify-center text-white hover:opacity-90 transition shrink-0"
-                        title="View thread"
+                        title="Preview thread"
                       >
                         <svg
                           width="16"
@@ -589,7 +652,7 @@ function ThreadQueueTab({
                           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                           <circle cx="12" cy="12" r="3" />
                         </svg>
-                      </Link>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -610,6 +673,15 @@ function ThreadQueueTab({
           </div>
         )}
       </div>
+
+      {/* Thread Preview Modal */}
+      {previewThread && (
+        <ThreadPreviewModal
+          thread={previewThread}
+          allUsers={allUsers}
+          onClose={() => setPreviewThread(null)}
+        />
+      )}
     </div>
   );
 }
@@ -782,7 +854,6 @@ export default function AdminDashboardPage() {
       <div className="flex min-h-screen bg-swansons-cream">
         <Sidebar user={user} onTab={setTab} tab={tab} />
         <main className="flex-1 p-6 md:p-10 overflow-x-auto">
-          {/* Mobile tabs */}
           <div className="md:hidden flex gap-2 mb-6 overflow-x-auto pb-1">
             {TABS.map((t, i) => (
               <button
@@ -798,7 +869,6 @@ export default function AdminDashboardPage() {
               </button>
             ))}
           </div>
-
           {tab === 0 && (
             <ThreadQueueTab
               threads={threads}
