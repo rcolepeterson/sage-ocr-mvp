@@ -495,7 +495,7 @@ function ThreadQueueTab({
               <th className="px-4 py-3 text-left">Urgent</th>
               <th className="px-4 py-3 text-left">Wait (hrs)</th>
               <th className="px-4 py-3 text-left">Assigned</th>
-              <th className="px-4 py-3 text-left">Action</th>
+              <th className="px-4 py-3 text-left ">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -563,8 +563,8 @@ function ThreadQueueTab({
                   <td className="px-4 py-3 text-swansons-text">
                     {assigned ? assigned.displayName : "—"}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                  <td className="px-4 py-3 pr-4 w-48">
+                    <div className="flex items-center justify-between gap-2">
                       <AssignDropdown
                         thread={t}
                         staffUsers={staffUsers}
