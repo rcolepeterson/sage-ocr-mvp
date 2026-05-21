@@ -302,10 +302,10 @@ type StatCardProps = {
 
 function StatCard({ label, value, barColor }: StatCardProps) {
   return (
-    <div className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden min-w-[120px] flex flex-col">
+    <div className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden max-w-[200px] flex flex-col">
       <div className="flex-1 flex items-center justify-center py-6 px-4">
         <span
-          className="font-heading font-bold text-swansons-navy"
+          className="font-heading text-swansons-navy"
           style={{ fontSize: "3rem", lineHeight: 1 }}
         >
           {value}
