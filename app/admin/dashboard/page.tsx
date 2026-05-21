@@ -19,7 +19,17 @@ import {
   AppUser,
 } from "@/lib/firebase/users";
 import { PlantSchema } from "@/lib/llm/schema";
+import { Logo } from "@/components/ui/Logo";
 import type { User as FirebaseUser } from "firebase/auth";
+import Link from "next/link";
+
+/* ─── Helpers ───────────────────────────────────────────────────────────── */
+function formatCustomerName(displayName?: string | null): string {
+  if (!displayName) return "Customer";
+  const parts = displayName.trim().split(" ");
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
 
 /* ─── RoleBadge ─────────────────────────────────────────────────────────── */
 function RoleBadge({ role }: { role: string }) {
@@ -56,9 +66,11 @@ function StaffAccountsTab({
       u.email?.toLowerCase().includes(search.toLowerCase()),
   );
   return (
-    <div className="bg-white rounded p-6 shadow max-w-2xl mx-auto">
+    <div className="bg-white rounded-2xl p-6 shadow max-w-2xl mx-auto">
       <div className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-        <h2 className="font-heading font-bold text-lg">Staff Accounts</h2>
+        <h2 className="font-heading font-bold text-lg text-swansons-navy">
+          Staff Accounts
+        </h2>
         <input
           className="input w-full sm:w-64 text-sm font-body"
           placeholder="Search by name or email"
@@ -69,28 +81,33 @@ function StaffAccountsTab({
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white rounded shadow font-body">
           <thead>
-            <tr className="bg-swansons-cream text-xs font-body">
-              <th className="p-2">Avatar</th>
-              <th className="p-2">Name</th>
-              <th className="p-2">Email</th>
-              <th className="p-2">Role</th>
-              <th className="p-2">Change Role</th>
+            <tr className="bg-swansons-cream text-xs font-body uppercase tracking-wide text-swansons-muted">
+              <th className="p-3 text-left">Avatar</th>
+              <th className="p-3 text-left">Name</th>
+              <th className="p-3 text-left">Email</th>
+              <th className="p-3 text-left">Role</th>
+              <th className="p-3 text-left">Change Role</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((u) => (
-              <tr key={u.uid} className="border-b text-xs font-body">
-                <td className="p-2">
+              <tr
+                key={u.uid}
+                className="border-b text-xs font-body hover:bg-swansons-cream/50"
+              >
+                <td className="p-3">
                   <div className="w-8 h-8 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-base">
                     {u.displayName?.[0]?.toUpperCase() || "?"}
                   </div>
                 </td>
-                <td className="p-2 font-body font-medium">{u.displayName}</td>
-                <td className="p-2 font-body">{u.email}</td>
-                <td className="p-2">
+                <td className="p-3 font-body font-medium text-swansons-navy">
+                  {u.displayName}
+                </td>
+                <td className="p-3 font-body text-swansons-text">{u.email}</td>
+                <td className="p-3">
                   <RoleBadge role={u.role} />
                 </td>
-                <td className="p-2 font-body">
+                <td className="p-3 font-body">
                   <select
                     className="input text-xs font-body"
                     value={u.role}
@@ -119,100 +136,186 @@ function StaffAccountsTab({
   );
 }
 
-/* ─── Sidebar ───────────────────────────────────────────────────────────── */
-const TABS = [
-  "Thread Queue",
-  "Staff Workload",
-  "Send Notifications",
-  "Staff Accounts",
-];
-
+/* ─── Sidebar — icon only ───────────────────────────────────────────────── */
 type SidebarProps = {
   user: AppUser | FirebaseUser | null;
-  counts: { open: number; unassigned: number; urgent: number; closed: number };
   onTab: (tab: number) => void;
   tab: number;
 };
 
-function Sidebar({ user, counts, onTab, tab }: SidebarProps) {
+const NAV_ICONS = [
+  {
+    label: "Thread Queue",
+    svg: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Staff Workload",
+    svg: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+  {
+    label: "Send Notifications",
+    svg: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+    ),
+  },
+  {
+    label: "Staff Accounts",
+    svg: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
+  },
+  {
+    label: "Settings",
+    disabled: true,
+    svg: (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    ),
+  },
+];
+
+function Sidebar({ user, onTab, tab }: SidebarProps) {
+  const photoURL = (user as any)?.photoURL;
+  const displayName = user?.displayName;
+
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-white border-r min-h-screen p-6">
-      <div className="mb-8">
-        <div className="text-2xl font-heading font-bold mb-1 text-swansons-navy">
-          Sage
-        </div>
-        <div className="text-sm font-body mb-2 text-swansons-muted">
-          Swansons Nursery
-        </div>
-        <div className="flex items-center gap-2 mt-4">
-          <div className="w-8 h-8 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold">
-            {user?.displayName?.[0] || "A"}
-          </div>
-          <div>
-            <div className="font-heading font-semibold text-swansons-navy">
-              {user?.displayName}
-            </div>
-            <div className="text-xs text-swansons-green font-body">Admin</div>
-          </div>
-        </div>
+    <aside className="hidden md:flex flex-col items-center w-20 bg-swansons-navy min-h-screen py-6 gap-6 shrink-0">
+      {/* Logo */}
+      <div className="mb-2">
+        <Logo width={44} height={44} />
       </div>
-      <div className="mb-8 space-y-2">
-        {[
-          { label: "All Open", value: counts.open, className: "" },
-          { label: "Unassigned", value: counts.unassigned, className: "" },
-          { label: "Urgent", value: counts.urgent, className: "text-red-500" },
-          { label: "Closed", value: counts.closed, className: "" },
-        ].map(({ label, value, className }) => (
-          <div
-            key={label}
-            className="flex items-center justify-between font-body text-swansons-text"
-          >
-            <span>{label}</span>
-            <span className={`font-mono ${className}`}>{value}</span>
-          </div>
-        ))}
+
+      {/* Profile photo */}
+      <div className="relative mb-4">
+        <div className="w-12 h-12 rounded-full overflow-hidden bg-swansons-green-muted flex items-center justify-center">
+          {photoURL ? (
+            <img
+              src={photoURL}
+              alt={displayName || "Admin"}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span className="text-swansons-green-dark font-heading font-bold text-lg">
+              {displayName?.[0]?.toUpperCase() || "A"}
+            </span>
+          )}
+        </div>
+        {/* Online dot */}
+        <span className="absolute bottom-0 right-0 w-3 h-3 bg-swansons-green rounded-full border-2 border-swansons-navy" />
       </div>
-      <nav className="flex flex-col gap-2 mt-4">
-        {[
-          { icon: "📨", label: "Thread Queue" },
-          { icon: "👥", label: "Staff Workload" },
-          { icon: "🔔", label: "Send Notifications" },
-          { icon: "👤", label: "Staff Accounts" },
-        ].map(({ icon, label }, i) => (
+
+      {/* Nav icons */}
+      <nav className="flex flex-col items-center gap-2 flex-1">
+        {NAV_ICONS.map(({ label, svg, disabled }, i) => (
           <button
             key={label}
-            className={`text-left font-body cursor-pointer ${tab === i ? "font-bold underline text-swansons-green" : "text-swansons-navy"}`}
-            onClick={() => onTab(i)}
+            onClick={() => !disabled && onTab(i)}
+            disabled={disabled}
+            title={label}
+            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+              disabled
+                ? "opacity-30 cursor-not-allowed text-white/50"
+                : tab === i
+                  ? "bg-white/20 text-white"
+                  : "text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
           >
-            {icon} {label}
+            {svg}
           </button>
         ))}
-        <button className="text-left opacity-60 cursor-not-allowed font-body text-swansons-muted">
-          ⚙️ Settings
-        </button>
       </nav>
     </aside>
   );
 }
 
-/* ─── StatCard ──────────────────────────────────────────────────────────── */
+/* ─── StatCard — coloured bottom bar ────────────────────────────────────── */
 type StatCardProps = {
   label: string;
   value: number | string;
-  color: string;
-  icon: string;
+  barColor: string;
 };
 
-function StatCard({ label, value, color, icon }: StatCardProps) {
+function StatCard({ label, value, barColor }: StatCardProps) {
   return (
-    <div
-      className={`flex-1 bg-white rounded p-4 shadow flex flex-col items-center border-t-4 ${color} min-w-[120px]`}
-    >
-      <div className="text-2xl mb-1">{icon}</div>
-      <div className="text-2xl font-heading font-bold text-swansons-navy">
-        {value}
+    <div className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden min-w-[120px] flex flex-col">
+      <div className="flex-1 flex items-center justify-center py-6 px-4">
+        <span
+          className="font-heading font-bold text-swansons-navy"
+          style={{ fontSize: "3rem", lineHeight: 1 }}
+        >
+          {value}
+        </span>
       </div>
-      <div className="text-xs text-swansons-muted mt-1 font-body">{label}</div>
+      <div className={`${barColor} py-2 px-4 text-center`}>
+        <span className="text-white font-body font-semibold text-xs uppercase tracking-widest">
+          {label}
+        </span>
+      </div>
     </div>
   );
 }
@@ -229,17 +332,17 @@ function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
   return (
     <div className="relative">
       <button
-        className="px-2 py-1 bg-swansons-cream rounded border border-swansons-muted text-xs font-body text-swansons-text"
+        className="px-3 py-1.5 rounded-full border border-swansons-navy text-xs font-body text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
         onClick={() => setOpen((v) => !v)}
       >
         {thread.assignedTo ? "Reassign" : "Assign"}
       </button>
       {open && (
-        <div className="absolute z-10 bg-white border rounded shadow mt-1 w-40">
+        <div className="absolute z-10 bg-white border rounded-xl shadow-lg mt-1 w-48 overflow-hidden">
           {staffUsers.map((u) => (
             <button
               key={u.uid}
-              className="block w-full text-left px-3 py-2 hover:bg-swansons-green-muted text-xs font-body text-swansons-text"
+              className="block w-full text-left px-4 py-2.5 hover:bg-swansons-green-muted text-xs font-body text-swansons-text"
               onClick={() => {
                 onAssign(thread.id, u.uid);
                 setOpen(false);
@@ -249,7 +352,7 @@ function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
             </button>
           ))}
           <button
-            className="block w-full text-left px-3 py-2 hover:bg-red-50 text-xs font-body text-red-500"
+            className="block w-full text-left px-4 py-2.5 hover:bg-red-50 text-xs font-body text-red-500 border-t"
             onClick={() => {
               onAssign(thread.id, null);
               setOpen(false);
@@ -266,8 +369,8 @@ function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
 /* ─── FILTERS ───────────────────────────────────────────────────────────── */
 const FILTERS = [
   { key: "all", label: "All" },
-  { key: "unassigned", label: "Unassigned (New)" },
-  { key: "needs-followup", label: "Needs Follow-Up" },
+  { key: "unassigned", label: "Unassigned" },
+  { key: "needs-followup", label: "Needs Followup" },
   { key: "waiting-on-customer", label: "Waiting on Customer" },
   { key: "closed", label: "Closed" },
 ];
@@ -276,6 +379,7 @@ const FILTERS = [
 type ThreadQueueTabProps = {
   threads: Thread[];
   staffUsers: AppUser[];
+  allUsers: AppUser[];
   onAssign: (threadId: string, staffUid: string | null) => Promise<void>;
   onUrgent: (threadId: string, urgent: boolean) => Promise<void>;
   filters: string[];
@@ -285,6 +389,7 @@ type ThreadQueueTabProps = {
 function ThreadQueueTab({
   threads,
   staffUsers,
+  allUsers,
   onAssign,
   onUrgent,
   filters,
@@ -296,14 +401,14 @@ function ThreadQueueTab({
   const now = Date.now();
 
   const avgResponseTime = useMemo(() => {
-    if (!open.length) return "0.0";
-    return (
+    if (!open.length) return "0";
+    return Math.round(
       open.reduce(
         (sum, t) =>
           sum + (now - ((t.createdAt as any)?.toMillis?.() || 0)) / 3600000,
         0,
-      ) / open.length
-    ).toFixed(1);
+      ) / open.length,
+    ).toString();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -328,11 +433,32 @@ function ThreadQueueTab({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 mb-4">
+      {/* Stat Cards */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        <StatCard
+          label="Unassigned"
+          value={unassigned.length}
+          barColor="bg-orange-400"
+        />
+        <StatCard
+          label="Active Threads"
+          value={open.length}
+          barColor="bg-teal-400"
+        />
+        <StatCard label="Urgent" value={urgent.length} barColor="bg-red-400" />
+        <StatCard
+          label="Avg Wait (Hrs)"
+          value={avgResponseTime}
+          barColor="bg-swansons-navy"
+        />
+      </div>
+
+      {/* Filter Pills */}
+      <div className="flex flex-wrap gap-2 mb-6">
         {FILTERS.map((f) => (
           <button
             key={f.key}
-            className={`px-3 py-1 rounded-full border text-xs font-body font-medium transition-all ${
+            className={`px-4 py-1.5 rounded-full border text-xs font-body font-medium transition-all ${
               filters.includes(f.key)
                 ? "bg-swansons-navy text-white border-swansons-navy"
                 : "bg-white text-swansons-navy border-swansons-navy"
@@ -356,121 +482,133 @@ function ThreadQueueTab({
             {f.label}
           </button>
         ))}
-        <span className="ml-2 text-xs text-swansons-muted font-body">
-          {filtered.length} thread{filtered.length === 1 ? "" : "s"} shown
-        </span>
       </div>
 
-      <div className="flex flex-wrap gap-4 mb-6">
-        <StatCard
-          label="Unassigned (New)"
-          value={unassigned.length}
-          color="border-orange-400"
-          icon="🆕"
-        />
-        <StatCard
-          label="Urgent"
-          value={urgent.length}
-          color="border-red-500"
-          icon="🚨"
-        />
-        <StatCard
-          label="Open"
-          value={open.length}
-          color="border-swansons-green"
-          icon="📬"
-        />
-        <StatCard
-          label="Avg Wait (hrs)"
-          value={avgResponseTime}
-          color="border-swansons-navy"
-          icon="⏱️"
-        />
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded shadow">
+      {/* Table */}
+      <div className="overflow-x-auto bg-white rounded-2xl shadow-sm">
+        <table className="min-w-full">
           <thead>
-            <tr className="bg-swansons-cream text-xs font-body">
-              <th className="p-2 text-left">Customer</th>
-              <th className="p-2 text-left">Plant</th>
-              <th className="p-2 text-left">Status</th>
-              <th className="p-2 text-left">Urgent</th>
-              <th className="p-2 text-left">Wait (hrs)</th>
-              <th className="p-2 text-left">Assigned</th>
-              <th className="p-2 text-left">Action</th>
+            <tr className="text-xs font-body uppercase tracking-wide text-swansons-muted border-b">
+              <th className="px-4 py-3 text-left">Customer</th>
+              <th className="px-4 py-3 text-left">Plant</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">Urgent</th>
+              <th className="px-4 py-3 text-left">Wait (hrs)</th>
+              <th className="px-4 py-3 text-left">Assigned</th>
+              <th className="px-4 py-3 text-left">Action</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((t) => {
-              const waitHrs = (
-                (now - ((t.createdAt as any)?.toMillis?.() || 0)) /
-                3600000
-              ).toFixed(1);
+              const waitHrs = Math.round(
+                (now - ((t.createdAt as any)?.toMillis?.() || 0)) / 3600000,
+              );
               const assigned = staffUsers.find((u) => u.uid === t.assignedTo);
+              const customer = allUsers.find((u) => u.uid === t.userId);
+              const customerName = formatCustomerName(customer?.displayName);
+
               return (
-                <tr key={t.id} className="border-b text-xs font-body">
-                  <td className="p-2 text-swansons-text">{t.userId}</td>
-                  <td className="p-2 text-swansons-text">
+                <tr
+                  key={t.id}
+                  className="border-b last:border-0 text-sm font-body hover:bg-swansons-cream/40 transition"
+                >
+                  <td className="px-4 py-3 text-swansons-text font-medium">
+                    {customerName}
+                  </td>
+                  <td className="px-4 py-3 text-swansons-muted max-w-[140px] truncate">
                     {t.plantName || "—"}
                   </td>
-                  <td className="p-2">
+                  <td className="px-4 py-3">
                     <span
-                      className={`px-2 py-1 rounded text-white text-xs ${
+                      className={`px-3 py-1 rounded-full text-white text-xs font-body font-medium ${
                         t.status === "new"
                           ? "bg-orange-400"
                           : t.status === "assigned"
                             ? "bg-swansons-navy"
                             : t.status === "waiting-on-customer"
-                              ? "bg-swansons-green"
+                              ? "bg-teal-400"
                               : t.status === "needs-followup"
                                 ? "bg-orange-500"
                                 : t.status === "closed"
-                                  ? "bg-swansons-green-dark"
+                                  ? "bg-swansons-muted"
                                   : "bg-swansons-muted"
                       }`}
                     >
                       {t.status === "new"
-                        ? "🆕 New"
+                        ? "Unassigned"
                         : t.status === "assigned"
-                          ? "👤 Assigned"
+                          ? "Assigned"
                           : t.status === "waiting-on-customer"
-                            ? "⏳ Waiting on Customer"
+                            ? "Waiting on Customer"
                             : t.status === "needs-followup"
-                              ? "🔁 Needs Follow-Up"
+                              ? "Needs Followup"
                               : t.status === "closed"
-                                ? "✅ Closed"
+                                ? "Closed"
                                 : t.status}
                     </span>
                   </td>
-                  <td className="p-2">
+                  <td className="px-4 py-3">
                     <button
-                      className={`px-2 py-1 rounded text-xs font-body ${
+                      className={`px-3 py-1 rounded-full text-xs font-body font-medium transition ${
                         t.urgent
-                          ? "bg-red-500 text-white"
-                          : "bg-swansons-cream text-swansons-text border border-swansons-muted"
+                          ? "bg-orange-500 text-white"
+                          : "border border-swansons-navy text-swansons-navy hover:bg-swansons-navy hover:text-white"
                       }`}
                       onClick={() => onUrgent(t.id, !t.urgent)}
                     >
                       {t.urgent ? "Urgent" : "Mark Urgent"}
                     </button>
                   </td>
-                  <td className="p-2 text-swansons-text">{waitHrs}</td>
-                  <td className="p-2 text-swansons-text">
+                  <td className="px-4 py-3 text-swansons-text">{waitHrs}</td>
+                  <td className="px-4 py-3 text-swansons-text">
                     {assigned ? assigned.displayName : "—"}
                   </td>
-                  <td className="p-2">
-                    <AssignDropdown
-                      thread={t}
-                      staffUsers={staffUsers}
-                      onAssign={onAssign}
-                    />
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <AssignDropdown
+                        thread={t}
+                        staffUsers={staffUsers}
+                        onAssign={onAssign}
+                      />
+                      {/* Eye icon — view thread */}
+                      <Link
+                        href={`/admin/inbox`}
+                        className="w-9 h-9 bg-swansons-navy rounded-full flex items-center justify-center text-white hover:opacity-90 transition shrink-0"
+                        title="View thread"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-swansons-muted font-body">
+            No threads found.
+          </div>
+        )}
+        {filtered.length > 0 && (
+          <div className="flex justify-center py-4 border-t">
+            <button className="font-body text-sm text-swansons-navy underline underline-offset-2">
+              Load More
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -501,16 +639,16 @@ function StaffWorkloadTab({
         return (
           <div
             key={u.uid}
-            className="bg-white rounded p-4 shadow flex items-center gap-4"
+            className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4"
           >
-            <div className="w-10 h-10 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-lg">
+            <div className="w-10 h-10 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-lg shrink-0">
               {u.displayName?.[0] || "S"}
             </div>
             <div className="flex-1">
               <div className="font-heading font-semibold text-swansons-navy">
                 {u.displayName}
               </div>
-              <div className="text-xs text-swansons-muted font-body mb-1">
+              <div className="text-xs text-swansons-muted font-body mb-2">
                 {u.specialty || <span className="italic">No specialty</span>}
               </div>
               <input
@@ -520,14 +658,14 @@ function StaffWorkloadTab({
                 onBlur={(e) => onSpecialty(u.uid, e.target.value)}
               />
             </div>
-            <div className="flex-1 flex items-center gap-2">
-              <div className="w-32 h-3 bg-swansons-cream rounded-full overflow-hidden">
+            <div className="flex-1 flex items-center gap-3">
+              <div className="flex-1 h-2 bg-swansons-cream rounded-full overflow-hidden">
                 <div
-                  className="bg-swansons-green h-3 rounded-full transition-all"
+                  className="bg-swansons-green h-2 rounded-full transition-all"
                   style={{ width: `${(count / maxCount) * 100}%` }}
                 />
               </div>
-              <div className="text-xs font-mono text-swansons-text">
+              <div className="text-xs font-mono text-swansons-text shrink-0">
                 {count} threads
               </div>
             </div>
@@ -542,30 +680,28 @@ function StaffWorkloadTab({
 function SendNotificationsTab() {
   const tagList = PlantSchema.shape.tags.unwrap().element.options;
   return (
-    <div className="bg-white rounded p-8 shadow flex flex-col items-center">
-      <div className="text-2xl mb-4">🔔</div>
-      <div className="font-heading font-bold text-lg mb-2 text-swansons-navy">
+    <div className="bg-white rounded-2xl p-8 shadow-sm flex flex-col items-center">
+      <div className="text-3xl mb-4">🔔</div>
+      <div className="font-heading font-bold text-xl mb-2 text-swansons-navy">
         Send Notifications
       </div>
       <div className="text-swansons-muted font-body mb-6">Coming Soon</div>
       <div className="w-full max-w-md">
-        <div className="mb-4">
-          <label className="block text-xs text-swansons-muted font-body mb-1">
-            Filter by plant tags
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {tagList.map((tag: string) => (
-              <span
-                key={tag}
-                className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-2 py-0.5 text-xs font-body font-medium border border-swansons-green opacity-60 cursor-not-allowed"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+        <label className="block text-xs text-swansons-muted font-body mb-2 uppercase tracking-wide">
+          Filter by plant tags
+        </label>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {tagList.map((tag: string) => (
+            <span
+              key={tag}
+              className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-2 py-0.5 text-xs font-body font-medium border border-swansons-green opacity-60 cursor-not-allowed"
+            >
+              {tag}
+            </span>
+          ))}
         </div>
         <button
-          className="w-full bg-swansons-green text-white py-2 rounded mt-4 opacity-60 cursor-not-allowed font-body"
+          className="w-full bg-swansons-green text-white py-3 rounded-full opacity-60 cursor-not-allowed font-body font-semibold"
           disabled
         >
           Create Notification →
@@ -576,6 +712,13 @@ function SendNotificationsTab() {
 }
 
 /* ─── AdminDashboardPage ────────────────────────────────────────────────── */
+const TABS = [
+  "Thread Queue",
+  "Staff Workload",
+  "Send Notifications",
+  "Staff Accounts",
+];
+
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const [tab, setTab] = useState(0);
@@ -637,13 +780,14 @@ export default function AdminDashboardPage() {
   return (
     <ProtectedRoute requiredRole="admin">
       <div className="flex min-h-screen bg-swansons-cream">
-        <Sidebar user={user} counts={counts} onTab={setTab} tab={tab} />
-        <main className="flex-1 p-4 md:p-8">
-          <div className="md:hidden flex gap-2 mb-4 overflow-x-auto">
+        <Sidebar user={user} onTab={setTab} tab={tab} />
+        <main className="flex-1 p-6 md:p-10 overflow-x-auto">
+          {/* Mobile tabs */}
+          <div className="md:hidden flex gap-2 mb-6 overflow-x-auto pb-1">
             {TABS.map((t, i) => (
               <button
                 key={t}
-                className={`flex-1 py-2 rounded text-xs font-body whitespace-nowrap ${
+                className={`flex-1 py-2 rounded-full text-xs font-body whitespace-nowrap px-3 ${
                   tab === i
                     ? "bg-swansons-navy text-white"
                     : "bg-white text-swansons-navy border border-swansons-navy"
@@ -654,10 +798,12 @@ export default function AdminDashboardPage() {
               </button>
             ))}
           </div>
+
           {tab === 0 && (
             <ThreadQueueTab
               threads={threads}
               staffUsers={staffUsers}
+              allUsers={allUsers}
               onAssign={handleAssign}
               onUrgent={handleUrgent}
               filters={filters}

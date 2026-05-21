@@ -66,12 +66,12 @@ export default function RootLayout({
           <div className="min-h-screen relative">
             <ClientLayout>
               <ScrollToTop />
+              <HamburgerMenu />
+              <BackButton />
               <ProtectedRoute>
                 <LenisProvider>{children}</LenisProvider>
               </ProtectedRoute>
             </ClientLayout>
-            <HamburgerMenu />
-            <BackButton />
             {/* <BottomNav /> */}
           </div>
         </AuthProvider>
