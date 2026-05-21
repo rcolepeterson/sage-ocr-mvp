@@ -9,6 +9,7 @@ const HIDE_ON = [
   "/terms",
   "/onboarding",
   "/ask",
+  "/admin",
 ];
 
 export default function BackButton() {
@@ -16,7 +17,11 @@ export default function BackButton() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  if (!user || HIDE_ON.includes(pathname)) return null;
+  if (
+    !user ||
+    HIDE_ON.some((path) => pathname === path || pathname.startsWith(path + "/"))
+  )
+    return null;
 
   return (
     <button
