@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "@/components/ui/Logo";
 
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
@@ -79,7 +80,16 @@ export default function ProtectedRoute({
 
   if (isPublicPath) return <>{children}</>;
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-swansons-cream">
+        <Logo width={120} height={60} />
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-swansons-green border-t-transparent animate-spin" />
+          <p className="font-body text-swansons-muted text-sm">Loading...</p>
+        </div>
+      </div>
+    );
 
   if (!user) return null;
 
