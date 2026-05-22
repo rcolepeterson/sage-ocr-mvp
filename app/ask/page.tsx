@@ -311,8 +311,8 @@ function AskPageInner() {
                 return (
                   <Link key={thread.id} href={`/ask/${thread.id}`}>
                     <div className="bg-white hover:bg-gray-50 transition rounded-2xl px-4 py-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-body text-xs text-swansons-muted">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-body text-xs text-swansons-navy">
                           {formatDate(thread.createdAt)}
                         </span>
                         <span
@@ -321,14 +321,14 @@ function AskPageInner() {
                           {badge.label}
                         </span>
                       </div>
-                      <p className="font-body text-swansons-navy text-sm truncate">
+                      <p className="font-body text-swansons-navy text-sm truncate underline">
                         {thread.question}
                       </p>
-                      {thread.plantName && (
+                      {/* {thread.plantName && (
                         <p className="font-body text-swansons-muted text-xs mt-1 truncate">
                           🌱 {thread.plantName}
                         </p>
-                      )}
+                      )} */}
                     </div>
                   </Link>
                 );
