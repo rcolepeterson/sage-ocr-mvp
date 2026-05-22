@@ -52,7 +52,7 @@ function RoleBadge({ role }: { role: string }) {
         : "bg-swansons-muted/10 text-swansons-muted border-swansons-muted";
   return (
     <span
-      className={`px-2 py-0.5 rounded-full border text-xs font-body font-medium ${color}`}
+      className={`px-3 py-1 rounded-full border text-xs font-body font-medium capitalize ${color}`}
     >
       {role}
     </span>
@@ -81,7 +81,6 @@ function ThreadPreviewModal({
         className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="font-body font-semibold text-swansons-navy">
@@ -99,13 +98,9 @@ function ThreadPreviewModal({
             Close
           </button>
         </div>
-
-        {/* Question */}
         <p className="font-body text-swansons-text text-sm leading-relaxed mb-6">
           {thread.question}
         </p>
-
-        {/* Open Thread button */}
         <Link href={`/admin/inbox`}>
           <Button variant="primary" className="rounded-full">
             Open Thread
@@ -116,90 +111,320 @@ function ThreadPreviewModal({
   );
 }
 
-/* ─── StaffAccountsTab ──────────────────────────────────────────────────── */
-function StaffAccountsTab({
-  users,
+/* ─── StaffEditModal ────────────────────────────────────────────────────── */
+function StaffEditModal({
+  user: staffUser,
   currentUid,
   onRoleChange,
+  onSpecialty,
+  onClose,
 }: {
-  users: AppUser[];
+  user: AppUser;
   currentUid: string;
   onRoleChange: (uid: string, role: string) => Promise<void>;
+  onSpecialty: (uid: string, specialty: string) => Promise<void>;
+  onClose: () => void;
 }) {
+  const [role, setRole] = useState(staffUser.role);
+  const [specialty, setSpecialty] = useState(staffUser.specialty || "");
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onRoleChange(staffUser.uid, role);
+    await onSpecialty(staffUser.uid, specialty);
+    setSaving(false);
+    setSuccess(true);
+    setTimeout(() => {
+      setSuccess(false);
+      onClose();
+    }, 800);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-heading font-bold text-lg text-swansons-navy">
+            Edit Staff
+          </h2>
+          <button
+            onClick={onClose}
+            className="font-body text-sm text-swansons-navy underline underline-offset-2"
+          >
+            Close
+          </button>
+        </div>
+
+        {/* Avatar + name */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-xl shrink-0">
+            {staffUser.displayName?.[0]?.toUpperCase() || "?"}
+          </div>
+          <div>
+            <p className="font-heading font-semibold text-swansons-navy">
+              {staffUser.displayName}
+            </p>
+            <p className="font-body text-xs text-swansons-muted">
+              {staffUser.email}
+            </p>
+          </div>
+        </div>
+
+        {/* Role */}
+        <div className="mb-4">
+          <label className="block text-xs font-body font-semibold uppercase tracking-wide text-swansons-muted mb-2">
+            Role
+          </label>
+          <select
+            className="input w-full font-body text-sm"
+            value={role}
+            disabled={staffUser.uid === currentUid}
+            onChange={(e) => setRole(e.target.value as UserRole)}
+          >
+            <option value="customer">Customer</option>
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+          </select>
+          {staffUser.uid === currentUid && (
+            <p className="text-xs text-swansons-muted font-body mt-1">
+              You cannot change your own role.
+            </p>
+          )}
+        </div>
+
+        {/* Specialty */}
+        <div className="mb-6">
+          <label className="block text-xs font-body font-semibold uppercase tracking-wide text-swansons-muted mb-2">
+            Specialty
+          </label>
+          <input
+            className="input w-full font-body text-sm"
+            placeholder="e.g. Perennials, Trees & Shrubs"
+            value={specialty}
+            onChange={(e) => setSpecialty(e.target.value)}
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            variant="primary"
+            className="flex-1 rounded-full"
+          >
+            {success ? "Saved ✓" : saving ? "Saving..." : "Save Changes"}
+          </Button>
+          <Button
+            onClick={onClose}
+            variant="secondary"
+            className="rounded-full"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── StaffManagementTab ────────────────────────────────────────────────── */
+type StaffManagementTabProps = {
+  staffUsers: AppUser[];
+  threads: Thread[];
+  currentUid: string;
+  onSpecialty: (uid: string, specialty: string) => Promise<void>;
+  onRoleChange: (uid: string, role: string) => Promise<void>;
+};
+
+function StaffManagementTab({
+  staffUsers,
+  threads,
+  currentUid,
+  onSpecialty,
+  onRoleChange,
+}: StaffManagementTabProps) {
   const [search, setSearch] = useState("");
-  const [successUid, setSuccessUid] = useState<string | null>(null);
-  const filtered = users.filter(
+  const [editUser, setEditUser] = useState<AppUser | null>(null);
+
+  const maxCount = Math.max(
+    ...staffUsers.map(
+      (u) =>
+        threads.filter((t) => t.assignedTo === u.uid && t.status !== "closed")
+          .length,
+    ),
+    1,
+  );
+
+  const filtered = staffUsers.filter(
     (u) =>
       u.displayName?.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase()),
   );
+
   return (
-    <div className="bg-white rounded-2xl p-6 shadow max-w-2xl mx-auto">
-      <div className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
-        <h2 className="font-heading font-bold text-lg text-swansons-navy">
-          Staff Accounts
-        </h2>
-        <input
-          className="input w-full sm:w-64 text-sm font-body"
-          placeholder="Search by name or email"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h1
+          className="font-heading font-bold text-swansons-navy"
+          style={{ fontSize: "2.5rem" }}
+        >
+          Staff Management
+        </h1>
+        <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm px-4 py-2 w-72">
+          <input
+            className="flex-1 font-body text-sm text-swansons-text placeholder:text-swansons-muted focus:outline-none bg-transparent"
+            placeholder="Search by name or email"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button className="w-8 h-8 bg-swansons-navy rounded-lg flex items-center justify-center shrink-0">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+          </button>
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded shadow font-body">
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <table className="min-w-full">
           <thead>
-            <tr className="bg-swansons-cream text-xs font-body uppercase tracking-wide text-swansons-muted">
-              <th className="p-3 text-left">Avatar</th>
-              <th className="p-3 text-left">Name</th>
-              <th className="p-3 text-left">Email</th>
-              <th className="p-3 text-left">Role</th>
-              <th className="p-3 text-left">Change Role</th>
+            <tr className="text-xs font-body uppercase tracking-wide text-swansons-muted border-b">
+              <th className="px-6 py-4 text-left">Avatar</th>
+              <th className="px-6 py-4 text-left">Name</th>
+              <th className="px-6 py-4 text-left">Email</th>
+              <th className="px-6 py-4 text-left">Role</th>
+              <th className="px-6 py-4 text-left">Workload</th>
+              <th className="px-6 py-4 text-left">Threads Closed</th>
+              <th className="px-6 py-4 text-right pr-6"></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((u) => (
-              <tr
-                key={u.uid}
-                className="border-b text-xs font-body hover:bg-swansons-cream/50"
-              >
-                <td className="p-3">
-                  <div className="w-8 h-8 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-base">
-                    {u.displayName?.[0]?.toUpperCase() || "?"}
-                  </div>
-                </td>
-                <td className="p-3 font-body font-medium text-swansons-navy">
-                  {u.displayName}
-                </td>
-                <td className="p-3 font-body text-swansons-text">{u.email}</td>
-                <td className="p-3">
-                  <RoleBadge role={u.role} />
-                </td>
-                <td className="p-3 font-body">
-                  <select
-                    className="input text-xs font-body"
-                    value={u.role}
-                    disabled={u.uid === currentUid}
-                    onChange={async (e) => {
-                      const newRole = e.target.value;
-                      await onRoleChange(u.uid, newRole);
-                      setSuccessUid(u.uid);
-                      setTimeout(() => setSuccessUid(null), 1200);
-                    }}
-                  >
-                    <option value="customer">customer</option>
-                    <option value="staff">staff</option>
-                    <option value="admin">admin</option>
-                  </select>
-                  {successUid === u.uid && (
-                    <span className="ml-2 text-swansons-green text-xs">✓</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {filtered.map((u) => {
+              const activeCount = threads.filter(
+                (t) => t.assignedTo === u.uid && t.status !== "closed",
+              ).length;
+              const closedCount = threads.filter(
+                (t) => t.assignedTo === u.uid && t.status === "closed",
+              ).length;
+              return (
+                <tr
+                  key={u.uid}
+                  className="border-b last:border-0 hover:bg-swansons-cream/30 transition"
+                >
+                  <td className="px-6 py-4">
+                    <div className="w-10 h-10 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-base overflow-hidden shrink-0">
+                      {u.displayName?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 font-body font-medium text-swansons-navy">
+                    {u.displayName}
+                  </td>
+                  <td className="px-6 py-4 font-body text-swansons-muted text-sm">
+                    {u.email}
+                  </td>
+                  <td className="px-6 py-4">
+                    <RoleBadge role={u.role} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="font-body font-semibold text-swansons-navy text-sm w-4 shrink-0">
+                        {activeCount}
+                      </span>
+                      <div className="w-32 h-2 bg-swansons-cream rounded-full overflow-hidden">
+                        <div
+                          className="bg-swansons-navy h-2 rounded-full transition-all"
+                          style={{
+                            width: `${(activeCount / maxCount) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 font-heading font-bold text-swansons-navy text-xl">
+                    {closedCount}
+                  </td>
+                  <td className="px-6 py-4 pr-6 text-right">
+                    <button
+                      onClick={() => setEditUser(u)}
+                      className="w-9 h-9 bg-swansons-navy rounded-full flex items-center justify-center text-white hover:opacity-90 transition ml-auto"
+                      title="Edit staff member"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {/* Add Staff */}
+      <div className="flex flex-col items-center mt-8 gap-2">
+        <button className="w-12 h-12 bg-swansons-navy rounded-full flex items-center justify-center text-white hover:opacity-90 transition">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+        <span className="font-body font-semibold text-swansons-navy text-sm underline underline-offset-2">
+          Add Staff
+        </span>
+      </div>
+
+      {/* Edit Modal */}
+      {editUser && (
+        <StaffEditModal
+          user={editUser}
+          currentUid={currentUid}
+          onRoleChange={onRoleChange}
+          onSpecialty={onSpecialty}
+          onClose={() => setEditUser(null)}
+        />
+      )}
     </div>
   );
 }
@@ -230,7 +455,7 @@ const NAV_ICONS = [
     ),
   },
   {
-    label: "Staff Workload",
+    label: "Staff Management",
     svg: (
       <svg
         width="22"
@@ -264,24 +489,6 @@ const NAV_ICONS = [
       >
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-      </svg>
-    ),
-  },
-  {
-    label: "Staff Accounts",
-    svg: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
       </svg>
     ),
   },
@@ -497,7 +704,6 @@ function ThreadQueueTab({
 
   return (
     <div>
-      {/* Stat Cards */}
       <div className="flex flex-wrap gap-4 mb-8">
         <StatCard
           label="Unassigned"
@@ -517,7 +723,6 @@ function ThreadQueueTab({
         />
       </div>
 
-      {/* Filter Pills */}
       <div className="flex flex-wrap gap-2 mb-6">
         {FILTERS.map((f) => (
           <button
@@ -548,7 +753,6 @@ function ThreadQueueTab({
         ))}
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto bg-white rounded-2xl shadow-sm">
         <table className="min-w-full">
           <thead>
@@ -593,9 +797,7 @@ function ThreadQueueTab({
                               ? "bg-teal-400"
                               : t.status === "needs-followup"
                                 ? "bg-orange-500"
-                                : t.status === "closed"
-                                  ? "bg-swansons-muted"
-                                  : "bg-swansons-muted"
+                                : "bg-swansons-muted"
                       }`}
                     >
                       {t.status === "new"
@@ -674,7 +876,6 @@ function ThreadQueueTab({
         )}
       </div>
 
-      {/* Thread Preview Modal */}
       {previewThread && (
         <ThreadPreviewModal
           thread={previewThread}
@@ -682,68 +883,6 @@ function ThreadQueueTab({
           onClose={() => setPreviewThread(null)}
         />
       )}
-    </div>
-  );
-}
-
-/* ─── StaffWorkloadTab ──────────────────────────────────────────────────── */
-type StaffWorkloadTabProps = {
-  staffUsers: AppUser[];
-  threads: Thread[];
-  onSpecialty: (uid: string, specialty: string) => Promise<void>;
-};
-
-function StaffWorkloadTab({
-  staffUsers,
-  threads,
-  onSpecialty,
-}: StaffWorkloadTabProps) {
-  const maxCount = Math.max(
-    ...staffUsers.map(
-      (u) => threads.filter((t) => t.assignedTo === u.uid).length,
-    ),
-    1,
-  );
-  return (
-    <div className="space-y-4">
-      {staffUsers.map((u) => {
-        const count = threads.filter((t) => t.assignedTo === u.uid).length;
-        return (
-          <div
-            key={u.uid}
-            className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4"
-          >
-            <div className="w-10 h-10 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-lg shrink-0">
-              {u.displayName?.[0] || "S"}
-            </div>
-            <div className="flex-1">
-              <div className="font-heading font-semibold text-swansons-navy">
-                {u.displayName}
-              </div>
-              <div className="text-xs text-swansons-muted font-body mb-2">
-                {u.specialty || <span className="italic">No specialty</span>}
-              </div>
-              <input
-                className="input text-xs w-40 font-body"
-                placeholder="Edit specialty"
-                defaultValue={u.specialty}
-                onBlur={(e) => onSpecialty(u.uid, e.target.value)}
-              />
-            </div>
-            <div className="flex-1 flex items-center gap-3">
-              <div className="flex-1 h-2 bg-swansons-cream rounded-full overflow-hidden">
-                <div
-                  className="bg-swansons-green h-2 rounded-full transition-all"
-                  style={{ width: `${(count / maxCount) * 100}%` }}
-                />
-              </div>
-              <div className="text-xs font-mono text-swansons-text shrink-0">
-                {count} threads
-              </div>
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -784,24 +923,13 @@ function SendNotificationsTab() {
 }
 
 /* ─── AdminDashboardPage ────────────────────────────────────────────────── */
-const TABS = [
-  "Thread Queue",
-  "Staff Workload",
-  "Send Notifications",
-  "Staff Accounts",
-];
+const TABS = ["Thread Queue", "Staff Management", "Send Notifications"];
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const [tab, setTab] = useState(0);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [staffUsers, setStaffUsers] = useState<AppUser[]>([]);
-  const [counts, setCounts] = useState({
-    open: 0,
-    unassigned: 0,
-    urgent: 0,
-    closed: 0,
-  });
   const [filters, setFilters] = useState<string[]>(["all"]);
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
 
@@ -809,15 +937,6 @@ export default function AdminDashboardPage() {
     if (!user) return;
     const unsub = subscribeToAllThreadsAdmin((allThreads) => {
       setThreads(allThreads);
-      setCounts({
-        open: allThreads.filter((t) => t.status !== "closed").length,
-        unassigned: allThreads.filter(
-          (t) => !t.assignedTo && t.status === "new",
-        ).length,
-        urgent: allThreads.filter((t) => t.urgent && t.status !== "closed")
-          .length,
-        closed: allThreads.filter((t) => t.status === "closed").length,
-      });
     });
     return () => unsub();
   }, [user]);
@@ -845,6 +964,9 @@ export default function AdminDashboardPage() {
   async function handleRoleChange(uid: string, role: string) {
     await updateUserRole(uid, role as UserRole);
     setAllUsers((prev) =>
+      prev.map((u) => (u.uid === uid ? { ...u, role: role as UserRole } : u)),
+    );
+    setStaffUsers((prev) =>
       prev.map((u) => (u.uid === uid ? { ...u, role: role as UserRole } : u)),
     );
   }
@@ -881,20 +1003,15 @@ export default function AdminDashboardPage() {
             />
           )}
           {tab === 1 && (
-            <StaffWorkloadTab
+            <StaffManagementTab
               staffUsers={staffUsers}
               threads={threads}
-              onSpecialty={handleSpecialty}
-            />
-          )}
-          {tab === 2 && <SendNotificationsTab />}
-          {tab === 3 && (
-            <StaffAccountsTab
-              users={allUsers}
               currentUid={user?.uid ?? ""}
+              onSpecialty={handleSpecialty}
               onRoleChange={handleRoleChange}
             />
           )}
+          {tab === 2 && <SendNotificationsTab />}
         </main>
       </div>
     </ProtectedRoute>
