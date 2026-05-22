@@ -237,9 +237,113 @@ function StaffEditModal({
   );
 }
 
+/* ─── AddStaffModal ─────────────────────────────────────────────────────── */
+function AddStaffModal({
+  allUsers,
+  currentStaffUids,
+  onRoleChange,
+  onClose,
+}: {
+  allUsers: AppUser[];
+  currentStaffUids: string[];
+  onRoleChange: (uid: string, role: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [successUid, setSuccessUid] = useState<string | null>(null);
+
+  const results = allUsers.filter(
+    (u) =>
+      u.role === "customer" &&
+      !currentStaffUids.includes(u.uid) &&
+      search.length > 0 &&
+      (u.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+        u.email?.toLowerCase().includes(search.toLowerCase())),
+  );
+
+  const handlePromote = async (u: AppUser) => {
+    setSaving(true);
+    await onRoleChange(u.uid, "staff");
+    setSaving(false);
+    setSuccessUid(u.uid);
+    setTimeout(() => {
+      setSuccessUid(null);
+      onClose();
+    }, 800);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-heading font-bold text-lg text-swansons-navy">
+            Add Staff
+          </h2>
+          <button
+            onClick={onClose}
+            className="font-body text-sm text-swansons-navy underline underline-offset-2"
+          >
+            Close
+          </button>
+        </div>
+        <p className="font-body text-swansons-muted text-sm mb-4">
+          Search for an existing user and promote them to Staff.
+        </p>
+        <input
+          className="input w-full font-body text-sm mb-4"
+          placeholder="Search by name or email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoFocus
+        />
+        {search.length > 0 && (
+          <div className="border rounded-xl overflow-hidden">
+            {results.length === 0 ? (
+              <p className="font-body text-swansons-muted text-sm p-4 text-center">
+                No customers found.
+              </p>
+            ) : (
+              results.map((u) => (
+                <div
+                  key={u.uid}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-swansons-cream/50 border-b last:border-0"
+                >
+                  <div>
+                    <p className="font-body font-medium text-swansons-navy text-sm">
+                      {u.displayName}
+                    </p>
+                    <p className="font-body text-swansons-muted text-xs">
+                      {u.email}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handlePromote(u)}
+                    disabled={saving}
+                    className="px-3 py-1.5 rounded-full bg-swansons-navy text-white text-xs font-body hover:opacity-90 transition disabled:opacity-50"
+                  >
+                    {successUid === u.uid ? "Done ✓" : "Make Staff"}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── StaffManagementTab ────────────────────────────────────────────────── */
 type StaffManagementTabProps = {
   staffUsers: AppUser[];
+  allUsers: AppUser[];
   threads: Thread[];
   currentUid: string;
   onSpecialty: (uid: string, specialty: string) => Promise<void>;
@@ -248,6 +352,7 @@ type StaffManagementTabProps = {
 
 function StaffManagementTab({
   staffUsers,
+  allUsers,
   threads,
   currentUid,
   onSpecialty,
@@ -255,6 +360,8 @@ function StaffManagementTab({
 }: StaffManagementTabProps) {
   const [search, setSearch] = useState("");
   const [editUser, setEditUser] = useState<AppUser | null>(null);
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const currentStaffUids = staffUsers.map((u) => u.uid);
 
   const maxCount = Math.max(
     ...staffUsers.map(
@@ -395,7 +502,10 @@ function StaffManagementTab({
 
       {/* Add Staff */}
       <div className="flex flex-col items-center mt-8 gap-2">
-        <button className="w-12 h-12 bg-swansons-navy rounded-full flex items-center justify-center text-white hover:opacity-90 transition">
+        <button
+          onClick={() => setShowAddStaff(true)}
+          className="w-12 h-12 bg-swansons-navy rounded-full flex items-center justify-center text-white hover:opacity-90 transition"
+        >
           <svg
             width="20"
             height="20"
@@ -423,6 +533,16 @@ function StaffManagementTab({
           onRoleChange={onRoleChange}
           onSpecialty={onSpecialty}
           onClose={() => setEditUser(null)}
+        />
+      )}
+
+      {/* Add Staff Modal */}
+      {showAddStaff && (
+        <AddStaffModal
+          allUsers={allUsers}
+          currentStaffUids={currentStaffUids}
+          onRoleChange={onRoleChange}
+          onClose={() => setShowAddStaff(false)}
         />
       )}
     </div>
@@ -1005,6 +1125,7 @@ export default function AdminDashboardPage() {
           {tab === 1 && (
             <StaffManagementTab
               staffUsers={staffUsers}
+              allUsers={allUsers}
               threads={threads}
               currentUid={user?.uid ?? ""}
               onSpecialty={handleSpecialty}
