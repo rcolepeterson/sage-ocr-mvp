@@ -352,7 +352,7 @@ export default function ScanPage() {
       {/* ── IDLE ─────────────────────────────────────────────────────────── */}
       {step === "idle" && (
         <div className="px-4 pt-4 pb-28 flex flex-col items-center justify-center">
-          <p className="font-body text-center text-swansons-black mb-8 text-sm leading-relaxed px-8">
+          <p className="font-body text-center text-swansons-black mb-8 text-base leading-relaxed font-semibold px-8">
             Hold plant tag or label in front of camera, tap &apos;Scan&apos;
             button below and hold still as plant data is captured.
           </p>

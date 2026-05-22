@@ -83,11 +83,11 @@ export default function MyPlantsPage() {
               <section key={space.id} className="mb-10">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="font-body font-bold text-swansons-navy uppercase tracking-widest text-sm mb-2">
+                    <p className="font-body font-bold text-swansons-black uppercase tracking-widest text-sm mb-2">
                       {space.name}
                     </p>
                     {spaceTags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 mb-6">
                         {spaceTags.map((tag) => (
                           <span
                             key={tag}
@@ -137,10 +137,16 @@ export default function MyPlantsPage() {
                               )}
                             </div>
                             <div>
-                              <p className="font-heading font-semibold text-swansons-navy leading-tight">
+                              <p
+                                className="text-swansons-green-dark leading-tight text-lg"
+                                style={{
+                                  fontFamily: "var(--font-poppins)",
+                                  fontWeight: 300,
+                                }}
+                              >
                                 {plant.commonName}
                               </p>
-                              <p className="font-body italic text-swansons-muted text-sm">
+                              <p className="font-body italic text-swansons-black font-semibold text-sm">
                                 {plant.latinName}
                               </p>
                             </div>
@@ -151,7 +157,7 @@ export default function MyPlantsPage() {
                         >
                           <Button
                             variant="primary"
-                            className="w-full rounded-full mx-auto block"
+                            className="w-full rounded-full mx-auto block max-w-[200px]"
                           >
                             Ask An Expert
                           </Button>
@@ -160,7 +166,7 @@ export default function MyPlantsPage() {
                         <button
                           onClick={() => handleDeletePlant(space.id, plant.id)}
                           disabled={deletingId === plant.id}
-                          className="w-full text-center font-body text-xs text-swansons-muted mt-2 hover:text-red-400 transition"
+                          className="w-full text-center font-body text-xs text-swansons-muted mt-4 hover:text-red-400 transition"
                         >
                           {deletingId === plant.id
                             ? "Removing..."
