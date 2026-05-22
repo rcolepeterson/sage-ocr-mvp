@@ -31,7 +31,7 @@ function LatestPlantCard() {
         )}
       </div>
       <div>
-        <p className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-black mb-1">
+        <p className="text-xs font-body font-bold uppercase tracking-widest text-swansons-black mb-1">
           Latest Plant
         </p>
         <h3 className="text-lg leading-tight">{plant.commonName}</h3>
@@ -60,7 +60,7 @@ function NotificationsCard() {
         className="w-full flex items-center justify-between px-5 py-4"
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-black">
+        <span className="text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
           Notifications
         </span>
         <span className="text-swansons-navy text-3xl leading-none">+</span>
