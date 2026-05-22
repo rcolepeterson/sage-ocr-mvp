@@ -220,14 +220,14 @@ function StaffEditModal({
             onClick={handleSave}
             disabled={saving}
             variant="primary"
-            className="flex-1 rounded-full"
+            className="flex-1 rounded-full whitespace-nowrap"
           >
             {success ? "Saved ✓" : saving ? "Saving..." : "Save Changes"}
           </Button>
           <Button
             onClick={onClose}
             variant="secondary"
-            className="rounded-full"
+            className="flex-1 rounded-full whitespace-nowrap"
           >
             Cancel
           </Button>
