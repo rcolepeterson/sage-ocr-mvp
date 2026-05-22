@@ -16,7 +16,6 @@ import {
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import NotificationBanner from "@/components/ui/NotificationBanner";
 import { Logo } from "@/components/ui/Logo";
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
@@ -297,17 +296,6 @@ function AskPageInner() {
               </div>
             </div>
           </form>
-
-          {/* Notification banner */}
-          {user && (
-            <div className="mt-4">
-              <NotificationBanner
-                uid={user.uid}
-                message="Want to know when an expert replies? Enable notifications"
-                show={submitted}
-              />
-            </div>
-          )}
         </div>
 
         {/* ── Thread list — dark navy section ── */}

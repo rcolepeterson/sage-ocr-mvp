@@ -13,31 +13,29 @@ import {
 } from "@/lib/firebase/threads";
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { getUser } from "@/lib/firebase/users";
-import NotificationBanner from "@/components/ui/NotificationBanner";
+import { PhotoPicker } from "@/components/ui/PhotoPicker";
+import { compressImage } from "@/lib/utils/imageCompression";
 
 function AdminInboxPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, role } = useAuth();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedThread, setSelectedThread] = useState<any>(null);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [staffFilter, setStaffFilter] = useState<string>("all");
   const bottomRef = useRef<HTMLDivElement>(null);
-  // Photo upload state
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Real time listener for all threads
   useEffect(() => {
     const unsub = subscribeToAllThreads(setThreads);
     return () => unsub();
   }, []);
 
-  // Fetch customer names for all threads
   useEffect(() => {
     const fetchNames = async () => {
       const uniqueUserIds = [...new Set(threads.map((t) => t.userId))];
@@ -55,22 +53,38 @@ function AdminInboxPage() {
     if (threads.length > 0) fetchNames();
   }, [threads]);
 
-  // Real time listener for selected thread
   useEffect(() => {
     if (!selectedThreadId) return;
     const unsub = subscribeToThread(selectedThreadId, setSelectedThread);
     return () => unsub();
   }, [selectedThreadId]);
 
-  // Auto scroll to bottom when replies update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selectedThread?.replies]);
 
-  const handleSelectThread = (threadId: string) => {
-    setSelectedThreadId(threadId);
-  };
+  // ─── Filter logic ────────────────────────────────────────────────────────
+  const visibleThreads = (() => {
+    if (role === "staff") {
+      // Staff only see threads assigned to them
+      return threads.filter((t) => t.assignedTo === user?.uid);
+    }
+    // Admin — filter by selected staff member
+    if (staffFilter === "all") return threads;
+    if (staffFilter === "unassigned")
+      return threads.filter((t) => !t.assignedTo);
+    return threads.filter((t) => t.assignedTo === staffFilter);
+  })();
 
+  // Unique staff members who have assigned threads (for admin filter dropdown)
+  const assignedStaffIds = [
+    ...new Set(
+      threads.filter((t) => t.assignedTo).map((t) => t.assignedTo as string),
+    ),
+  ];
+
+  const handleSelectThread = (threadId: string) =>
+    setSelectedThreadId(threadId);
   const handleBack = () => {
     setSelectedThreadId(null);
     setSelectedThread(null);
@@ -106,20 +120,11 @@ function AdminInboxPage() {
       setPhotoPreview("");
       setUploadProgress(0);
     } catch (e) {
-      // Optionally handle error
+      console.error(e);
     }
     setSubmitting(false);
     setUploading(false);
   };
-
-  // Handle file input change
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-    }
-  }
 
   const handleStatus = async (
     status:
@@ -133,153 +138,157 @@ function AdminInboxPage() {
     await updateThreadStatus(selectedThread.id, status);
   };
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  function getStatusLabel(status: string) {
+    switch (status) {
+      case "new":
+        return "🆕 New";
+      case "assigned":
+        return "👤 Assigned";
+      case "waiting-on-customer":
+        return "⏳ Waiting on Customer";
+      case "needs-followup":
+        return "🔁 Needs Follow-Up";
+      case "closed":
+        return "✅ Closed";
+      default:
+        return status;
+    }
+  }
+
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin w-8 h-8 border-2 border-swansons-green border-t-transparent rounded-full" />
+      </div>
+    );
 
   return (
     <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden pb-20">
-      {/* Top Header */}
+      {/* Header */}
       <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white flex items-center gap-3">
-        {/* Back button on mobile when thread is selected */}
         {selectedThread && (
           <button
             onClick={handleBack}
-            className="md:hidden text-green-700 font-medium text-sm"
+            className="md:hidden text-swansons-navy font-body font-medium text-sm"
           >
             ← Back
           </button>
         )}
-        <h1 className="text-xl font-semibold">
-          {selectedThread ? "Thread" : "Staff Inbox"}
+        <h1 className="font-heading font-semibold text-swansons-navy text-lg">
+          {selectedThread
+            ? "Thread"
+            : role === "staff"
+              ? "My Threads"
+              : "Staff Inbox"}
         </h1>
-      </div>
 
-      {/* Notification banner — prompts staff to enable push notifications */}
-      {user && (
-        <div className="shrink-0 px-4 pt-3">
-          <NotificationBanner
-            uid={user.uid}
-            message="Get notified about new customer questions. Enable notifications"
-          />
-        </div>
-      )}
+        {/* Admin only — filter by staff */}
+        {role === "admin" && !selectedThread && (
+          <div className="ml-auto">
+            <select
+              className="input text-xs font-body py-1.5"
+              value={staffFilter}
+              onChange={(e) => setStaffFilter(e.target.value)}
+            >
+              <option value="all">All Staff</option>
+              <option value="unassigned">Unassigned</option>
+              {assignedStaffIds.map((uid) => (
+                <option key={uid} value={uid}>
+                  {userNames[uid] || uid.slice(0, 8)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel — Thread List
-          On mobile: show only when no thread selected
-          On desktop: always show */}
+        {/* Left Panel — Thread List */}
         <div
-          className={`
-        w-full md:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden
-        ${selectedThread ? "hidden md:flex" : "flex"}
-      `}
+          className={`w-full md:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden ${selectedThread ? "hidden md:flex" : "flex"}`}
         >
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {threads.map((thread) => (
+            {visibleThreads.map((thread) => (
               <div
                 key={thread.id}
-                className={`rounded p-3 cursor-pointer flex flex-col gap-1 ${
+                className={`rounded-xl p-3 cursor-pointer flex flex-col gap-1 ${
                   selectedThread?.id === thread.id
-                    ? "bg-green-50 border-2 border-green-600"
-                    : "bg-gray-50 hover:bg-gray-100"
+                    ? "bg-swansons-green-muted border-2 border-swansons-green"
+                    : "bg-swansons-cream hover:bg-swansons-green-muted/50"
                 }`}
                 onClick={() => handleSelectThread(thread.id)}
               >
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-swansons-muted font-body">
                   {userNames[thread.userId] || "Loading..."}
                 </span>
-                <span className="font-medium text-sm">{thread.question}</span>
+                <span className="font-body font-medium text-sm text-swansons-navy truncate">
+                  {thread.question}
+                </span>
                 {thread.plantName && (
-                  <span className="text-xs text-green-600 mt-0.5">
+                  <span className="text-xs text-swansons-green font-body mt-0.5">
                     🌱 {thread.plantName}
                   </span>
                 )}
-                <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600 self-start">
-                  {(() => {
-                    switch (thread.status) {
-                      case "new":
-                        return "🆕 New";
-                      case "assigned":
-                        return "👤 Assigned";
-                      case "waiting-on-customer":
-                        return "⏳ Waiting on Customer";
-                      case "needs-followup":
-                        return "🔁 Needs Follow-Up";
-                      case "closed":
-                        return "✅ Closed";
-                      default:
-                        return thread.status;
-                    }
-                  })()}
+                <span className="text-xs px-2 py-0.5 rounded-full bg-white text-swansons-muted font-body self-start">
+                  {getStatusLabel(thread.status)}
                 </span>
               </div>
             ))}
-            {threads.length === 0 && (
-              <p className="text-gray-500 text-sm">No open threads.</p>
+            {visibleThreads.length === 0 && (
+              <p className="font-body text-swansons-muted text-sm text-center mt-8">
+                {role === "staff"
+                  ? "No threads assigned to you yet."
+                  : "No threads found."}
+              </p>
             )}
           </div>
         </div>
 
-        {/* Right Panel — Thread Detail
-          On mobile: show only when thread selected
-          On desktop: always show */}
+        {/* Right Panel — Thread Detail */}
         <div
-          className={`
-        flex-1 flex flex-col overflow-hidden
-        ${selectedThread ? "flex" : "hidden md:flex"}
-      `}
+          className={`flex-1 flex flex-col overflow-hidden ${selectedThread ? "flex" : "hidden md:flex"}`}
         >
           {selectedThread ? (
             <>
-              {/* Fixed Thread Header */}
+              {/* Thread Header */}
               <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
-                <p className="text-xs text-gray-400 mb-1">
+                <p className="text-xs text-swansons-muted font-body mb-1">
                   {userNames[selectedThread.userId] || "Loading..."}
                 </p>
-                <p className="font-medium">Q: {selectedThread.question}</p>
+                <p className="font-body font-medium text-swansons-navy">
+                  Q: {selectedThread.question}
+                </p>
                 {selectedThread.plantName && (
-                  <span className="text-xs text-green-600 mt-0.5 block">
+                  <span className="text-xs text-swansons-green font-body mt-0.5 block">
                     🌱 {selectedThread.plantName}
                   </span>
                 )}
-                <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                  {(() => {
-                    switch (selectedThread.status) {
-                      case "new":
-                        return "🆕 New";
-                      case "assigned":
-                        return "👤 Assigned";
-                      case "waiting-on-customer":
-                        return "⏳ Waiting on Customer";
-                      case "needs-followup":
-                        return "🔁 Needs Follow-Up";
-                      case "closed":
-                        return "✅ Closed";
-                      default:
-                        return selectedThread.status;
-                    }
-                  })()}
+                <span className="text-xs px-2 py-0.5 rounded-full bg-swansons-cream text-swansons-muted font-body">
+                  {getStatusLabel(selectedThread.status)}
                 </span>
               </div>
 
               {/* Scrollable Replies */}
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-                {selectedThread.replies && selectedThread.replies.length > 0 ? (
+                {selectedThread.replies?.length > 0 ? (
                   selectedThread.replies.map((r: any) => (
                     <div
                       key={r.id}
-                      className={`flex flex-col max-w-sm rounded p-3 ${
+                      className={`flex flex-col max-w-sm rounded-xl p-3 ${
                         r.isStaff
-                          ? "bg-green-50 self-start"
+                          ? "bg-swansons-green-muted self-start"
                           : "bg-white shadow self-end ml-auto"
                       }`}
                     >
-                      <span className="text-xs text-gray-500 mb-1">
+                      <span className="text-xs text-swansons-muted font-body mb-1">
                         {r.isStaff
                           ? "Staff"
                           : userNames[selectedThread.userId] || "Customer"}
                       </span>
-                      <span className="text-sm">{r.message}</span>
+                      <span className="font-body text-sm text-swansons-text">
+                        {r.message}
+                      </span>
                       {r.photoURL && (
                         <a
                           href={r.photoURL}
@@ -290,62 +299,58 @@ function AdminInboxPage() {
                           <img
                             src={r.photoURL}
                             alt="Attached photo"
-                            className="rounded object-cover max-h-48 border"
-                            style={{ width: "100%", marginTop: 4 }}
+                            className="rounded-xl object-cover max-h-48 border"
                           />
                         </a>
                       )}
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-sm">No replies yet.</p>
+                  <p className="font-body text-swansons-muted text-sm">
+                    No replies yet.
+                  </p>
                 )}
                 <div ref={bottomRef} />
               </div>
 
-              {/* Fixed Bottom — Reply Box + Button */}
+              {/* Reply Box */}
               <div className="shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
                 <form onSubmit={handleReply} className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      aria-label="Attach photo"
-                      className="text-2xl px-2 py-1 bg-gray-100 rounded-full hover:bg-gray-200 focus:outline-none"
-                      onClick={() => fileInputRef.current?.click()}
+                    <PhotoPicker
+                      onFile={(file) => {
+                        setPhotoFile(file);
+                        setPhotoPreview(URL.createObjectURL(file));
+                      }}
                       disabled={submitting || uploading}
                     >
-                      📎
-                    </button>
+                      <button
+                        type="button"
+                        className="text-2xl px-2 py-1 bg-swansons-cream rounded-full hover:bg-swansons-green-muted focus:outline-none"
+                        disabled={submitting || uploading}
+                      >
+                        📎
+                      </button>
+                    </PhotoPicker>
                     <textarea
-                      className="flex-1 input min-h-15"
+                      className="flex-1 input"
                       placeholder="Type a reply..."
                       value={reply}
                       onChange={(e) => setReply(e.target.value)}
                       disabled={submitting || uploading}
                       required={!photoFile}
                     />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      ref={fileInputRef}
-                      className="hidden"
-                      onChange={handlePhotoChange}
-                      disabled={submitting || uploading}
-                    />
                   </div>
-                  {/* Photo preview and progress */}
                   {photoPreview && (
                     <div className="flex flex-col items-center mt-2">
                       <img
                         src={photoPreview}
                         alt="Preview"
-                        className="rounded object-cover max-h-48 border mb-2"
-                        style={{ width: "auto", maxWidth: "100%" }}
+                        className="rounded-xl object-cover max-h-48 border mb-2"
                       />
                       <button
                         type="button"
-                        className="text-xs text-red-500 underline mb-1"
+                        className="text-xs font-body text-red-400 underline mb-1"
                         onClick={() => {
                           setPhotoFile(null);
                           setPhotoPreview("");
@@ -356,14 +361,14 @@ function AdminInboxPage() {
                     </div>
                   )}
                   {uploading && (
-                    <div className="text-xs text-green-700 mt-1">
+                    <div className="text-xs font-body text-swansons-green mt-1">
                       Uploading photo... {uploadProgress.toFixed(0)}%
                     </div>
                   )}
                   <div className="flex gap-2">
                     <button
                       type="submit"
-                      className="btn btn-primary flex-1"
+                      className="flex-1 bg-swansons-navy text-white font-body font-medium py-2 px-4 rounded-full hover:opacity-90 transition disabled:opacity-50"
                       disabled={
                         submitting || uploading || (!reply.trim() && !photoFile)
                       }
@@ -372,7 +377,7 @@ function AdminInboxPage() {
                     </button>
                     <button
                       type="button"
-                      className="btn bg-green-200 cursor-pointer px-4"
+                      className="bg-swansons-green-muted text-swansons-green-dark font-body font-medium py-2 px-4 rounded-full hover:opacity-90 transition"
                       onClick={() => handleStatus("closed")}
                     >
                       Close Thread
@@ -382,7 +387,7 @@ function AdminInboxPage() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+            <div className="flex-1 flex items-center justify-center font-body text-swansons-muted text-sm">
               Select a thread to view details.
             </div>
           )}
