@@ -152,12 +152,20 @@ function SpacesList() {
                         </div>
                       ),
                     )}
+                  {count > 3 && (
+                    <div className="w-10 h-10 rounded-full  bg-swansons-navy text-white text-sm flex items-center justify-center shrink-0">
+                      <span
+                        style={{
+                          marginRight: 4,
+                          fontFamily: "var(--font-poppins)",
+                          fontWeight: 300,
+                        }}
+                      >
+                        +{count - 3}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                {count > 3 && (
-                  <span className="ml-1 bg-swansons-navy text-white text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center">
-                    +{count - 3}
-                  </span>
-                )}
                 {count === 0 && (
                   <span className="text-xs font-body text-swansons-muted">
                     No plants yet
