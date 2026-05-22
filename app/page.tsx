@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/firebase/AuthContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useSpaces } from "@/lib/hooks/useSpaces";
 import { useState } from "react";
+import { motion } from "motion/react";
 
 // ─── Latest Plant placeholder ──────────────────────────────────────────────
 function LatestPlantCard() {
@@ -189,6 +190,20 @@ function SpacesList() {
   );
 }
 
+const containerVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
 // ─── Home page ─────────────────────────────────────────────────────────────
 export default function Home() {
   const { user } = useAuth();
@@ -198,55 +213,67 @@ export default function Home() {
     <ProtectedRoute>
       <OnboardingModal />
       <main className="min-h-screen px-4 pt-6 pb-28 max-w-lg mx-auto">
-        {/* Logo */}
-        <div className="flex items-center justify-center mb-8">
-          <Logo />
-        </div>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="flex flex-col"
+        >
+          {/* Logo */}
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center justify-center mb-8"
+          >
+            <Logo />
+          </motion.div>
 
-        {/* Welcome */}
-        <div className="mb-6">
-          <h2 className="text-4xl font-heading  text-swansons-navy leading-tight">
-            Hi, {firstName}
-          </h2>
-          <p className="font-body text-swansons-black mt-1">
-            Hey there, green thumb. What are we tending to today?
-          </p>
-        </div>
+          {/* Welcome */}
+          <motion.div variants={itemVariants} className="mb-6">
+            <h2 className="text-4xl font-heading text-swansons-navy leading-tight">
+              Hi, {firstName}
+            </h2>
+            <p className="font-body text-swansons-black mt-1">
+              Hey there, green thumb. What are we tending to today?
+            </p>
+          </motion.div>
 
-        {/* Notifications */}
-        <div className="mb-4">
-          <NotificationsCard />
-        </div>
+          {/* Notifications */}
+          <motion.div variants={itemVariants} className="mb-4">
+            <NotificationsCard />
+          </motion.div>
 
-        {/* Latest Plant */}
-        <div className="mb-6">
-          <LatestPlantCard />
-        </div>
+          {/* Latest Plant */}
+          <motion.div variants={itemVariants} className="mb-6">
+            <LatestPlantCard />
+          </motion.div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 mb-8">
-          <Link href="/scan" className="flex-1">
-            <Button
-              variant="primary"
-              size="md"
-              className="w-full rounded-full text-base"
-            >
-              Add A Plant
-            </Button>
-          </Link>
-          <Link href="/ask" className="flex-1">
-            <Button
-              variant="primary"
-              size="md"
-              className="w-full rounded-full text-base"
-            >
-              Ask An Expert
-            </Button>
-          </Link>
-        </div>
+          {/* Action Buttons */}
+          <motion.div variants={itemVariants} className="flex gap-3 mb-8">
+            <Link href="/scan" className="flex-1">
+              <Button
+                variant="primary"
+                size="md"
+                className="w-full rounded-full text-base"
+              >
+                Add A Plant
+              </Button>
+            </Link>
+            <Link href="/ask" className="flex-1">
+              <Button
+                variant="primary"
+                size="md"
+                className="w-full rounded-full text-base"
+              >
+                Ask An Expert
+              </Button>
+            </Link>
+          </motion.div>
 
-        {/* Spaces */}
-        <SpacesList />
+          {/* Spaces */}
+          <motion.div variants={itemVariants}>
+            <SpacesList />
+          </motion.div>
+        </motion.div>
       </main>
     </ProtectedRoute>
   );
