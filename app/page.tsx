@@ -52,7 +52,14 @@ function NotificationsCard() {
   return (
     <div className="relative bg-white rounded-2xl shadow-sm overflow-visible">
       {/* Badge — half on/half off top right */}
-      <span className=" pb-0.5  absolute -top-2 -right-2 bg-swansons-navy text-white text-xs font-bold rounded-full w-7 h-7 flex items-center justify-center z-10">
+      <span
+        className=" pb-0.5  absolute -top-3 -right-3 bg-swansons-navy text-white text-lg rounded-full w-10 h-10 flex items-center justify-center z-10"
+        style={{
+          marginRight: 4,
+          fontFamily: "var(--font-poppins)",
+          fontWeight: 300,
+        }}
+      >
         3
       </span>
 
@@ -63,7 +70,9 @@ function NotificationsCard() {
         <span className="text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
           Notifications
         </span>
-        <span className="text-swansons-navy text-3xl leading-none">+</span>
+        <span className="text-swansons-navy text-6xl font-light leading-none">
+          +
+        </span>
       </button>
       {open && (
         <div className="px-5 pb-4 text-sm text-swansons-muted">
