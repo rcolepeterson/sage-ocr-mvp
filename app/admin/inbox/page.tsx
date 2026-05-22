@@ -62,7 +62,7 @@ function AdminInboxPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selectedThread?.replies]);
-
+  console.log("[inbox] role:", role, "uid:", user?.uid);
   // ─── Filter logic ────────────────────────────────────────────────────────
   const visibleThreads = (() => {
     if (role === "staff") {
