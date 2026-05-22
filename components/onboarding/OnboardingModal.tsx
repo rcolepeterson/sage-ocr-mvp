@@ -34,11 +34,21 @@ function OnboardingModalInner() {
   const searchParams = useSearchParams();
   const preview = searchParams.get("onboarding") === "preview";
 
-  // Always show modal for design/testing
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
 
-  // Skip onboardingCompletedAt check for design/testing
+  useEffect(() => {
+    async function check() {
+      if (preview) {
+        setVisible(true);
+        return;
+      }
+      if (!user) return;
+      const snap = await getDoc(doc(db, "users", user.uid));
+      setVisible(!(snap.exists() && snap.data()?.onboardingCompletedAt));
+    }
+    check();
+  }, [user, preview]);
 
   const dismiss = async () => {
     setVisible(false);
@@ -123,11 +133,11 @@ function OnboardingModalInner() {
             Skip
           </Button>
           {/* Preview badge — visible to designer so they know they're in preview mode */}
-          {preview && (
+          {/* {preview && (
             <span className="mt-4 text-xs text-orange-400 font-medium tracking-wide uppercase">
               Preview mode — changes not saved
             </span>
-          )}
+          )} */}
         </div>
       </div>
     </div>

@@ -428,7 +428,7 @@ export default function ScanPage() {
               className="w-65"
             >
               <span className="flex items-center gap-6">
-                <span className="text-3xl font-light leading-none">+</span>
+                <span className="text-xl font-light leading-none">+</span>
                 <span>Create a New Space</span>
               </span>
             </Button>
