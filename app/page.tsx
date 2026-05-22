@@ -19,7 +19,7 @@ function LatestPlantCard() {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4">
-      <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 bg-swansons-green-muted flex items-center justify-center">
+      <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 bg-swansons-green-muted flex items-center justify-center border-[4px] border-swansons-green">
         {plant.photo ? (
           <img
             src={plant.photo}
@@ -31,7 +31,7 @@ function LatestPlantCard() {
         )}
       </div>
       <div>
-        <p className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted mb-1">
+        <p className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-black mb-1">
           Latest Plant
         </p>
         <h3 className="text-lg leading-tight">{plant.commonName}</h3>
@@ -60,7 +60,7 @@ function NotificationsCard() {
         className="w-full flex items-center justify-between px-5 py-4"
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted">
+        <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-black">
           Notifications
         </span>
         <span className="text-swansons-navy text-3xl leading-none">+</span>
@@ -188,10 +188,10 @@ export default function Home() {
 
         {/* Welcome */}
         <div className="mb-6">
-          <h2 className="text-4xl font-heading font-bold text-swansons-navy leading-tight">
+          <h2 className="text-4xl font-heading  text-swansons-navy leading-tight">
             Hi, {firstName}
           </h2>
-          <p className="font-body text-swansons-text mt-1">
+          <p className="font-body text-swansons-black mt-1">
             Hey there, green thumb. What are we tending to today?
           </p>
         </div>
