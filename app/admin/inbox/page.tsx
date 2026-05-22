@@ -62,11 +62,7 @@ function AdminInboxPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selectedThread?.replies]);
-  console.log("[inbox] role:", role, "uid:", user?.uid);
-  console.log(
-    "[inbox] threads assignedTo values:",
-    threads.map((t) => ({ id: t.id, assignedTo: t.assignedTo })),
-  );
+
   // ─── Filter logic ────────────────────────────────────────────────────────
   const visibleThreads = (() => {
     if (role === "staff") {
