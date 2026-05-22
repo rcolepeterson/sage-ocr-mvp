@@ -416,9 +416,9 @@ export default function ScanPage() {
             />
           </div>
 
-          <h2 className="font-heading text-3xl font-bold text-swansons-navy text-center mb-8 leading-tight">
-            Where is your{" "}
-            <span className="italic">{llmResult?.commonName}</span> going?
+          <h2 className="font-heading text-4xl  text-swansons-navy text-center mb-8 leading-tight">
+            Where is your {llmResult?.commonName} going?
+            {/* <span className="italic">{llmResult?.commonName}</span> going? */}
           </h2>
           <div className="flex flex-col items-center gap-4 mb-6">
             {/* Create new space */}
@@ -428,7 +428,7 @@ export default function ScanPage() {
               className="w-65"
             >
               <span className="flex items-center gap-6">
-                <span className="text-2xl leading-none">+</span>
+                <span className="text-3xl font-light leading-none">+</span>
                 <span>Create a New Space</span>
               </span>
             </Button>
@@ -437,7 +437,7 @@ export default function ScanPage() {
             {spaces.length > 0 && (
               <div className="relative w-65">
                 <select
-                  className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-3.25 rounded-full text-base bg-transparent px-6 appearance-none"
+                  className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-2.5 rounded-full text-base bg-transparent px-6 appearance-none"
                   value={selectedSpaceId}
                   onChange={(e) => setSelectedSpaceId(e.target.value)}
                 >
@@ -507,7 +507,7 @@ export default function ScanPage() {
               onClick={() => selectedSpaceId && saveToSpace(selectedSpaceId)}
               disabled={saving || !selectedSpaceId}
               variant="inverted"
-              className=""
+              className="max-w-[120px]"
             >
               {saving ? "Saving..." : "Save"}
             </Button>
