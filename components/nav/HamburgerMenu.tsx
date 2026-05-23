@@ -110,7 +110,7 @@ export default function HamburgerMenu() {
     <>
       {/* Hamburger button */}
       <button
-        className="fixed top-5 right-4 z-50 flex flex-col gap-1.5 p-2"
+        className="fixed top-5 right-4 z-50 flex flex-col gap-1.5 p-2 bg-white/70 backdrop-blur-sm rounded-lg"
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((v) => !v)}
       >
