@@ -16,6 +16,17 @@ import { uploadPlantPhoto } from "@/lib/firebase/storage";
 import { compressImage } from "@/lib/utils/imageCompression";
 import { Button } from "@/components/ui/Button";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
+import { motion } from "motion/react";
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
+const containerVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1 } },
+};
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type ScanStep = "idle" | "scanning" | "space-select" | "create-space";
@@ -313,12 +324,12 @@ export default function ScanPage() {
       {/* Camera — mounted during idle + scanning */}
       {(step === "idle" || step === "scanning") && (
         <div className="px-4 pt-4 relative">
-          <div className="rounded-2xl overflow-hidden bg-black ">
+          <div className="rounded-2xl overflow-hidden bg-black aspect-video">
             <video
               ref={videoRef}
               autoPlay
               playsInline
-              className="w-full h-auto"
+              className="w-full h-full object-cover"
             />
           </div>
           {/* Camera flip icon — bottom right of video */}
@@ -351,23 +362,36 @@ export default function ScanPage() {
 
       {/* ── IDLE ─────────────────────────────────────────────────────────── */}
       {step === "idle" && (
-        <div className="px-4 pt-4 pb-28 flex flex-col items-center justify-center">
-          <p className="font-body text-center text-swansons-black mb-8 text-base leading-relaxed font-semibold px-8">
+        <motion.div
+          className="px-4 pt-4 pb-28 flex flex-col items-center justify-center"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.p
+            variants={itemVariants}
+            className="font-body text-center text-swansons-black mb-8 text-base leading-relaxed font-semibold px-8"
+          >
             Hold plant tag or label in front of camera, tap &apos;Scan&apos;
             button below and hold still as plant data is captured.
-          </p>
+          </motion.p>
 
-          <Button
-            onClick={() => handleScan()}
-            variant="primary"
-            className="py-2"
-          >
-            Scan Plant Tag/Label
-          </Button>
+          <motion.div variants={itemVariants}>
+            <Button
+              onClick={() => handleScan()}
+              variant="primary"
+              className="py-2"
+            >
+              Scan Plant Tag/Label
+            </Button>
+          </motion.div>
 
           {/* Dev only — manual entry */}
           {showManual && (
-            <div className="bg-white rounded-2xl p-4 my-4 ">
+            <motion.div
+              variants={itemVariants}
+              className="bg-white rounded-2xl p-4 my-4 "
+            >
               <p className="text-xs font-body text-swansons-muted mb-2">
                 🛠 Manual entry (dev only)
               </p>
@@ -385,15 +409,18 @@ export default function ScanPage() {
               >
                 Submit Manual Query
               </Button>
-            </div>
+            </motion.div>
           )}
 
           {showManual && (
-            <p className="text-center font-body text-sm text-swansons-muted underline cursor-pointer">
+            <motion.p
+              variants={itemVariants}
+              className="text-center font-body text-sm text-swansons-muted underline cursor-pointer"
+            >
               Can&apos;t find tag or label?
-            </p>
+            </motion.p>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* ── SCANNING ─────────────────────────────────────────────────────── */}
@@ -405,22 +432,36 @@ export default function ScanPage() {
 
       {/* ── SPACE SELECT ─────────────────────────────────────────────────── */}
       {step === "space-select" && (
-        <div className="px-4 pt-8 pb-36 max-w-lg mx-auto">
+        <motion.div
+          className="px-4 pt-8 pb-36 max-w-lg mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
           {/* Success badge */}
-          <div className="flex justify-center mb-6">
+          <motion.div
+            variants={itemVariants}
+            className="flex justify-center mb-6"
+          >
             <img
               src="/images/add_plant_check_mark.png"
               alt="Success"
               width={100}
               height={100}
             />
-          </div>
+          </motion.div>
 
-          <h2 className="font-heading text-4xl  text-swansons-navy text-center mb-8 leading-tight">
+          <motion.h2
+            variants={itemVariants}
+            className="font-heading text-4xl  text-swansons-navy text-center mb-8 leading-tight"
+          >
             Where is your {llmResult?.commonName} going?
             {/* <span className="italic">{llmResult?.commonName}</span> going? */}
-          </h2>
-          <div className="flex flex-col items-center gap-4 mb-6">
+          </motion.h2>
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col items-center gap-4 mb-6"
+          >
             {/* Create new space */}
             <Button
               onClick={() => setStep("create-space")}
@@ -461,10 +502,13 @@ export default function ScanPage() {
                 </span>
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Photo picker */}
-          <div className="flex flex-col items-center gap-3 mb-4">
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col items-center gap-3 mb-4"
+          >
             <PhotoPicker onFile={handlePhotoChange} disabled={saving}>
               <button
                 type="button"
@@ -498,7 +542,7 @@ export default function ScanPage() {
                 Uploading... {uploadProgress.toFixed(0)}%
               </p>
             )}
-          </div>
+          </motion.div>
 
           {/* Fixed bottom bar */}
           <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
@@ -512,18 +556,26 @@ export default function ScanPage() {
               {saving ? "Saving..." : "Save"}
             </Button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* ── CREATE SPACE ─────────────────────────────────────────────────── */}
       {step === "create-space" && (
-        <div className="px-4 pt-2 pb-36 max-w-lg mx-auto">
-          <h2 className="text-swansons-navy text-center mb-8">
+        <motion.div
+          className="px-4 pt-2 pb-36 max-w-lg mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.h2
+            variants={itemVariants}
+            className="text-swansons-navy text-center mb-8"
+          >
             Create a new <br></br>space
-          </h2>
+          </motion.h2>
 
           {/* Name */}
-          <div className="mb-6">
+          <motion.div variants={itemVariants} className="mb-6">
             <label className="font-body text-lg text-swansons-green-dark mb-2 block">
               Create a name for your space
             </label>
@@ -533,10 +585,10 @@ export default function ScanPage() {
               value={newSpaceName}
               onChange={(e) => setNewSpaceName(e.target.value)}
             />
-          </div>
+          </motion.div>
 
           {/* Light level */}
-          <div className="mb-6">
+          <motion.div variants={itemVariants} className="mb-6">
             <p className="font-body text-lg text-swansons-green-dark mb-3">
               Light level of space
             </p>
@@ -565,10 +617,10 @@ export default function ScanPage() {
                 </label>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Location */}
-          <div className="mb-6">
+          <motion.div variants={itemVariants} className="mb-6">
             <p className="font-body text-lg text-swansons-green-dark mb-3">
               Location of space
             </p>
@@ -595,10 +647,10 @@ export default function ScanPage() {
                 </label>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Containment */}
-          <div className="mb-8">
+          <motion.div variants={itemVariants} className="mb-8">
             <p className="font-body text-lg text-swansons-green-dark mb-3">
               Containment of space
             </p>
@@ -626,7 +678,7 @@ export default function ScanPage() {
                 </label>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Fixed bottom bar */}
           <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
@@ -646,7 +698,7 @@ export default function ScanPage() {
               Cancel Plant Profile
             </Button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Debug — dev only */}
