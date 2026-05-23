@@ -102,7 +102,7 @@ export default function ThreadDetailPage() {
       >
         <div className="flex flex-col h-full max-w-lg mx-auto w-full">
           {/* ── Scrollable messages ── */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+          <div className="flex-1 overflow-y-auto px-4 pt-14 pb-6 space-y-6">
             {thread.replies?.length > 0 ? (
               thread.replies.map((r: any) => {
                 const isStaff = r.isStaff;
