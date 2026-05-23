@@ -97,7 +97,7 @@ function OnboardingModalInner() {
         <div className="px-6 pt-5 pb-7 flex flex-col items-center">
           {/**Step dots (scrolling indicator) commented out for design */}
 
-          {/* <div className="flex gap-2 mb-5">
+          <div className="flex gap-2 mb-5">
             {STEPS.map((_, i) => (
               <div
                 key={i}
@@ -107,7 +107,7 @@ function OnboardingModalInner() {
                 )}
               />
             ))}
-          </div> */}
+          </div>
 
           {/* Body */}
           <p className="text-center text-black text-base leading-snug mb-7 mx-auto">
