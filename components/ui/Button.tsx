@@ -1,7 +1,11 @@
 // components/ui/Button.tsx
 import { ButtonHTMLAttributes, ReactNode } from "react";
+import { motion } from "motion/react";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "onDrag" | "onDragEnd" | "onDragStart" | "onAnimationStart"
+> {
   variant?: "primary" | "secondary" | "text" | "disabled" | "inverted";
   size?: "sm" | "md" | "lg";
   children: ReactNode;
@@ -15,18 +19,18 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const baseStyles = "font-body font-medium transition-all duration-200";
+  const baseStyles = "font-body font-medium";
 
   const variants = {
     primary:
-      "bg-[var(--color-swansons-navy)] text-white hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] shadow-sm hover:shadow-md active:scale-[0.98] cursor-pointer",
+      "bg-[var(--color-swansons-navy)] text-white hover:bg-[color-mix(in_srgb,var(--color-swansons-navy)_90%,black)] shadow-sm hover:shadow-md cursor-pointer",
     secondary:
-      "bg-transparent text-[var(--color-swansons-navy)] border-2 border-[var(--color-swansons-navy)] hover:bg-[var(--color-swansons-navy)] hover:text-white active:scale-[0.98] cursor-pointer",
+      "bg-transparent text-[var(--color-swansons-navy)] border-2 border-[var(--color-swansons-navy)] hover:bg-[var(--color-swansons-navy)] hover:text-white cursor-pointer",
     text: "text-[var(--color-swansons-navy)] underline underline-offset-4 hover:opacity-80 cursor-pointer",
     disabled:
       "bg-swansons-navy/30 text-white/50 border-2 border-transparent cursor-not-allowed",
     inverted:
-      "bg-transparent text-white border-2 border-white hover:bg-white/10 active:scale-[0.98] cursor-pointer",
+      "bg-transparent text-white border-2 border-white hover:bg-white/10 cursor-pointer",
   };
 
   const sizes = {
@@ -42,8 +46,15 @@ export function Button({
     `${baseStyles} ${variants[appliedVariant]} ${sizes[size]} ${className}`.trim();
 
   return (
-    <button className={classes} disabled={disabled} {...props}>
+    <motion.button
+      className={classes}
+      disabled={disabled}
+      whileHover={disabled ? {} : { scale: 1.03 }}
+      whileTap={disabled ? {} : { scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      {...props}
+    >
       {children}
-    </button>
+    </motion.button>
   );
 }
