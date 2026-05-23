@@ -101,7 +101,7 @@ function ThreadPreviewModal({
         <p className="font-body text-swansons-text text-sm leading-relaxed mb-6">
           {thread.question}
         </p>
-        <Link href={`/admin/inbox`}>
+        <Link href={`/admin/inbox?threadId=${thread.id}`}>
           <Button variant="primary" className="rounded-full">
             Open Thread
           </Button>

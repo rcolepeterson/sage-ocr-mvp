@@ -37,6 +37,14 @@ function OnboardingModalInner() {
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
 
+  // Preload all step images on mount
+  useEffect(() => {
+    STEPS.forEach((s) => {
+      const img = new window.Image();
+      img.src = s.image;
+    });
+  }, []);
+
   useEffect(() => {
     async function check() {
       if (preview) {

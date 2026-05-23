@@ -3,7 +3,8 @@
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   subscribeToAllThreads,
   subscribeToThread,
@@ -14,13 +15,18 @@ import {
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { getUser } from "@/lib/firebase/users";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
-import { compressImage } from "@/lib/utils/imageCompression";
+//import { compressImage } from "@/lib/utils/imageCompression";
 
 function AdminInboxPage() {
   const { user, loading, role } = useAuth();
+  const searchParams = useSearchParams();
+  const threadIdParam = searchParams.get("threadId");
+
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedThread, setSelectedThread] = useState<any>(null);
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(
+    threadIdParam,
+  );
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
@@ -400,7 +406,9 @@ function AdminInboxPage() {
 export default function AdminInboxPageWrapper() {
   return (
     <ProtectedRoute requiredRole="staff">
-      <AdminInboxPage />
+      <Suspense>
+        <AdminInboxPage />
+      </Suspense>
     </ProtectedRoute>
   );
 }
