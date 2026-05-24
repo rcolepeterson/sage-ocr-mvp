@@ -25,7 +25,7 @@ Firebase Project: sage-swansons-e4677
 - Tailwind CSS v4
 - Vercel (hosting)
 - Google Vision API (OCR, server-side only)
-- Vercel AI SDK (Gemini gemini-2.5-flash)
+- Vercel AI SDK + Vertex AI (Gemini gemini-2.5-flash)
 - Firebase Auth (Google, Email/Password, Phone)
 - Firebase App Check (reCAPTCHA Enterprise)
 - Firestore (database)
@@ -40,7 +40,7 @@ Firebase Project: sage-swansons-e4677
 /app
 /api/ocr/route.ts # OCR server route (Google Vision)
 /api/plant-llm/route.ts # LLM streaming route
-/api/flora/route.ts # Flora API plant lookup
+
 /api/notify/route.ts # FCM push notification route
 /api/firebase-messaging-sw/route.ts # Service worker route
 /scan/page.tsx # Camera + OCR UI + save plant flow
@@ -194,7 +194,16 @@ iPhone Safari shows Google passkey screen on sign-in. Helper text: "Tap Other ac
 
 ## Environment Variables
 
-NEXT_PUBLIC_FIREBASE_API_KEY NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=sage-swansons-e4677.firebaseapp.com ← do NOT change to Vercel URL NEXT_PUBLIC_FIREBASE_PROJECT_ID NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID NEXT_PUBLIC_FIREBASE_APP_ID NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY NEXT_PUBLIC_FIREBASE_VAPID_KEY GOOGLE_APPLICATION_CREDENTIALS_JSON ← VML AI sandbox — Google Vision OCR only FIREBASE_ADMIN_CREDENTIALS_JSON ← sage-swansons-e4677 — Firebase Admin SDK only GEMINI_API_KEY FLORA_API_KEY
+NEXT_PUBLIC_FIREBASE_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=sage-swansons-e4677.firebaseapp.com ← do NOT change to Vercel URL
+NEXT_PUBLIC_FIREBASE_PROJECT_ID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID
+NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY
+NEXT_PUBLIC_FIREBASE_VAPID_KEY
+GOOGLE_APPLICATION_CREDENTIALS_JSON ← sage-swansons-e4677 service account — OCR + Vertex AI LLM
+FIREBASE_ADMIN_CREDENTIALS_JSON ← sage-swansons-e4677 — Firebase Admin SDK only
 
 ---
 
@@ -208,9 +217,9 @@ npm run dev # Start local dev server npm run build # Build for production npx ve
 
 One active project: **sage-swansons-e4677**
 
-- All Firebase, App Check, Admin SDK work uses this project
-- GOOGLE_APPLICATION_CREDENTIALS_JSON is for VML AI sandbox (OCR only) — NOT this project
-- FIREBASE_ADMIN_CREDENTIALS_JSON is for sage-swansons-e4677 (Admin SDK)
+- All Firebase, App Check, Admin SDK, OCR and Vertex AI LLM use this project
+- GOOGLE_APPLICATION_CREDENTIALS_JSON → sage-swansons-e4677 service account — powers OCR + Vertex AI LLM
+- FIREBASE_ADMIN_CREDENTIALS_JSON → sage-swansons-e4677 — Firebase Admin SDK only
 
 ---
 
