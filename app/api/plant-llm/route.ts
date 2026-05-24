@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import { streamObject } from "ai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createVertex } from "@ai-sdk/google-vertex";
 import { PlantSchema } from "@/lib/llm/schema";
 
 export async function POST(req: Request) {
@@ -12,12 +12,21 @@ export async function POST(req: Request) {
     return new Response("Missing query", { status: 400 });
   }
 
-  const google = createGoogleGenerativeAI({
-    apiKey: process.env.GEMINI_API_KEY,
+  const creds = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON!);
+  if (creds?.private_key) {
+    creds.private_key = creds.private_key.replace(/\\n/g, "\n");
+  }
+
+  const vertex = createVertex({
+    project: "sage-swansons-e4677",
+    location: "us-central1",
+    googleAuthOptions: {
+      credentials: creds,
+    },
   });
 
   const result = streamObject({
-    model: google("gemini-2.5-flash"),
+    model: vertex("gemini-2.5-flash"),
     schema: PlantSchema,
     system:
       "You are a horticulture expert. Return a structured response that matches the schema. If unknown, set fields to null and keep arrays empty. Based on the plant identified, assign all relevant tags from the provided list. A plant can and should have multiple tags — stack all that apply across every category. Consider the Pacific Northwest (Seattle) climate when assigning PNW-specific and seasonal tags. Be generous with upsell tags — if there is any reasonable upsell opportunity, include it. Also return a structured lightLevel as one of: 'low', 'medium', or 'high'. 'high' = full sun (6+ hours direct sunlight), 'medium' = part sun / part shade (3-6 hours), 'low' = full shade (less than 3 hours). For the description field, write 2-3 sentences about the plant in a warm, knowledgeable tone — highlight what makes it special and why it suits the Pacific Northwest. Prioritise accuracy of commonName, latinName, light, water, careTips, warnings and tags above all other fields — description is secondary.",

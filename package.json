@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.37",
+    "@ai-sdk/google-vertex": "^4.0.137",
     "@ai-sdk/react": "^3.0.113",
     "@google-cloud/vision": "^5.3.4",
     "ai": "^6.0.111",
