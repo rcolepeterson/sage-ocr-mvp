@@ -82,3 +82,7 @@ GCP
 Sage-Swanson
 https://console.cloud.google.com/iam-admin/serviceaccounts?project=sage-swansons-e4677
 rcolepeterson@gmail.com
+
+COSTS
+https://console.cloud.google.com/billing?project=sage-swansons-e4677
+https://console.firebase.google.com/project/sage-swansons-e4677/usage
