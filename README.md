@@ -35,3 +35,8 @@ https://imagine.wpp.ai/chat/6jQJv4kOvypySOa1V4LYj/foundational?resultId=8VPoHKuC
 
 this is debug URLS
 http://localhost:3000/onboarding?onboarding=preview
+
+GCP
+Sage-Swanson
+https://console.cloud.google.com/iam-admin/serviceaccounts?project=sage-swansons-e4677
+rcolepeterson@gmail.com
