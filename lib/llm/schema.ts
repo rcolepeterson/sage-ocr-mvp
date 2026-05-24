@@ -3,7 +3,6 @@ import { z } from "zod";
 export const PlantSchema = z.object({
   commonName: z.string().nullable(),
   latinName: z.string().nullable(),
-  description: z.string().nullable(),
   light: z.string().nullable(),
   lightLevel: z.enum(["low", "medium", "high"]).nullable().optional(),
   water: z.string().nullable(),
@@ -99,6 +98,7 @@ export const PlantSchema = z.object({
       ]),
     )
     .optional(),
+  description: z.string().nullable(),
 });
 
 export type PlantInfo = z.infer<typeof PlantSchema>;
