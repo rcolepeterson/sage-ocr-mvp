@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 const NO_TOP_PADDING = [
   "/",
+  "/dashboard",
   "/ask",
   "/signin",
   "/unauthorized",

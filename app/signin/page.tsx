@@ -39,7 +39,7 @@ export default function SignInPage() {
   const [phoneLoading, setPhoneLoading] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) router.push("/");
+    if (!loading && user) router.push("/dashboard");
   }, [user, loading, router]);
 
   useEffect(() => {

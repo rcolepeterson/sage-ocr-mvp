@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/firebase/AuthContext";
 
 const HIDE_ON = [
   "/",
+  "/dashboard",
   "/signin",
   "/unauthorized",
   "/terms",

@@ -17,7 +17,7 @@ function OnboardingForm() {
 
   useEffect(() => {
     if (!preview && user && user.displayName) {
-      router.replace("/");
+      router.replace("/dashboard");
     }
   }, [user, router, preview]);
 
@@ -31,7 +31,7 @@ function OnboardingForm() {
         authCtx.setUser({ ...user, displayName: name.trim() });
       }
       setSubmitting(false);
-      router.replace("/");
+      router.replace("/dashboard");
     } else {
       setTimeout(() => setSubmitting(false), 800);
     }
@@ -84,7 +84,7 @@ function OnboardingForm() {
             type="button"
             variant="text"
             size="sm"
-            onClick={() => router.replace("/")}
+            onClick={() => router.replace("/dashboard")}
           >
             Skip
           </Button>

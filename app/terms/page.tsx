@@ -18,7 +18,7 @@ export default function TermsPage() {
   useEffect(() => {
     // If already accepted, redirect home
     if (user && user.termsAcceptedAt) {
-      router.replace("/");
+      router.replace("/dashboard");
     }
   }, [user, router]);
 
@@ -36,7 +36,7 @@ export default function TermsPage() {
       });
     }
     setSubmitting(false);
-    router.replace("/");
+    router.replace("/dashboard");
   };
 
   return (

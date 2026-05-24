@@ -18,7 +18,13 @@ export default function ProtectedRoute({
   const router = useRouter();
   const pathname = usePathname();
 
-  const publicPaths = ["/signin", "/unauthorized", "/terms", "/onboarding"];
+  const publicPaths = [
+    "/",
+    "/signin",
+    "/unauthorized",
+    "/terms",
+    "/onboarding",
+  ];
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {
@@ -40,7 +46,7 @@ export default function ProtectedRoute({
     }
 
     if (!loading && user && user.termsAcceptedAt && pathname === "/terms") {
-      router.replace("/");
+      router.replace("/dashboard");
       return;
     }
 
@@ -59,7 +65,7 @@ export default function ProtectedRoute({
 
     // Prevent /onboarding for users who already have displayName
     if (!loading && user && user.displayName && pathname === "/onboarding") {
-      router.replace("/");
+      router.replace("/dashboard");
       return;
     }
 
