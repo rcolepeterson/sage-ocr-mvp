@@ -245,6 +245,19 @@ export default function ScanPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* restart camera when returning to idle */
+  useEffect(() => {
+    if (step === "idle") {
+      const timer = setTimeout(() => {
+        if (videoRef.current && !videoRef.current.srcObject) {
+          initCamera(facingMode);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
   async function initCamera(mode: "user" | "environment" = facingMode) {
     addDebug(`initCamera(${mode})`);
     setCameraError(null);
