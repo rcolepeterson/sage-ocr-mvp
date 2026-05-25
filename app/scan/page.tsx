@@ -29,7 +29,12 @@ const containerVariants = {
 };
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
-type ScanStep = "idle" | "scanning" | "space-select" | "create-space";
+type ScanStep =
+  | "idle"
+  | "scanning"
+  | "thinking"
+  | "space-select"
+  | "create-space";
 type LightLevel = "full-sun" | "partial-sun" | "dappled-shade" | "full-shade";
 type Containment = "container" | "in-ground" | "raised-bed";
 
@@ -63,7 +68,7 @@ function ErrorBanner({
   );
 }
 
-/* ─── Scanning animation ─────────────────────────────────────────────────── */
+/* ─── Scanning overlay — OCR phase ──────────────────────────────────────── */
 function ScanningOverlay() {
   return (
     <div className="flex flex-col items-center justify-center py-12">
@@ -78,12 +83,40 @@ function ScanningOverlay() {
       </p>
       <p className="font-body text-swansons-muted mt-2">Scanning in progress</p>
       <style>{`
-    @keyframes scanline {
-      0%, 100% { top: 0; }
-      50% { top: calc(100% - 2px); }
-    }
-  `}</style>
+      @keyframes scanline {
+        0%, 100% { top: 0; }
+        50% { top: calc(100% - 2px); }
+      }
+    `}</style>
     </div>
+  );
+}
+
+/* ─── Thinking overlay — LLM phase ──────────────────────────────────────── */
+function ThinkingOverlay() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-col items-center justify-center py-16 px-8"
+    >
+      {/* Spinning leaf */}
+      <div className="relative w-20 h-20 mb-8">
+        <div className="w-20 h-20 rounded-full border-4 border-swansons-green-muted border-t-swansons-navy animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center text-3xl">
+          🌿
+        </div>
+      </div>
+      <p className="font-heading text-2xl font-bold text-swansons-navy mb-3 text-center">
+        Identifying your plant...
+      </p>
+      <p className="font-body text-swansons-muted text-center text-sm leading-relaxed">
+        You can put the tag down now.
+        <br />
+        This usually takes a few seconds.
+      </p>
+    </motion.div>
   );
 }
 
@@ -175,15 +208,14 @@ export default function ScanPage() {
 
   /* advance to space-select when LLM finishes */
   useEffect(() => {
-    if (!llmLoading && llmResult?.latinName && step === "scanning") {
+    if (!llmLoading && llmResult?.latinName && step === "thinking") {
       setStep("space-select");
     }
-    // If LLM finished but returned no plant name — show error
     if (
       !llmLoading &&
       completion &&
       !llmResult?.latinName &&
-      step === "scanning"
+      step === "thinking"
     ) {
       setStep("idle");
       setError(
@@ -312,6 +344,8 @@ export default function ScanPage() {
       }
     }
 
+    // OCR done — switch to thinking before LLM starts
+    setStep("thinking");
     addDebug(`LLM submit: "${query.slice(0, 60)}..."`);
     complete(query);
   }
@@ -408,7 +442,7 @@ export default function ScanPage() {
   /* ─── Render ─────────────────────────────────────────────────────────── */
   return (
     <main className="min-h-screen">
-      {/* ── Camera error ─────────────────────────────────────────────────── */}
+      {/* Camera error */}
       {cameraError && (
         <div className="mx-4 mt-4 bg-red-50 border border-red-200 rounded-2xl px-4 py-4 text-center">
           <p className="font-body text-sm text-red-600 leading-relaxed mb-3">
@@ -425,12 +459,12 @@ export default function ScanPage() {
         </div>
       )}
 
-      {/* ── Global error banner ───────────────────────────────────────────── */}
+      {/* Global error banner */}
       {error && (
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
       )}
 
-      {/* Camera — mounted during idle + scanning */}
+      {/* Camera — only during idle + scanning */}
       {(step === "idle" || step === "scanning") && !cameraError && (
         <div className="px-4 pt-4 relative">
           <div className="rounded-2xl overflow-hidden bg-black aspect-video">
@@ -531,10 +565,17 @@ export default function ScanPage() {
         </motion.div>
       )}
 
-      {/* ── SCANNING ─────────────────────────────────────────────────────── */}
+      {/* ── SCANNING — OCR phase ─────────────────────────────────────────── */}
       {step === "scanning" && (
         <div className="px-4 pb-28">
           <ScanningOverlay />
+        </div>
+      )}
+
+      {/* ── THINKING — LLM phase ─────────────────────────────────────────── */}
+      {step === "thinking" && (
+        <div className="px-4 pb-28">
+          <ThinkingOverlay />
         </div>
       )}
 
@@ -799,6 +840,7 @@ export default function ScanPage() {
         </motion.div>
       )}
 
+      {/* Debug — dev only */}
       {showManual && (
         <div className="px-4 pb-8">
           <details>
