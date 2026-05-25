@@ -109,3 +109,11 @@ Sage is a mobile-first Next.js (App Router) web app for Swansons Nursery. Users 
 - Use `GOOGLE_APPLICATION_CREDENTIALS_JSON` for Firebase Admin SDK (wrong project)
 - Request notification permission automatically — always require a user gesture
 - Use raw `<input type="file">` for photos — always use `PhotoPicker`
+
+## Error Handling
+
+- Never fail silently — always show the user a friendly error message
+- Use the ErrorBanner component pattern for inline errors (red pill, dismissible)
+- Camera errors get their own dedicated state (cameraError) separate from general errors
+- Error messages should be friendly and actionable — tell the user what to do next
+- Always clear errors (setError(null)) at the start of a new action
