@@ -16,7 +16,7 @@ import { uploadPlantPhoto } from "@/lib/firebase/storage";
 import { compressImage } from "@/lib/utils/imageCompression";
 import { Button } from "@/components/ui/Button";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -33,6 +33,36 @@ type ScanStep = "idle" | "scanning" | "space-select" | "create-space";
 type LightLevel = "full-sun" | "partial-sun" | "dappled-shade" | "full-shade";
 type Containment = "container" | "in-ground" | "raised-bed";
 
+/* ─── Error Banner ───────────────────────────────────────────────────────── */
+function ErrorBanner({
+  message,
+  onDismiss,
+}: {
+  message: string;
+  onDismiss: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        className="mx-4 mt-4 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 flex items-start justify-between gap-3"
+      >
+        <p className="font-body text-sm text-red-600 leading-relaxed">
+          {message}
+        </p>
+        <button
+          onClick={onDismiss}
+          className="text-red-400 hover:text-red-600 font-body text-xs shrink-0 mt-0.5"
+        >
+          Dismiss
+        </button>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 /* ─── Scanning animation ─────────────────────────────────────────────────── */
 function ScanningOverlay() {
   return (
@@ -48,11 +78,11 @@ function ScanningOverlay() {
       </p>
       <p className="font-body text-swansons-muted mt-2">Scanning in progress</p>
       <style>{`
-      @keyframes scanline {
-        0%, 100% { top: 0; }
-        50% { top: calc(100% - 2px); }
-      }
-    `}</style>
+    @keyframes scanline {
+      0%, 100% { top: 0; }
+      50% { top: calc(100% - 2px); }
+    }
+  `}</style>
     </div>
   );
 }
@@ -68,6 +98,10 @@ export default function ScanPage() {
   const [step, setStep] = useState<ScanStep>("idle");
   const [showManual, setShowManual] = useState(true);
   const [manualQuery, setManualQuery] = useState("");
+
+  /* errors */
+  const [error, setError] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   /* OCR / LLM */
   const [llmResult, setLlmResult] = useState<{
@@ -125,6 +159,7 @@ export default function ScanPage() {
     onError(err) {
       addDebug(`LLM error: ${err?.message || String(err)}`);
       setStep("idle");
+      setError("Couldn't identify this plant. Please try again.");
     },
   });
 
@@ -143,7 +178,19 @@ export default function ScanPage() {
     if (!llmLoading && llmResult?.latinName && step === "scanning") {
       setStep("space-select");
     }
-  }, [llmLoading, llmResult, step]);
+    // If LLM finished but returned no plant name — show error
+    if (
+      !llmLoading &&
+      completion &&
+      !llmResult?.latinName &&
+      step === "scanning"
+    ) {
+      setStep("idle");
+      setError(
+        "We couldn't identify a plant from that tag. Try holding the camera closer and scanning again.",
+      );
+    }
+  }, [llmLoading, llmResult, step, completion]);
 
   /* read ?manual=true from URL */
   useEffect(() => {
@@ -168,6 +215,7 @@ export default function ScanPage() {
 
   async function initCamera(mode: "user" | "environment" = facingMode) {
     addDebug(`initCamera(${mode})`);
+    setCameraError(null);
     try {
       if (videoRef.current?.srcObject) {
         (videoRef.current.srcObject as MediaStream)
@@ -181,6 +229,20 @@ export default function ScanPage() {
       addDebug("camera stream attached");
     } catch (e: any) {
       addDebug(`camera error: ${e?.message || String(e)}`);
+      if (
+        e?.name === "NotAllowedError" ||
+        e?.name === "PermissionDeniedError"
+      ) {
+        setCameraError(
+          "Camera access was denied. Please allow camera access in your browser settings and reload the page.",
+        );
+      } else if (e?.name === "NotFoundError") {
+        setCameraError("No camera found on this device.");
+      } else {
+        setCameraError(
+          "Couldn't start the camera. Please reload and try again.",
+        );
+      }
     }
   }
 
@@ -201,6 +263,7 @@ export default function ScanPage() {
 
   async function handleScan(queryOverride?: string) {
     if (!queryOverride && (!videoRef.current || !canvasRef.current)) return;
+    setError(null);
     setStep("scanning");
     setLlmResult(null);
     addDebug("handleScan()");
@@ -208,25 +271,45 @@ export default function ScanPage() {
     let query = queryOverride || "";
 
     if (!queryOverride) {
-      const video = videoRef.current!;
-      const canvas = canvasRef.current!;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
-      downscaleCanvas(canvas, 1280);
-      const imageBase64 = canvas.toDataURL("image/jpeg", 0.7);
-      addDebug(`image captured, len=${imageBase64.length}`);
+      try {
+        const video = videoRef.current!;
+        const canvas = canvasRef.current!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        downscaleCanvas(canvas, 1280);
+        const imageBase64 = canvas.toDataURL("image/jpeg", 0.7);
+        addDebug(`image captured, len=${imageBase64.length}`);
 
-      const res = await fetch("/api/ocr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64 }),
-      });
-      const data = await res.json();
-      query = data.text || "";
-      addDebug(`OCR text len=${query.length}`);
+        const res = await fetch("/api/ocr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64 }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`OCR failed with status ${res.status}`);
+        }
+
+        const data = await res.json();
+        query = data.text || "";
+        addDebug(`OCR text len=${query.length}`);
+
+        if (!query.trim()) {
+          setStep("idle");
+          setError(
+            "No text found on the tag. Hold the camera still and make sure the tag is clearly visible, then try again.",
+          );
+          return;
+        }
+      } catch (e: any) {
+        addDebug(`OCR error: ${e?.message || String(e)}`);
+        setStep("idle");
+        setError("Something went wrong while scanning. Please try again.");
+        return;
+      }
     }
 
     addDebug(`LLM submit: "${query.slice(0, 60)}..."`);
@@ -243,6 +326,7 @@ export default function ScanPage() {
     setSaving(true);
     setUploading(false);
     setUploadProgress(0);
+    setError(null);
     let photoUrl = "";
 
     try {
@@ -285,6 +369,7 @@ export default function ScanPage() {
       router.push(`/plant/${spaceId}/${plantId}`);
     } catch (e) {
       console.error("Error saving plant:", e);
+      setError("Couldn't save your plant. Please try again.");
       setSaving(false);
       setUploading(false);
     }
@@ -293,8 +378,8 @@ export default function ScanPage() {
   async function handleCreateAndSave() {
     if (!user || !newSpaceName.trim()) return;
     setSaving(true);
+    setError(null);
     try {
-      // Note: lightLevel + containment will be added to Space schema later
       const spaceId = await createSpace(
         user.uid,
         newSpaceName.trim(),
@@ -303,6 +388,7 @@ export default function ScanPage() {
       await saveToSpace(spaceId);
     } catch (e) {
       console.error("Error creating space:", e);
+      setError("Couldn't create the space. Please try again.");
       setSaving(false);
     }
   }
@@ -316,13 +402,36 @@ export default function ScanPage() {
     setPhotoFile(null);
     setPhotoPreview("");
     setSaving(false);
+    setError(null);
   }
 
   /* ─── Render ─────────────────────────────────────────────────────────── */
   return (
-    <main className="min-h-screen ">
+    <main className="min-h-screen">
+      {/* ── Camera error ─────────────────────────────────────────────────── */}
+      {cameraError && (
+        <div className="mx-4 mt-4 bg-red-50 border border-red-200 rounded-2xl px-4 py-4 text-center">
+          <p className="font-body text-sm text-red-600 leading-relaxed mb-3">
+            📷 {cameraError}
+          </p>
+          <Button
+            onClick={() => initCamera(facingMode)}
+            variant="secondary"
+            size="sm"
+            className="rounded-full"
+          >
+            Try Again
+          </Button>
+        </div>
+      )}
+
+      {/* ── Global error banner ───────────────────────────────────────────── */}
+      {error && (
+        <ErrorBanner message={error} onDismiss={() => setError(null)} />
+      )}
+
       {/* Camera — mounted during idle + scanning */}
-      {(step === "idle" || step === "scanning") && (
+      {(step === "idle" || step === "scanning") && !cameraError && (
         <div className="px-4 pt-4 relative">
           <div className="rounded-2xl overflow-hidden bg-black aspect-video">
             <video
@@ -332,14 +441,13 @@ export default function ScanPage() {
               className="w-full h-full object-cover"
             />
           </div>
-          {/* Camera flip icon — bottom right of video */}
           <button
             onClick={() => {
               const next = facingMode === "user" ? "environment" : "user";
               setFacingMode(next);
               initCamera(next);
             }}
-            className="absolute bottom-5 right-8  w-10 h-10 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center transition cursor-pointer"
+            className="absolute bottom-5 right-8 w-10 h-10 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center transition cursor-pointer"
             aria-label="Flip camera"
           >
             <svg
@@ -381,16 +489,16 @@ export default function ScanPage() {
               onClick={() => handleScan()}
               variant="primary"
               className="py-2"
+              disabled={!!cameraError}
             >
               Scan Plant Tag/Label
             </Button>
           </motion.div>
 
-          {/* Dev only — manual entry */}
           {showManual && (
             <motion.div
               variants={itemVariants}
-              className="bg-white rounded-2xl p-4 my-4 "
+              className="bg-white rounded-2xl p-4 my-4"
             >
               <p className="text-xs font-body text-swansons-muted mb-2">
                 🛠 Manual entry (dev only)
@@ -438,7 +546,6 @@ export default function ScanPage() {
           initial="hidden"
           animate="show"
         >
-          {/* Success badge */}
           <motion.div
             variants={itemVariants}
             className="flex justify-center mb-6"
@@ -453,16 +560,15 @@ export default function ScanPage() {
 
           <motion.h2
             variants={itemVariants}
-            className="font-heading text-4xl  text-swansons-navy text-center mb-8 leading-tight"
+            className="font-heading text-4xl text-swansons-navy text-center mb-8 leading-tight"
           >
             Where is your {llmResult?.commonName} going?
-            {/* <span className="italic">{llmResult?.commonName}</span> going? */}
           </motion.h2>
+
           <motion.div
             variants={itemVariants}
             className="flex flex-col items-center gap-4 mb-6"
           >
-            {/* Create new space */}
             <Button
               onClick={() => setStep("create-space")}
               variant="primary"
@@ -474,7 +580,6 @@ export default function ScanPage() {
               </span>
             </Button>
 
-            {/* Select existing space */}
             {spaces.length > 0 && (
               <div className="relative w-65">
                 <select
@@ -504,7 +609,6 @@ export default function ScanPage() {
             )}
           </motion.div>
 
-          {/* Photo picker */}
           <motion.div
             variants={itemVariants}
             className="flex flex-col items-center gap-3 mb-4"
@@ -544,9 +648,7 @@ export default function ScanPage() {
             )}
           </motion.div>
 
-          {/* Fixed bottom bar */}
           <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
-            {/* Space select bottom bar */}
             <Button
               onClick={() => selectedSpaceId && saveToSpace(selectedSpaceId)}
               disabled={saving || !selectedSpaceId}
@@ -571,10 +673,10 @@ export default function ScanPage() {
             variants={itemVariants}
             className="text-swansons-navy text-center mb-8"
           >
-            Create a new <br></br>space
+            Create a new <br />
+            space
           </motion.h2>
 
-          {/* Name */}
           <motion.div variants={itemVariants} className="mb-6">
             <label className="font-body text-lg text-swansons-green-dark mb-2 block">
               Create a name for your space
@@ -587,7 +689,6 @@ export default function ScanPage() {
             />
           </motion.div>
 
-          {/* Light level */}
           <motion.div variants={itemVariants} className="mb-6">
             <p className="font-body text-lg text-swansons-green-dark mb-3">
               Light level of space
@@ -619,7 +720,6 @@ export default function ScanPage() {
             </div>
           </motion.div>
 
-          {/* Location */}
           <motion.div variants={itemVariants} className="mb-6">
             <p className="font-body text-lg text-swansons-green-dark mb-3">
               Location of space
@@ -649,7 +749,6 @@ export default function ScanPage() {
             </div>
           </motion.div>
 
-          {/* Containment */}
           <motion.div variants={itemVariants} className="mb-8">
             <p className="font-body text-lg text-swansons-green-dark mb-3">
               Containment of space
@@ -680,7 +779,6 @@ export default function ScanPage() {
             </div>
           </motion.div>
 
-          {/* Fixed bottom bar */}
           <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
             <Button
               onClick={handleCreateAndSave}
@@ -701,7 +799,6 @@ export default function ScanPage() {
         </motion.div>
       )}
 
-      {/* Debug — dev only */}
       {showManual && (
         <div className="px-4 pb-8">
           <details>
