@@ -315,11 +315,14 @@ export default function ScanPage() {
         const imageBase64 = canvas.toDataURL("image/jpeg", 0.7);
         addDebug(`image captured, len=${imageBase64.length}`);
 
-        const res = await fetch("/api/ocr", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageBase64 }),
-        });
+        const [res] = await Promise.all([
+          fetch("/api/ocr", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageBase64 }),
+          }),
+          new Promise((resolve) => setTimeout(resolve, 2000)), // minimum 2s
+        ]);
 
         if (!res.ok) {
           throw new Error(`OCR failed with status ${res.status}`);
