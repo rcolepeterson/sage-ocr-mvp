@@ -825,7 +825,7 @@ export default function ScanPage() {
               onClick={handleCreateAndSave}
               disabled={saving || !newSpaceName.trim()}
               variant="inverted"
-              className="w-full"
+              className=""
             >
               {saving ? "Saving..." : "Save"}
             </Button>
