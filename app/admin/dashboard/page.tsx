@@ -657,7 +657,7 @@ function Sidebar({ user, onTab, tab }: SidebarProps) {
             </span>
           )}
         </div>
-        <span className="absolute bottom-0 right-0 w-3 h-3 bg-swansons-green rounded-full border-2 border-swansons-navy" />
+        <span className="absolute bottom-0 right-0 w-4 h-4 bg-swansons-green rounded-full border-2 border-swansons-navy" />
       </div>
       <nav className="flex flex-col items-center gap-2 flex-1">
         {NAV_ICONS.map(({ label, svg, disabled }, i) => (
