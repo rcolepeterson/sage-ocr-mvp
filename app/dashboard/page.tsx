@@ -20,7 +20,7 @@ function LatestPlantCard() {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4">
-      <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 bg-swansons-green-muted flex items-center justify-center border-[4px] border-swansons-green">
+      <div className="w-20 h-20 rounded-full overflow-hidden shrink-0 bg-swansons-green-muted flex items-center justify-center border-4 border-swansons-green">
         {plant.photo ? (
           <img
             src={plant.photo}

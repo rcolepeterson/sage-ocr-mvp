@@ -710,7 +710,7 @@ export default function ScanPage() {
               onClick={() => selectedSpaceId && saveToSpace(selectedSpaceId)}
               disabled={saving || !selectedSpaceId}
               variant="inverted"
-              className="max-w-[120px]"
+              className="max-w-30"
             >
               {saving ? "Saving..." : "Save"}
             </Button>

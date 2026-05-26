@@ -255,7 +255,7 @@ export default function HamburgerMenu() {
             );
           })}
           <Link
-            href="/?onboarding=preview"
+            href="/dashboard?onboarding=preview"
             onClick={() => setOpen(false)}
             className="font-body text-base py-3 border-b border-gray-100 transition-colors text-swansons-navy hover:text-swansons-green"
           >
