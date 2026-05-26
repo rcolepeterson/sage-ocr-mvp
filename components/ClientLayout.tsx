@@ -27,6 +27,7 @@ export default function ClientLayout({
     pathname.startsWith(route),
   );
   const isAdmin = pathname.startsWith("/admin");
+  const isLanding = pathname === "/";
 
   return (
     <div
@@ -36,7 +37,7 @@ export default function ClientLayout({
           : "min-h-screen bg-swansons-cream relative"
       }
     >
-      {!isAdmin && (
+      {!isAdmin && !isLanding && (
         <div
           className="fixed top-0 w-full max-w-lg pointer-events-none select-none overflow-hidden"
           style={{ left: "max(0px, calc(50vw - 256px))" }}

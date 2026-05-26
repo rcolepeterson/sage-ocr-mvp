@@ -37,7 +37,15 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-swansons-cream flex flex-col items-center justify-center px-6">
+    <main
+      className="min-h-screen flex flex-col items-center justify-center px-6 "
+      style={{
+        backgroundImage: "url('/images/LandingPage_BG.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <motion.div
         variants={containerVariants}
         initial="hidden"
