@@ -38,11 +38,11 @@ export default function LandingPage() {
 
   return (
     <main
-      className="min-h-screen flex flex-col items-center justify-center px-6 "
+      className="min-h-screen flex flex-col items-center justify-center px-6  pt-12"
       style={{
         backgroundImage: "url('/images/LandingPage_BG.png')",
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "top",
         backgroundRepeat: "no-repeat",
       }}
     >
@@ -58,16 +58,20 @@ export default function LandingPage() {
         </motion.div>
 
         {/* Headline */}
-        <motion.h1 variants={itemVariants} className="text-swansons-navy">
-          Plant care made simple
+        <motion.h1
+          variants={itemVariants}
+          className="text-swansons-navy text-4xl"
+        >
+          Your thumbs just turned green.
         </motion.h1>
 
         {/* Subtext */}
         <motion.p
           variants={itemVariants}
-          className="font-body text-swansons-muted text-lg"
+          className="font-body text-swansons-black text-lg leading-snug mx-4"
         >
-          Scan. Identify. Grow.
+          Sage exports our knowledge and customer service from the nursery to
+          wherever your plants end up. Start gardening like an expert.
         </motion.p>
 
         {/* Buttons */}
