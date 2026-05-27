@@ -7,8 +7,15 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useSpaces } from "@/lib/hooks/useSpaces";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import type { PanInfo } from "motion/react";
+import {
+  onNotificationsSnapshot,
+  markNotificationAsRead,
+  getUnreadCount,
+  type Notification,
+} from "@/lib/firebase/notifications";
 
 // ─── Latest Plant placeholder ──────────────────────────────────────────────
 function LatestPlantCard() {
@@ -47,37 +54,127 @@ function LatestPlantCard() {
   );
 }
 
-// ─── Notifications placeholder ─────────────────────────────────────────────
+// ─── Notifications card ────────────────────────────────────────────────────
 function NotificationsCard() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Real-time listener — auto-expires 30 days server-side in the query
+  useEffect(() => {
+    if (!user) return;
+    const unsub = onNotificationsSnapshot(user.uid, (notifs) => {
+      setNotifications(notifs);
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Mark as read when a slide becomes active
+  useEffect(() => {
+    if (!open || notifications.length === 0) return;
+    const notif = notifications[currentIndex];
+    if (notif && !notif.read) {
+      markNotificationAsRead(notif.id).catch(console.error);
+    }
+  }, [currentIndex, open, notifications]);
+
+  const unreadCount = getUnreadCount(notifications);
+
+  const goTo = (index: number) => {
+    setCurrentIndex(Math.max(0, Math.min(index, notifications.length - 1)));
+  };
+
+  const handleDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
+    const threshold = 50;
+    if (info.offset.x < -threshold && currentIndex < notifications.length - 1) {
+      goTo(currentIndex + 1);
+    } else if (info.offset.x > threshold && currentIndex > 0) {
+      goTo(currentIndex - 1);
+    }
+  };
+
   return (
     <div className="relative bg-white rounded-2xl shadow-sm overflow-visible">
-      {/* Badge — half on/half off top right */}
-      <span
-        className=" pb-0.5  absolute -top-3 -right-3 bg-swansons-navy text-white text-lg rounded-full w-10 h-10 flex items-center justify-center z-10"
-        style={{
-          marginRight: 4,
-          fontFamily: "var(--font-poppins)",
-          fontWeight: 300,
-        }}
-      >
-        3
-      </span>
+      {/* Unread badge — hidden when count is 0 */}
+      {unreadCount > 0 && (
+        <span
+          className="absolute -top-3 -right-3 bg-swansons-navy text-white text-lg rounded-full w-10 h-10 flex items-center justify-center z-10 pb-0.5"
+          style={{ fontFamily: "var(--font-poppins)", fontWeight: 300 }}
+        >
+          {unreadCount}
+        </span>
+      )}
 
+      {/* Header row — always visible */}
       <button
         className="w-full flex items-center justify-between px-5 py-4"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (!open) setCurrentIndex(0);
+          setOpen((v) => !v);
+        }}
       >
         <span className="text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
           Notifications
         </span>
         <span className="text-swansons-navy text-6xl font-light leading-none">
-          +
+          {open ? "×" : "+"}
         </span>
       </button>
+
+      {/* Expanded panel */}
       {open && (
-        <div className="px-5 pb-4 text-sm text-swansons-muted">
-          <p>Notification list coming soon.</p>
+        <div className="px-5 pb-5" data-lenis-prevent>
+          {notifications.length === 0 ? (
+            /* Empty state */
+            <p className="font-body text-swansons-muted text-sm text-center py-4">
+              You&apos;re all caught up! 🌿
+            </p>
+          ) : (
+            <>
+              {/* Swipeable slide */}
+              <div className="overflow-hidden">
+                <motion.div
+                  key={currentIndex}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={handleDragEnd}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="cursor-grab active:cursor-grabbing select-none"
+                >
+                  <h3 className="font-heading font-semibold text-swansons-navy text-lg leading-tight mb-2">
+                    {notifications[currentIndex].title}
+                  </h3>
+                  <p className="font-body text-swansons-black text-sm leading-relaxed">
+                    {notifications[currentIndex].body}
+                  </p>
+                </motion.div>
+              </div>
+
+              {/* Pagination dots — only shown when more than one notification */}
+              {notifications.length > 1 && (
+                <div className="flex justify-center gap-2 mt-4">
+                  {notifications.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => goTo(i)}
+                      className={`h-2 rounded-full transition-all ${
+                        i === currentIndex
+                          ? "bg-swansons-navy w-4"
+                          : "bg-swansons-muted/40 w-2"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

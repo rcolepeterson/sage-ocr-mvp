@@ -19,7 +19,13 @@ import {
   AppUser,
 } from "@/lib/firebase/users";
 import { PlantSchema } from "@/lib/llm/schema";
+import {
+  onBroadcastsSnapshot,
+  getRecipientCount,
+  type Broadcast,
+} from "@/lib/firebase/broadcasts";
 import { Logo } from "@/components/ui/Logo";
+import { auth } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/Button";
 import type { User as FirebaseUser } from "firebase/auth";
 import Link from "next/link";
@@ -1008,36 +1014,458 @@ function ThreadQueueTab({
 }
 
 /* ─── SendNotificationsTab ──────────────────────────────────────────────── */
+/* ─── SendNotificationsTab ──────────────────────────────────────────────── */
 function SendNotificationsTab() {
+  const { user } = useAuth();
   const tagList = PlantSchema.shape.tags.unwrap().element.options;
+
+  // Form state
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sendToAll, setSendToAll] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+
+  // UI state
+  const [recipientCount, setRecipientCount] = useState<number | null>(null);
+  const [isLoadingCount, setIsLoadingCount] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Broadcast history
+  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
+
+  // Subscribe to broadcast history log
+  useEffect(() => {
+    const unsub = onBroadcastsSnapshot(setBroadcasts);
+    return () => unsub();
+  }, []);
+
+  // Live recipient count — refetch whenever tags or sendToAll changes
+  useEffect(() => {
+    if (!sendToAll && selectedTags.length === 0) {
+      setRecipientCount(null);
+      return;
+    }
+    setIsLoadingCount(true);
+    getRecipientCount(selectedTags, sendToAll)
+      .then(setRecipientCount)
+      .catch(() => setRecipientCount(null))
+      .finally(() => setIsLoadingCount(false));
+  }, [selectedTags, sendToAll]);
+
+  const toggleTag = (tag: string) => {
+    if (sendToAll) return;
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
+
+  const isFormValid =
+    title.trim().length > 0 &&
+    body.trim().length > 0 &&
+    (sendToAll || selectedTags.length > 0);
+
+  const handleSendClick = () => {
+    setError(null);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmSend = async () => {
+    if (!user) return;
+    setError(null);
+    setIsSending(true);
+    setShowConfirm(false);
+
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Not authenticated");
+      const res = await fetch("/api/broadcast", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          body: body.trim(),
+          tags: selectedTags,
+          sendToAll,
+          sentBy: user.uid,
+          sentByName: user.displayName || "Admin",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send notification");
+
+      setSuccessMessage(
+        `Notification sent to ${data.recipientCount} customer${data.recipientCount !== 1 ? "s" : ""} ✓`,
+      );
+      setTitle("");
+      setBody("");
+      setSelectedTags([]);
+      setSendToAll(false);
+      setRecipientCount(null);
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err: any) {
+      setError(err.message || "Failed to send notification. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-2xl p-8 shadow-sm flex flex-col items-center">
-      <div className="text-3xl mb-4">🔔</div>
-      <div className="font-heading font-bold text-xl mb-2 text-swansons-navy">
-        Send Notifications
-      </div>
-      <div className="text-swansons-muted font-body mb-6">Coming Soon</div>
-      <div className="w-full max-w-md">
-        <label className="block text-xs text-swansons-muted font-body mb-2 uppercase tracking-wide">
-          Filter by plant tags
-        </label>
-        <div className="flex flex-wrap gap-2 mb-6">
-          {tagList.map((tag: string) => (
-            <span
-              key={tag}
-              className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-2 py-0.5 text-xs font-body font-medium border border-swansons-green opacity-60 cursor-not-allowed"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-        <button
-          className="w-full bg-swansons-green text-white py-3 rounded-full opacity-60 cursor-not-allowed font-body font-semibold"
-          disabled
+    <div>
+      {/* ── Header ── */}
+      <div className="mb-8">
+        <h1
+          className="font-heading font-bold text-swansons-navy"
+          style={{ fontSize: "2.5rem" }}
         >
-          Create Notification →
-        </button>
+          Send Notifications
+        </h1>
+        <p className="font-body text-swansons-muted mt-1">
+          Target customers by plant tag and send a broadcast message.
+        </p>
       </div>
+
+      <div className="flex gap-8 items-start">
+        {/* ── Compose panel ── */}
+        <div className="flex-1 max-w-2xl">
+          <div className="bg-white rounded-2xl p-8 shadow-sm">
+            {/* Success banner */}
+            {successMessage && (
+              <div className="mb-6 px-4 py-3 rounded-full bg-swansons-green/10 border border-swansons-green text-swansons-green-dark font-body text-sm flex items-center justify-between">
+                <span>{successMessage}</span>
+                <button
+                  onClick={() => setSuccessMessage(null)}
+                  className="ml-4 text-swansons-green-dark hover:opacity-70 text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Error banner */}
+            {error && (
+              <div className="mb-6 px-4 py-3 rounded-full bg-red-50 border border-red-200 text-red-600 font-body text-sm flex items-center justify-between">
+                <span>{error}</span>
+                <button
+                  onClick={() => setError(null)}
+                  className="ml-4 text-red-400 hover:opacity-70 text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Send to all toggle */}
+            <div className="flex items-center justify-between mb-6 p-4 bg-swansons-cream rounded-xl">
+              <div>
+                <p className="font-body font-semibold text-swansons-navy text-sm">
+                  Send to all customers
+                </p>
+                <p className="font-body text-swansons-muted text-xs mt-0.5">
+                  Bypass tag filter — send to every customer
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSendToAll((v) => !v);
+                  setSelectedTags([]);
+                }}
+                className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${
+                  sendToAll ? "bg-swansons-green" : "bg-swansons-muted/30"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                    sendToAll ? "translate-x-6" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Tag filter */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide">
+                  Filter by plant tags
+                </label>
+                {selectedTags.length > 0 && (
+                  <button
+                    onClick={() => setSelectedTags([])}
+                    className="text-xs font-body text-swansons-muted underline underline-offset-2 hover:text-swansons-navy"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+              <div
+                className={`flex flex-wrap gap-2 transition-opacity ${
+                  sendToAll ? "opacity-40 pointer-events-none" : ""
+                }`}
+              >
+                {tagList.map((tag: string) => {
+                  const isSelected = selectedTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      disabled={sendToAll}
+                      className={`rounded-full px-3 py-1 text-xs font-body font-medium border transition-all ${
+                        isSelected
+                          ? "bg-swansons-navy text-white border-swansons-navy"
+                          : "bg-swansons-green-muted text-swansons-green-dark border-swansons-green hover:bg-swansons-navy hover:text-white hover:border-swansons-navy"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Live recipient count */}
+            {(sendToAll || selectedTags.length > 0) && (
+              <div className="mb-6 px-4 py-3 rounded-xl bg-swansons-cream border border-swansons-green/30">
+                <p className="font-body text-sm text-swansons-navy">
+                  {isLoadingCount ? (
+                    <span className="text-swansons-muted">
+                      Calculating recipients...
+                    </span>
+                  ) : (
+                    <>
+                      <span className="font-semibold">
+                        {recipientCount ?? 0}
+                      </span>{" "}
+                      customer
+                      {recipientCount !== 1 ? "s" : ""} will receive this
+                      notification
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* Title */}
+            <div className="mb-4">
+              <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-2">
+                Title
+              </label>
+              <input
+                className="input w-full font-body text-sm"
+                placeholder="e.g. Pruning season is here!"
+                value={title}
+                maxLength={100}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <p className="text-xs text-swansons-muted font-body mt-1 text-right">
+                {title.length}/100
+              </p>
+            </div>
+
+            {/* Body */}
+            <div className="mb-6">
+              <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-2">
+                Message
+              </label>
+              <textarea
+                className="input w-full font-body text-sm resize-none"
+                placeholder="e.g. The pruning window is open for your fruit tree..."
+                value={body}
+                maxLength={500}
+                rows={4}
+                onChange={(e) => setBody(e.target.value)}
+              />
+              <p className="text-xs text-swansons-muted font-body mt-1 text-right">
+                {body.length}/500
+              </p>
+            </div>
+
+            {/* FCM toggle — stubbed / coming soon */}
+            <div className="flex items-center justify-between mb-8 p-4 bg-swansons-cream/60 rounded-xl border border-dashed border-swansons-muted/30 opacity-50 cursor-not-allowed">
+              <div>
+                <p className="font-body font-semibold text-swansons-navy text-sm">
+                  Also send push notification
+                </p>
+                <p className="font-body text-swansons-muted text-xs mt-0.5">
+                  Push notification — coming soon
+                </p>
+              </div>
+              <div className="w-12 h-6 rounded-full bg-swansons-muted/30 relative shrink-0">
+                <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow" />
+              </div>
+            </div>
+
+            {/* Send button */}
+            <Button
+              variant={isFormValid && !isSending ? "primary" : "disabled"}
+              disabled={!isFormValid || isSending}
+              onClick={handleSendClick}
+              className="w-full rounded-full"
+            >
+              {isSending ? "Sending..." : "Send Notification →"}
+            </Button>
+          </div>
+        </div>
+
+        {/* ── Broadcast history ── */}
+        <div className="w-96 shrink-0">
+          <h2 className="font-heading font-bold text-swansons-navy text-xl mb-4">
+            Past Broadcasts
+          </h2>
+          {broadcasts.length === 0 ? (
+            <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-swansons-muted font-body text-sm">
+              No broadcasts sent yet.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {broadcasts.map((b) => (
+                <div key={b.id} className="bg-white rounded-2xl p-5 shadow-sm">
+                  {/* Title + status */}
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="font-heading font-semibold text-swansons-navy text-sm">
+                      {b.title}
+                    </p>
+                    <span
+                      className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-body font-medium ${
+                        b.status === "sent"
+                          ? "bg-swansons-green/10 text-swansons-green-dark"
+                          : b.status === "sending"
+                            ? "bg-orange-100 text-orange-600"
+                            : "bg-red-100 text-red-600"
+                      }`}
+                    >
+                      {b.status}
+                    </span>
+                  </div>
+
+                  {/* Body preview */}
+                  <p className="font-body text-swansons-muted text-xs leading-relaxed mb-3 line-clamp-2">
+                    {b.body}
+                  </p>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {b.sendToAll ? (
+                      <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-2 py-0.5 text-xs font-body">
+                        All customers
+                      </span>
+                    ) : (
+                      b.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-2 py-0.5 text-xs font-body"
+                        >
+                          {tag}
+                        </span>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Meta */}
+                  <div className="flex items-center justify-between text-xs font-body text-swansons-muted">
+                    <span>
+                      {b.recipientCount} recipient
+                      {b.recipientCount !== 1 ? "s" : ""}
+                    </span>
+                    <span>{b.sentByName}</span>
+                    <span>{formatTimeAgo(b.createdAt)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Confirmation dialog ── */}
+      {showConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          onClick={() => setShowConfirm(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-heading font-bold text-lg text-swansons-navy mb-2">
+              Confirm Broadcast
+            </h2>
+            <p className="font-body text-swansons-muted text-sm mb-6">
+              This will send a notification to the following users. This cannot
+              be undone.
+            </p>
+
+            <div className="bg-swansons-cream rounded-xl p-4 mb-6 flex flex-col gap-4">
+              <div>
+                <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
+                  Recipients
+                </p>
+                <p className="font-body font-semibold text-swansons-navy text-sm">
+                  {sendToAll
+                    ? "All customers"
+                    : `${recipientCount ?? 0} customer${recipientCount !== 1 ? "s" : ""}`}
+                </p>
+              </div>
+
+              {!sendToAll && selectedTags.length > 0 && (
+                <div>
+                  <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
+                    Tags
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-2 py-0.5 text-xs font-body"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
+                  Title
+                </p>
+                <p className="font-body font-semibold text-swansons-navy text-sm">
+                  {title}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
+                  Message
+                </p>
+                <p className="font-body text-swansons-navy text-sm">{body}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={handleConfirmSend}
+                variant="primary"
+                className="flex-1 rounded-full"
+              >
+                Confirm Send
+              </Button>
+              <Button
+                onClick={() => setShowConfirm(false)}
+                variant="secondary"
+                className="flex-1 rounded-full"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

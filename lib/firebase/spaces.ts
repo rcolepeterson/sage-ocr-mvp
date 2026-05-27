@@ -7,6 +7,7 @@ import {
   getDocs,
   serverTimestamp,
   deleteDoc,
+  arrayUnion,
 } from "firebase/firestore";
 // Delete a plant from a space
 export async function deletePlant(
@@ -19,6 +20,24 @@ export async function deletePlant(
     `users/${userId}/spaces/${spaceId}/plants/${plantId}`,
   );
   await deleteDoc(plantRef);
+
+  // Recalculate user's plant tag index from remaining plants
+  const spacesSnap = await getDocs(collection(db, `users/${userId}/spaces`));
+  const allTags: string[] = [];
+  await Promise.all(
+    spacesSnap.docs.map(async (spaceDoc) => {
+      const plantsSnap = await getDocs(
+        collection(db, `users/${userId}/spaces/${spaceDoc.id}/plants`),
+      );
+      plantsSnap.docs.forEach((p) => {
+        const tags = p.data().tags || [];
+        allTags.push(...tags);
+      });
+    }),
+  );
+  const uniqueTags = [...new Set(allTags)];
+  const userRef = doc(db, "users", userId);
+  await setDoc(userRef, { plantTags: uniqueTags }, { merge: true });
 }
 import { db } from "./firestore";
 
@@ -122,6 +141,17 @@ export async function savePlantToSpace(
     createdAt: serverTimestamp(),
   };
   await setDoc(plantRef, plant);
+
+  // Update user's plant tag index
+  if (plantData.tags && plantData.tags.length > 0) {
+    const userRef = doc(db, "users", userId);
+    await setDoc(
+      userRef,
+      { plantTags: arrayUnion(...plantData.tags) },
+      { merge: true },
+    );
+  }
+
   return plantRef.id;
 }
 

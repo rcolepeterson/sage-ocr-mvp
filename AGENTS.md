@@ -119,7 +119,7 @@ iPhone Safari shows Google passkey screen on sign-in. Helper text: "Tap Other ac
 
 ## Firestore Structure
 
-/users/{uid} uid, email, displayName: string role: "customer" | "staff" | "admin" createdAt, termsAcceptedAt: timestamp termsVersion: string onboardingCompletedAt?: timestamp fcmToken?: string notificationsDeclined?: boolean specialty?: string
+/users/{uid} uid, email, displayName: string role: "customer" | "staff" | "admin" createdAt, termsAcceptedAt: timestamp termsVersion: string onboardingCompletedAt?: timestamp fcmToken?: string notificationsDeclined?: boolean specialty?: string plantTags?: string[]
 
 /threads/{threadId} plantId?: string plantName?: string userId: string question: string status: "pending" | "answered" | "needs-followup" urgent: boolean assignedTo: string | null createdAt: timestamp /replies/{replyId} authorId, message: string photoURL?: string isStaff: boolean createdAt: timestamp
 
