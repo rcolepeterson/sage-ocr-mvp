@@ -192,6 +192,38 @@ iPhone Safari shows Google passkey screen on sign-in. Helper text: "Tap Other ac
 
 ---
 
+## AI Plant Tagging System
+
+Tags are automatically assigned by Gemini at scan time and stored on each plant document.
+
+### Where tags live
+
+Firestore: `/users/{uid}/spaces/{spaceId}/plants/{plantId}.tags` — string array
+
+### When tags are assigned
+
+During the scan flow — the LLM receives the OCR text, identifies the plant, and assigns all applicable tags from the predefined list in `/lib/llm/schema.ts`.
+
+### Tag categories (9 total)
+
+Plant Type, Light, Water, Seasonal, Care Complexity, Pest & Disease, Container, PNW Specific, Upsell
+
+### Current usage
+
+- Displayed on plant profile page — staff/admin only (labeled "AI Tags — staff/admin")
+- Customers do not see tags yet
+
+### Planned usage
+
+- Filter plants/spaces by tag
+- Send targeted push notifications by tag (e.g. notify all hosta owners in spring)
+
+### Where the tag list lives
+
+`/lib/llm/schema.ts` — Zod enum array. The LLM prompt in `/app/api/plant-llm/route.ts` passes the full tag list and instructs Gemini to assign all applicable tags.
+
+---
+
 ## Environment Variables
 
 NEXT_PUBLIC_FIREBASE_API_KEY

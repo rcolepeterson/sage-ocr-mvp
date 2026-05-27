@@ -163,6 +163,7 @@
 - Routing rules
 - Dashboard/Home (waiting on Shawn's designs)
 - Account/Profile page (edit name, view details)
+- Account deletion — delete Firebase Auth user + all Firestore data (spaces, plants, threads, user doc) to prevent orphaned data
 - Send Notifications — targeted push by plant tags
 - Apple Developer account ($99/yr) for iPhone push + Sign in with Apple
 
