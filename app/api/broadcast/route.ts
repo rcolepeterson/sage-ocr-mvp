@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 4. Parse + validate body ─────────────────────────────────────────────
-    const { title, body, tags, sendToAll, sentBy, sentByName } =
+    const { title, body, tags, sendToAll, sentBy, sentByName, ctaUrl, ctaLabel } =
       await req.json();
 
     if (!title || typeof title !== "string") {
@@ -117,6 +117,8 @@ export async function POST(req: NextRequest) {
       sentByName,
       status: "sending",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...(ctaUrl ? { ctaUrl: String(ctaUrl).slice(0, 500) } : {}),
+      ...(ctaLabel ? { ctaLabel: String(ctaLabel).slice(0, 50) } : {}),
     });
 
     // ── 7. Write notifications in batches of 499 ─────────────────────────────
@@ -138,6 +140,8 @@ export async function POST(req: NextRequest) {
           read: false,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           broadcastId: broadcastRef.id,
+          ...(ctaUrl ? { ctaUrl: String(ctaUrl).slice(0, 500) } : {}),
+          ...(ctaLabel ? { ctaLabel: String(ctaLabel).slice(0, 50) } : {}),
         });
       });
 

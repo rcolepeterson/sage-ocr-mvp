@@ -21,6 +21,8 @@ export interface Notification {
   createdAt: Timestamp;
   broadcastId?: string;
   threadId?: string;
+  ctaUrl?: string;
+  ctaLabel?: string;
 }
 
 function thirtyDaysAgo(): Date {

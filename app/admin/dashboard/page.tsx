@@ -1024,6 +1024,8 @@ function SendNotificationsTab() {
   const [sendToAll, setSendToAll] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("");
+  const [ctaUrl, setCtaUrl] = useState("");
 
   // UI state
   const [recipientCount, setRecipientCount] = useState<number | null>(null);
@@ -1094,6 +1096,8 @@ function SendNotificationsTab() {
           sendToAll,
           sentBy: user.uid,
           sentByName: user.displayName || "Admin",
+          ...(ctaUrl.trim() ? { ctaUrl: ctaUrl.trim() } : {}),
+          ...(ctaLabel.trim() ? { ctaLabel: ctaLabel.trim() } : {}),
         }),
       });
 
@@ -1105,6 +1109,8 @@ function SendNotificationsTab() {
       );
       setTitle("");
       setBody("");
+      setCtaLabel("");
+      setCtaUrl("");
       setSelectedTags([]);
       setSendToAll(false);
       setRecipientCount(null);
@@ -1285,6 +1291,36 @@ function SendNotificationsTab() {
               </p>
             </div>
 
+            {/* CTA Label */}
+            <div className="mb-4">
+              <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-2">
+                Button Label (optional)
+              </label>
+              <input
+                className="input w-full font-body text-sm"
+                placeholder="e.g. Shop now"
+                value={ctaLabel}
+                maxLength={50}
+                onChange={(e) => setCtaLabel(e.target.value)}
+              />
+              <p className="text-xs text-swansons-muted font-body mt-1 text-right">
+                {ctaLabel.length}/50
+              </p>
+            </div>
+
+            {/* CTA URL */}
+            <div className="mb-6">
+              <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-2">
+                Button URL (optional)
+              </label>
+              <input
+                className="input w-full font-body text-sm"
+                placeholder="e.g. https://swansonsnursery.com or /ask"
+                value={ctaUrl}
+                onChange={(e) => setCtaUrl(e.target.value)}
+              />
+            </div>
+
             {/* FCM toggle — stubbed / coming soon */}
             <div className="flex items-center justify-between mb-8 p-4 bg-swansons-cream/60 rounded-xl border border-dashed border-swansons-muted/30 opacity-50 cursor-not-allowed">
               <div>
@@ -1445,6 +1481,20 @@ function SendNotificationsTab() {
                 </p>
                 <p className="font-body text-swansons-navy text-sm">{body}</p>
               </div>
+
+              {ctaUrl.trim() && (
+                <div>
+                  <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
+                    Button
+                  </p>
+                  <p className="font-body text-swansons-navy text-sm">
+                    {ctaLabel.trim() || "Learn more →"}{" "}
+                    <span className="text-swansons-muted">
+                      ({ctaUrl.trim()})
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3">

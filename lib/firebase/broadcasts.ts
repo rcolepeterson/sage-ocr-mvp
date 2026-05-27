@@ -20,6 +20,8 @@ export interface Broadcast {
   sentByName: string;
   status: "sent" | "sending" | "failed";
   createdAt: Timestamp;
+  ctaUrl?: string;
+  ctaLabel?: string;
 }
 
 // Live recipient count query
