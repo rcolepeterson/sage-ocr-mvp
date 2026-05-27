@@ -70,6 +70,7 @@ Sage is a mobile-first Next.js (App Router) web app for Swansons Nursery. Users 
 /app                          # All routes (App Router)
   /api/ocr/route.ts           # OCR (Google Vision, server-side only)
   /api/plant-llm/route.ts     # LLM streaming
+  /api/broadcast/route.ts     # Admin broadcast send logic
   /scan/page.tsx              # Camera + OCR + save plant flow
   /plant/[spaceId]/[id]/      # Plant profile
   /spaces/page.tsx            # My Spaces
@@ -83,6 +84,8 @@ Sage is a mobile-first Next.js (App Router) web app for Swansons Nursery. Users 
   /ui/PhotoPicker.tsx         # Use for ALL photo uploads
   /ui/Button.tsx
 /lib/firebase/                # Firebase SDK wrappers
+/lib/firebase/notifications.ts  # Notifications CRUD + real-time listener
+/lib/firebase/broadcasts.ts     # Broadcasts CRUD + real-time listener + recipient count
 /lib/llm/schema.ts            # Zod schema for LLM output
 /lib/utils/imageCompression.ts
 ```
@@ -109,6 +112,8 @@ Sage is a mobile-first Next.js (App Router) web app for Swansons Nursery. Users 
 - Use `GOOGLE_APPLICATION_CREDENTIALS_JSON` for Firebase Admin SDK (wrong project)
 - Request notification permission automatically — always require a user gesture
 - Use raw `<input type="file">` for photos — always use `PhotoPicker`
+- Never write directly to `/notifications` or `/broadcasts` from the client — Admin SDK only
+- Never send broadcasts to staff or admin users — customers only (`role: "customer"`)
 
 ## Error Handling
 

@@ -42,6 +42,7 @@ Firebase Project: sage-swansons-e4677
 /api/plant-llm/route.ts # LLM streaming route
 
 /api/notify/route.ts # FCM push notification route
+/api/broadcast/route.ts # Admin broadcast — sends to filtered customers via Admin SDK
 /api/firebase-messaging-sw/route.ts # Service worker route
 /scan/page.tsx # Camera + OCR UI + save plant flow
 /plant/[spaceId]/[id]/page.tsx # Plant profile page
@@ -82,6 +83,8 @@ ScrollToTop.tsx # Scrolls to top on route change
 /firebase/storage.ts # Firebase Storage upload/delete
 /firebase/users.ts # User CRUD + role management
 /firebase/messaging.ts # FCM token management
+/firebase/notifications.ts # Notifications CRUD + real-time listener
+/firebase/broadcasts.ts # Broadcasts CRUD + real-time listener + recipient count
 /hooks/useSpaces.ts # Spaces + plant counts + latest plant hook
 /utils/imageCompression.ts # Image compression (512x512, q0.3)
 /ocr/googleVision.ts
@@ -119,7 +122,28 @@ iPhone Safari shows Google passkey screen on sign-in. Helper text: "Tap Other ac
 
 ## Firestore Structure
 
-/users/{uid} uid, email, displayName: string role: "customer" | "staff" | "admin" createdAt, termsAcceptedAt: timestamp termsVersion: string onboardingCompletedAt?: timestamp fcmToken?: string notificationsDeclined?: boolean specialty?: string plantTags?: string[]
+/users/{uid} uid, email, displayName: string role: "customer" | "staff" | "admin" createdAt, termsAcceptedAt: timestamp termsVersion: string onboardingCompletedAt?: timestamp fcmToken?: string notificationsDeclined?: boolean specialty?: string plantTags?: string[] // denormalized tag index — maintained on plant save/delete
+
+/notifications/{notificationId}
+userId: string
+title: string
+body: string
+type: "broadcast" | "reply" | "system"
+read: boolean
+createdAt: timestamp
+broadcastId?: string
+threadId?: string // reserved for future reply notifications
+
+/broadcasts/{broadcastId}
+title: string
+body: string
+tags: string[] // empty array if sendToAll
+sendToAll: boolean
+recipientCount: number
+sentBy: string // admin uid
+sentByName: string // admin displayName
+status: "sent" | "sending" | "failed"
+createdAt: timestamp
 
 /threads/{threadId} plantId?: string plantName?: string userId: string question: string status: "pending" | "answered" | "needs-followup" urgent: boolean assignedTo: string | null createdAt: timestamp /replies/{replyId} authorId, message: string photoURL?: string isStaff: boolean createdAt: timestamp
 
@@ -152,6 +176,42 @@ iPhone Safari shows Google passkey screen on sign-in. Helper text: "Tap Other ac
 - Customer notified on staff reply
 - Service worker at /firebase-messaging-sw.js
 - VAPID key stored in NEXT_PUBLIC_FIREBASE_VAPID_KEY
+- Broadcast FCM push is planned but not yet wired — toggle is stubbed in the admin UI
+
+---
+
+## Notification System
+
+### Broadcast notifications
+
+- Admin sends targeted broadcasts via /admin/dashboard → "Send Notifications" tab (desktop only)
+- Filtered by plantTags (OR logic) or sendToAll toggle
+- Staff and admin are always excluded from broadcasts — customers only
+- Writes one /notifications doc per recipient via Admin SDK (batch writes, 499 per batch)
+- Writes one /broadcasts record per send event
+- FCM push toggle is stubbed — UI visible but disabled, wired up in a future phase
+
+### User notification inbox
+
+- Live carousel on /dashboard — expands in place on the notifications card
+- Swipeable, one notification per slide, pagination dots
+- Marked as read when slide becomes active (Firestore write)
+- Unread badge count shown on card, disappears at 0
+- Auto-expires after 30 days (Firestore query filter — no deletion needed)
+- Empty state: "You're all caught up! 🌿"
+
+### plantTags index
+
+- Stored on /users/{uid}.plantTags as a string[]
+- Updated via arrayUnion on savePlantToSpace
+- Fully recalculated on deletePlant from all remaining plants across all spaces
+- Used for broadcast recipient filtering via Firestore array-contains-any (OR logic, max 30 tags)
+
+### Firestore composite index
+
+- Collection: notifications
+- Fields: userId ASC, createdAt DESC
+- Status: created ✅ (sage-swansons-e4677)
 
 ---
 
