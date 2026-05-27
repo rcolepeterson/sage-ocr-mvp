@@ -67,3 +67,8 @@ Store the full JSON key as a single line in:
 ## Tech Stack
 
 Next.js, TypeScript, Tailwind, Firebase, Vercel
+
+## AI Helper URLS
+
+Dashboard
+https://imagine.wpp.ai/chat/6jQJv4kOvypySOa1V4LYj/foundational?resultId=4xrTZ3wV9OnRGqTYPSr2M

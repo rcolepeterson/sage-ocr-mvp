@@ -55,6 +55,9 @@
 - Move plant to different space (/plant/[spaceId]/[id]/move) ✅
 - Plant photos shown in space circles on home page ✅
 - PhotoPicker component (camera + photo library) ✅
+- Two-phase scan flow — OCR "Hold Still" + LLM "Identifying your plant..." ✅
+- Error handling across scan flow (camera, OCR, LLM, save failures) ✅
+- Minimum 2 second scan animation ✅
 
 ### UI & Design
 
@@ -63,6 +66,10 @@
 - EditIcon component ✅
 - Swansons colour tokens + typography system ✅
 - ClientLayout with conditional max-width + padding ✅
+- Motion entrance animations (home, scan, ask, spaces) ✅
+- Button spring animations ✅
+- Landing page (/) with botanical background image ✅
+- Dashboard moved to /dashboard ✅
 
 ### Threads & Expert Chat
 
@@ -78,6 +85,10 @@
 - Auto needs-followup on customer reply ✅
 - Plant name in staff inbox ✅
 - Customer name in staff inbox ✅
+- Staff inbox left panel scrolling (Lenis data-lenis-prevent) ✅
+- Initial question shown as first message bubble ✅
+- Customer messages left / staff messages right ✅
+- Thread preview modal from admin dashboard ✅
 
 ### Admin Dashboard
 
@@ -86,9 +97,13 @@
 - Filter pills ✅
 - Assign/Reassign threads to staff ✅
 - Urgent flag toggle ✅
-- Staff Workload tab ✅
 - Send Notifications tab (stubbed) ✅
-- Staff specialty field ✅
+- Staff Management tab (combined workload + accounts) ✅
+- Staff edit modal (role + specialty) ✅
+- Add Staff modal (promote customer to staff) ✅
+- Admin user management (change roles in app) ✅
+- Icon-only sidebar ✅
+- Stat cards with coloured bars ✅
 
 ### Notifications (FCM)
 
@@ -117,12 +132,16 @@
 - Firebase Storage (CORS + rules configured) ✅
 - Firebase App Check (reCAPTCHA Enterprise) ✅
 - Deployed: sage-ocr-mvp-one.vercel.app ✅
+- OCR + Gemini LLM both on sage-swansons-e4677 ✅
+- Vertex AI for Gemini (service account, no prepay credits) ✅
+- GCP billing alerts configured ✅
 
 ### Dev Tools
 
 - Debug page (/debug) — admin only ✅
 - Clear display name tool ✅
 - Reset onboarding tool ✅
+- Clean up my test data tool ✅
 
 ---
 
@@ -132,7 +151,6 @@
 
 ### High Priority
 
-- Admin user management (change roles in app)
 - QR code → direct URL sign in
 - Create standalone space (without scanning a plant)
 - Email notifications
