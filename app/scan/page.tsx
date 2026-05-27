@@ -111,7 +111,7 @@ function ThinkingOverlay() {
       <p className="font-heading text-2xl font-bold text-swansons-navy mb-3 text-center">
         Identifying your plant...
       </p>
-      <p className="font-body text-swansons-muted text-center text-sm leading-relaxed">
+      <p className="font-body text-swansons-black text-center text-sm leading-relaxed">
         You can put the tag down now.
         <br />
         This usually takes a few seconds.
