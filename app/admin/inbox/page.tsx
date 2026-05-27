@@ -2,6 +2,7 @@
 "use client";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -64,6 +65,15 @@ function AdminInboxPage() {
     const unsub = subscribeToThread(selectedThreadId, setSelectedThread);
     return () => unsub();
   }, [selectedThreadId]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -169,7 +179,7 @@ function AdminInboxPage() {
     );
 
   return (
-    <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden pb-20">
+    <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden">
       {/* Header */}
       <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white flex items-center gap-3">
         {selectedThread && (
@@ -209,12 +219,15 @@ function AdminInboxPage() {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Left Panel — Thread List */}
         <div
-          className={`w-full md:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden ${selectedThread ? "hidden md:flex" : "flex"}`}
+          className={`w-full md:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col min-h-0 ${selectedThread ? "hidden md:flex" : "flex"}`}
         >
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div
+            data-lenis-prevent
+            className="flex-1 overflow-y-auto min-h-0 p-4 space-y-2"
+          >
             {visibleThreads.map((thread) => (
               <div
                 key={thread.id}
@@ -253,7 +266,7 @@ function AdminInboxPage() {
 
         {/* Right Panel — Thread Detail */}
         <div
-          className={`flex-1 flex flex-col overflow-hidden ${selectedThread ? "flex" : "hidden md:flex"}`}
+          className={`flex-1 flex flex-col min-h-0 overflow-hidden ${selectedThread ? "flex" : "hidden md:flex"}`}
         >
           {selectedThread ? (
             <>
@@ -276,7 +289,10 @@ function AdminInboxPage() {
               </div>
 
               {/* Scrollable Replies */}
-              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+              <div
+                data-lenis-prevent
+                className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-3"
+              >
                 {selectedThread.replies?.length > 0 ? (
                   selectedThread.replies.map((r: any) => (
                     <div
@@ -372,15 +388,15 @@ function AdminInboxPage() {
                     </div>
                   )}
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="submit"
-                      className="flex-1 bg-swansons-navy text-white font-body font-medium py-2 px-4 rounded-full hover:opacity-90 transition disabled:opacity-50"
+                      className="flex-1"
                       disabled={
                         submitting || uploading || (!reply.trim() && !photoFile)
                       }
                     >
                       {submitting || uploading ? "Sending..." : "Send Reply"}
-                    </button>
+                    </Button>
                     <button
                       type="button"
                       className="bg-swansons-green-muted text-swansons-green-dark font-body font-medium py-2 px-4 rounded-full hover:opacity-90 transition"
