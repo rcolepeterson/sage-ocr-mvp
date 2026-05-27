@@ -297,34 +297,40 @@ function AdminInboxPage() {
                   selectedThread.replies.map((r: any) => (
                     <div
                       key={r.id}
-                      className={`flex flex-col max-w-sm rounded-xl p-3 ${
-                        r.isStaff
-                          ? "bg-swansons-green-muted self-start"
-                          : "bg-white shadow self-end ml-auto"
-                      }`}
+                      className={`flex flex-col w-full mb-4 ${r.isStaff ? "items-end" : "items-start"}`}
                     >
-                      <span className="text-xs text-swansons-muted font-body mb-1">
+                      <span className="text-xs text-swansons-muted font-body mb-1 px-1">
                         {r.isStaff
                           ? "Staff"
                           : userNames[selectedThread.userId] || "Customer"}
                       </span>
-                      <span className="font-body text-sm text-swansons-text">
-                        {r.message}
-                      </span>
-                      {r.photoURL && (
-                        <a
-                          href={r.photoURL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2"
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                          r.isStaff
+                            ? "bg-swansons-navy text-white"
+                            : "bg-white shadow-sm border border-gray-100"
+                        }`}
+                      >
+                        <span
+                          className={`font-body text-sm leading-relaxed ${r.isStaff ? "text-white" : "text-swansons-navy"}`}
                         >
-                          <img
-                            src={r.photoURL}
-                            alt="Attached photo"
-                            className="rounded-xl object-cover max-h-48 border"
-                          />
-                        </a>
-                      )}
+                          {r.message}
+                        </span>
+                        {r.photoURL && (
+                          <a
+                            href={r.photoURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 block"
+                          >
+                            <img
+                              src={r.photoURL}
+                              alt="Attached photo"
+                              className="rounded-xl max-h-48 object-cover mt-2"
+                            />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -390,7 +396,7 @@ function AdminInboxPage() {
                   <div className="flex gap-2">
                     <Button
                       type="submit"
-                      className="flex-1"
+                      className=""
                       disabled={
                         submitting || uploading || (!reply.trim() && !photoFile)
                       }
