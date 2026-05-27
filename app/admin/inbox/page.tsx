@@ -293,6 +293,18 @@ function AdminInboxPage() {
                 data-lenis-prevent
                 className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-3"
               >
+                {/* Initial question — always show first */}
+                <div className="flex flex-col w-full mb-4 items-start">
+                  <span className="text-xs text-swansons-muted font-body mb-1 px-1">
+                    {userNames[selectedThread.userId] || "Customer"}
+                  </span>
+                  <div className="max-w-[75%] rounded-2xl px-4 py-3 bg-white shadow-sm border border-gray-100">
+                    <span className="font-body text-sm leading-relaxed text-swansons-navy">
+                      {selectedThread.question}
+                    </span>
+                  </div>
+                </div>
+
                 {selectedThread.replies?.length > 0 ? (
                   selectedThread.replies.map((r: any) => (
                     <div
