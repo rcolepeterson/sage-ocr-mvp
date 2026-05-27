@@ -2,6 +2,7 @@
 import dynamic from "next/dynamic";
 // Download any free animation from lottiefiles.com and save to /public/animations/placeholder.json
 import lottiePlaceholder from "@/lib/animations/placeholder.json";
+import { Button } from "@/components/ui/Button";
 
 const LottieAnimation = dynamic(
   () => import("@/components/ui/LottieAnimation"),
@@ -48,6 +49,27 @@ export default function StyleGuidePage() {
         </div>
         <div>
           <span className="font-body">.font-body (Raleway)</span>
+        </div>
+      </section>
+
+      {/* Buttons */}
+      <section className="mb-10">
+        <h2 className="mb-4">Buttons — Light Background</h2>
+        <div className="flex flex-col items-start gap-4">
+          <Button variant="primary">Get Started</Button>
+          <Button variant="primary" disabled>
+            Get Started
+          </Button>
+        </div>
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-4">Buttons — Dark Background</h2>
+        <div className="flex flex-col items-start gap-4 bg-swansons-navy rounded-2xl p-6">
+          <Button variant="inverted">Get Started</Button>
+          <Button variant="disabledInverted" disabled>
+            Get Started
+          </Button>
         </div>
       </section>
 

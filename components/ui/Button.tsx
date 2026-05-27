@@ -6,7 +6,13 @@ interface ButtonProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   "onDrag" | "onDragEnd" | "onDragStart" | "onAnimationStart"
 > {
-  variant?: "primary" | "secondary" | "text" | "disabled" | "inverted";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "text"
+    | "disabled"
+    | "inverted"
+    | "disabledInverted";
   size?: "sm" | "md" | "lg";
   children: ReactNode;
 }
@@ -31,6 +37,8 @@ export function Button({
       "bg-swansons-navy/30 text-white/50 border-2 border-transparent cursor-not-allowed",
     inverted:
       "bg-transparent text-white border-2 border-white hover:bg-white/10 cursor-pointer",
+    disabledInverted:
+      "bg-transparent text-white/40 border-2 border-white/60 cursor-not-allowed",
   };
 
   const sizes = {
@@ -40,7 +48,12 @@ export function Button({
   };
 
   // Auto-apply disabled variant if disabled prop is true
-  const appliedVariant = disabled ? "disabled" : variant;
+  const appliedVariant =
+    disabled && variant === "disabledInverted"
+      ? "disabledInverted"
+      : disabled
+        ? "disabled"
+        : variant;
 
   const classes =
     `${baseStyles} ${variants[appliedVariant]} ${sizes[size]} ${className}`.trim();
