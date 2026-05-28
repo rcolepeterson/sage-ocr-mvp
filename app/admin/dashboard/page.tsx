@@ -1216,40 +1216,36 @@ function SendNotificationsTab() {
   function StepIndicator() {
     return (
       <div className="max-w-3xl mb-10">
-        {/* Row 1: Pills + lines between them */}
-        <div className="flex items-center mb-3">
+        <div className="flex items-start">
           {STEP_LABELS.map((label, i) => {
             const num = i + 1;
             const isActive = step >= num;
             return (
               <React.Fragment key={num}>
-                <div
-                  className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white shrink-0 ${
-                    isActive ? "bg-swansons-navy" : "bg-swansons-muted"
-                  }`}
-                >
-                  STEP {num}
+                {/* Pill + label — label left-aligns with pill */}
+                <div className="flex flex-col items-start shrink-0">
+                  <div
+                    className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white ${
+                      isActive ? "bg-swansons-navy" : "bg-swansons-muted"
+                    }`}
+                  >
+                    STEP {num}
+                  </div>
+                  <span
+                    className={`text-sm font-body font-semibold mt-2 ${
+                      isActive ? "text-swansons-navy" : "text-swansons-muted"
+                    }`}
+                  >
+                    {label}
+                  </span>
                 </div>
+                {/* Line between steps */}
                 {i < STEP_LABELS.length - 1 && (
-                  <div className="flex-1 border-t border-swansons-muted/30 mx-3" />
+                  <div className="flex-1 border-t border-swansons-muted/30 mx-3 mt-4" />
                 )}
               </React.Fragment>
             );
           })}
-        </div>
-
-        {/* Row 2: Labels below pills */}
-        <div className="flex items-start justify-between">
-          {STEP_LABELS.map((label, i) => (
-            <span
-              key={i}
-              className={`text-sm font-body font-semibold ${
-                step >= i + 1 ? "text-swansons-navy" : "text-swansons-muted"
-              }`}
-            >
-              {label}
-            </span>
-          ))}
         </div>
       </div>
     );
