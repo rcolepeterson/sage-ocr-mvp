@@ -28,6 +28,7 @@ import { auth } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/Button";
 import type { User as FirebaseUser } from "firebase/auth";
 import Link from "next/link";
+import React from "react";
 
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
 function formatCustomerName(displayName?: string | null): string {
@@ -1016,48 +1017,86 @@ function ThreadQueueTab({
 
 const TAG_CATEGORIES: Record<string, string[]> = {
   "Plant Type": [
-    "fruit-tree", "ornamental-tree", "evergreen-tree",
-    "deciduous-shrub", "evergreen-shrub", "flowering-shrub",
-    "shade-perennial", "sun-perennial", "ornamental-grass",
-    "ground-cover", "climbing-vine", "annual-flower",
-    "tropical-annual", "bulb", "fern", "hosta", "rose",
-    "rhododendron", "azalea", "hydrangea", "lavender", "herb",
-    "vegetable-starts", "tomato", "berry-bush", "succulent",
-    "houseplant", "bonsai", "water-plant", "edible-flower",
+    "fruit-tree",
+    "ornamental-tree",
+    "evergreen-tree",
+    "deciduous-shrub",
+    "evergreen-shrub",
+    "flowering-shrub",
+    "shade-perennial",
+    "sun-perennial",
+    "ornamental-grass",
+    "ground-cover",
+    "climbing-vine",
+    "annual-flower",
+    "tropical-annual",
+    "bulb",
+    "fern",
+    "hosta",
+    "rose",
+    "rhododendron",
+    "azalea",
+    "hydrangea",
+    "lavender",
+    "herb",
+    "vegetable-starts",
+    "tomato",
+    "berry-bush",
+    "succulent",
+    "houseplant",
+    "bonsai",
+    "water-plant",
+    "edible-flower",
   ],
-  "Light": [
-    "full-sun-plant", "part-shade-plant",
-    "full-shade-plant", "adaptable-light",
+  Light: [
+    "full-sun-plant",
+    "part-shade-plant",
+    "full-shade-plant",
+    "adaptable-light",
   ],
-  "Water": [
-    "drought-tolerant", "moderate-water",
-    "high-water", "moisture-lover",
+  Water: ["drought-tolerant", "moderate-water", "high-water", "moisture-lover"],
+  Seasonal: [
+    "spring-bloomer",
+    "summer-bloomer",
+    "fall-bloomer",
+    "winter-interest",
+    "spring-ephemeral",
+    "deciduous",
+    "evergreen",
   ],
-  "Seasonal": [
-    "spring-bloomer", "summer-bloomer", "fall-bloomer",
-    "winter-interest", "spring-ephemeral",
-    "deciduous", "evergreen",
-  ],
-  "Care Complexity": [
-    "beginner-friendly", "intermediate-care", "expert-care",
-  ],
+  "Care Complexity": ["beginner-friendly", "intermediate-care", "expert-care"],
   "Pest & Disease": [
-    "slug-risk", "aphid-risk", "powdery-mildew-risk",
-    "deer-risk", "root-rot-risk", "virus-risk", "scale-risk",
+    "slug-risk",
+    "aphid-risk",
+    "powdery-mildew-risk",
+    "deer-risk",
+    "root-rot-risk",
+    "virus-risk",
+    "scale-risk",
   ],
-  "Container": [
-    "container-friendly", "needs-ground-space",
-    "raised-bed-ideal", "hanging-basket",
+  Container: [
+    "container-friendly",
+    "needs-ground-space",
+    "raised-bed-ideal",
+    "hanging-basket",
   ],
   "PNW Specific": [
-    "pnw-native", "pnw-adapted", "rain-tolerant",
-    "heat-sensitive", "frost-tender", "winter-hardy",
+    "pnw-native",
+    "pnw-adapted",
+    "rain-tolerant",
+    "heat-sensitive",
+    "frost-tender",
+    "winter-hardy",
   ],
-  "Upsell": [
-    "needs-fertilizer-spring", "needs-fertilizer-fall",
-    "needs-pruning-tools", "needs-support-structure",
-    "needs-soil-amendment", "needs-pest-control",
-    "needs-mulch", "pot-upgrade-candidate",
+  Upsell: [
+    "needs-fertilizer-spring",
+    "needs-fertilizer-fall",
+    "needs-pruning-tools",
+    "needs-support-structure",
+    "needs-soil-amendment",
+    "needs-pest-control",
+    "needs-mulch",
+    "pot-upgrade-candidate",
     "companion-planting-opportunity",
   ],
 };
@@ -1169,55 +1208,46 @@ function SendNotificationsTab() {
   };
 
   /* ── Step indicator ── */
-  const STEP_LABELS = ["Build Audience", "Create Notification", "Add CTA / Link"];
+  const STEP_LABELS = [
+    "Build Audience",
+    "Create Notification",
+    "Add CTA / Link",
+  ];
   function StepIndicator() {
     return (
-      <div className="flex items-start gap-0 mb-10">
-        {STEP_LABELS.map((label, i) => {
-          const num = i + 1;
-          const isActive = step === num;
-          const isDone = step > num;
-          const isPill = isActive || isDone;
-          return (
-            <div key={num} className="flex items-start flex-1">
-              <div className="flex flex-col items-center flex-1">
-                <p className="text-xs font-body uppercase tracking-widest text-swansons-muted mb-1.5">
-                  STEP {num}
-                </p>
+      <div className="max-w-3xl mb-10">
+        {/* Relative container — absolute line sits behind pills */}
+        <div className="relative flex items-start justify-between mb-2">
+          {/* Line — absolute, behind everything */}
+          <div className="absolute left-0 right-0 top-4 border-t border-swansons-muted/30 z-0" />
+
+          {STEP_LABELS.map((label, i) => {
+            const num = i + 1;
+            const isActive = step >= num;
+            return (
+              <div
+                key={num}
+                className="flex flex-col items-start relative z-10"
+              >
+                {/* Solid background so line doesn't bleed through */}
                 <div
-                  className={`px-4 py-1.5 rounded-full text-xs font-body font-semibold whitespace-nowrap ${
-                    isPill
-                      ? "bg-swansons-navy text-white"
-                      : "bg-swansons-muted/30 text-swansons-muted"
+                  className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white ${
+                    isActive ? "bg-swansons-navy" : "bg-swansons-muted"
+                  }`}
+                >
+                  STEP {num}
+                </div>
+                <span
+                  className={`text-sm font-body font-semibold mt-2 ${
+                    isActive ? "text-swansons-navy" : "text-swansons-muted"
                   }`}
                 >
                   {label}
-                </div>
+                </span>
               </div>
-              {i < STEP_LABELS.length - 1 && (
-                <div className="flex-1 border-t border-swansons-muted/30 mt-8" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  /* ── Right column — audience size ── */
-  function AudiencePanel() {
-    return (
-      <div className="w-64 shrink-0 flex flex-col items-start pt-12">
-        <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-2">
-          Audience Size
-        </p>
-        {isLoadingCount ? (
-          <p className="font-body text-swansons-muted text-sm">Calculating…</p>
-        ) : (
-          <p className="font-heading font-bold text-swansons-navy text-6xl leading-none">
-            {recipientCount !== null ? recipientCount.toLocaleString() : "—"}
-          </p>
-        )}
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -1230,11 +1260,8 @@ function SendNotificationsTab() {
           className="font-heading font-bold text-swansons-navy"
           style={{ fontSize: "2.5rem" }}
         >
-          Send Notifications
+          Customer Notifications
         </h1>
-        <p className="font-body text-swansons-muted mt-1">
-          Target customers by plant tag and send a broadcast message.
-        </p>
       </div>
 
       {/* ── Success / error banners ── */}
@@ -1262,26 +1289,39 @@ function SendNotificationsTab() {
       )}
 
       {/* ── Wizard card ── */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm mb-4">
-        <StepIndicator />
+      <div>
+        <div className="mb-8">
+          <StepIndicator />
 
-        {/* ── STEP 1 ── */}
-        {step === 1 && (
-          <div className="flex gap-8 items-start">
-            <div className="flex-1">
-              {/* Category + send-to-all row */}
-              <div className="flex items-center gap-4 mb-4">
-                <select
-                  className="input font-body text-sm w-64"
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                >
-                  {Object.keys(TAG_CATEGORIES).map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+          {/* ── STEP 1 ── */}
+          {step === 1 && (
+            <div>
+              {/* Top row: category + toggle + audience size */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="relative w-64">
+                  <select
+                    className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-3 rounded-full text-sm bg-transparent px-5 appearance-none"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                  >
+                    {Object.keys(TAG_CATEGORIES).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-swansons-navy pointer-events-none">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M6 9l6 6 6-6"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </div>
 
                 <div className="flex items-center gap-3">
                   <span className="font-body text-sm text-swansons-navy font-semibold whitespace-nowrap">
@@ -1303,6 +1343,24 @@ function SendNotificationsTab() {
                     />
                   </button>
                 </div>
+
+                {/* Audience size */}
+                <div className="ml-auto flex flex-col items-end">
+                  <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
+                    Audience Size
+                  </p>
+                  {isLoadingCount ? (
+                    <p className="font-body text-swansons-muted text-sm">
+                      Calculating…
+                    </p>
+                  ) : (
+                    <p className="font-heading font-bold text-swansons-navy text-5xl leading-none">
+                      {recipientCount !== null
+                        ? recipientCount.toLocaleString()
+                        : "—"}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Tag pills */}
@@ -1320,7 +1378,7 @@ function SendNotificationsTab() {
                       disabled={sendToAll}
                       className={`rounded-full px-3 py-1 text-xs font-body border transition-all ${
                         isSelected
-                          ? "bg-swansons-navy text-white border-swansons-navy"
+                          ? "bg-swansons-green text-white border-swansons-green"
                           : "bg-white border-swansons-navy/30 text-swansons-navy"
                       }`}
                     >
@@ -1332,7 +1390,11 @@ function SendNotificationsTab() {
 
               <div className="mt-6">
                 <Button
-                  variant={sendToAll || selectedTags.length > 0 ? "primary" : "disabled"}
+                  variant={
+                    sendToAll || selectedTags.length > 0
+                      ? "primary"
+                      : "disabled"
+                  }
                   disabled={!sendToAll && selectedTags.length === 0}
                   onClick={() => setStep(2)}
                   className="rounded-full"
@@ -1341,14 +1403,31 @@ function SendNotificationsTab() {
                 </Button>
               </div>
             </div>
-            <AudiencePanel />
-          </div>
-        )}
+          )}
 
-        {/* ── STEP 2 ── */}
-        {step === 2 && (
-          <div className="flex gap-8 items-start">
-            <div className="flex-1">
+          {/* ── STEP 2 ── */}
+          {step === 2 && (
+            <div>
+              {/* Audience size row */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="ml-auto flex flex-col items-end">
+                  <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
+                    Audience Size
+                  </p>
+                  {isLoadingCount ? (
+                    <p className="font-body text-swansons-muted text-sm">
+                      Calculating…
+                    </p>
+                  ) : (
+                    <p className="font-heading font-bold text-swansons-navy text-5xl leading-none">
+                      {recipientCount !== null
+                        ? recipientCount.toLocaleString()
+                        : "—"}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* Headline */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
@@ -1412,14 +1491,31 @@ function SendNotificationsTab() {
                 </Button>
               </div>
             </div>
-            <AudiencePanel />
-          </div>
-        )}
+          )}
 
-        {/* ── STEP 3 ── */}
-        {step === 3 && (
-          <div className="flex gap-8 items-start">
-            <div className="flex-1">
+          {/* ── STEP 3 ── */}
+          {step === 3 && (
+            <div>
+              {/* Audience size row */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="ml-auto flex flex-col items-end">
+                  <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
+                    Audience Size
+                  </p>
+                  {isLoadingCount ? (
+                    <p className="font-body text-swansons-muted text-sm">
+                      Calculating…
+                    </p>
+                  ) : (
+                    <p className="font-heading font-bold text-swansons-navy text-5xl leading-none">
+                      {recipientCount !== null
+                        ? recipientCount.toLocaleString()
+                        : "—"}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* CTA copy */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
@@ -1470,21 +1566,35 @@ function SendNotificationsTab() {
                 </Button>
               </div>
             </div>
-            <AudiencePanel />
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* ── Broadcast history ── */}
-      <h2 className="font-heading font-bold text-swansons-navy text-2xl mb-4 mt-10">
+      {/* <h2 className="font-heading font-bold text-swansons-navy text-2xl mb-4 mt-10">
         Past Broadcasts
-      </h2>
+      </h2> */}
       {broadcasts.length === 0 ? (
         <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-swansons-muted font-body text-sm">
           No broadcasts sent yet.
         </div>
       ) : (
         <div className="flex flex-col gap-3">
+          {/* Column headers */}
+          <div className="flex items-center gap-6 px-5">
+            <span className="w-28 shrink-0 text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
+              Date
+            </span>
+            <span className="flex-1 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
+              Notification
+            </span>
+            <span className="w-48 shrink-0 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
+              Tags
+            </span>
+            <span className="w-32 shrink-0 text-right text-xs font-bold  font-body uppercase tracking-widest text-swansons-black">
+              Audience
+            </span>
+          </div>
           {broadcasts.map((b) => (
             <div
               key={b.id}
@@ -1527,15 +1637,15 @@ function SendNotificationsTab() {
 
               {/* TAGS */}
               <div className="w-48 shrink-0 flex flex-wrap gap-1">
-                {b.sendToAll ? (
-                  <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-2 py-0.5 text-xs font-body">
+                {b.sendToAll || b.tags.length === 0 ? (
+                  <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-3 py-1 text-xs font-body font-medium">
                     All customers
                   </span>
                 ) : (
                   b.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-2 py-0.5 text-xs font-body"
+                      className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-3 py-1 text-xs font-body font-medium"
                     >
                       {tag}
                     </span>
@@ -1544,10 +1654,10 @@ function SendNotificationsTab() {
               </div>
 
               {/* AUDIENCE */}
-              <div className="w-24 shrink-0 text-right">
-                <p className="font-heading font-bold text-swansons-navy text-4xl leading-none">
-                  {b.recipientCount.toLocaleString()}
-                </p>
+              <div className="w-32 shrink-0 text-right">
+                <span className="font-heading font-bold text-swansons-navy text-4xl leading-none">
+                  {(b.recipientCount ?? 0).toLocaleString()}
+                </span>
               </div>
             </div>
           ))}
