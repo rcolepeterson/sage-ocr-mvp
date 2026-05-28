@@ -1216,37 +1216,40 @@ function SendNotificationsTab() {
   function StepIndicator() {
     return (
       <div className="max-w-3xl mb-10">
-        {/* Relative container — absolute line sits behind pills */}
-        <div className="relative flex items-start justify-between mb-2">
-          {/* Line — absolute, behind everything */}
-          <div className="absolute left-0 right-0 top-4 border-t border-swansons-muted/30 z-0" />
-
+        {/* Row 1: Pills + lines between them */}
+        <div className="flex items-center mb-3">
           {STEP_LABELS.map((label, i) => {
             const num = i + 1;
             const isActive = step >= num;
             return (
-              <div
-                key={num}
-                className="flex flex-col items-start relative z-10"
-              >
-                {/* Solid background so line doesn't bleed through */}
+              <React.Fragment key={num}>
                 <div
-                  className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white ${
+                  className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white shrink-0 ${
                     isActive ? "bg-swansons-navy" : "bg-swansons-muted"
                   }`}
                 >
                   STEP {num}
                 </div>
-                <span
-                  className={`text-sm font-body font-semibold mt-2 ${
-                    isActive ? "text-swansons-navy" : "text-swansons-muted"
-                  }`}
-                >
-                  {label}
-                </span>
-              </div>
+                {i < STEP_LABELS.length - 1 && (
+                  <div className="flex-1 border-t border-swansons-muted/30 mx-3" />
+                )}
+              </React.Fragment>
             );
           })}
+        </div>
+
+        {/* Row 2: Labels below pills */}
+        <div className="flex items-start justify-between">
+          {STEP_LABELS.map((label, i) => (
+            <span
+              key={i}
+              className={`text-sm font-body font-semibold ${
+                step >= i + 1 ? "text-swansons-navy" : "text-swansons-muted"
+              }`}
+            >
+              {label}
+            </span>
+          ))}
         </div>
       </div>
     );
@@ -1591,9 +1594,11 @@ function SendNotificationsTab() {
             <span className="w-48 shrink-0 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
               Tags
             </span>
-            <span className="w-32 shrink-0 text-right text-xs font-bold  font-body uppercase tracking-widest text-swansons-black">
-              Audience
-            </span>
+            <div className="w-32 shrink-0 flex justify-end">
+              <span className="text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
+                Audience
+              </span>
+            </div>
           </div>
           {broadcasts.map((b) => (
             <div
@@ -1654,7 +1659,7 @@ function SendNotificationsTab() {
               </div>
 
               {/* AUDIENCE */}
-              <div className="w-32 shrink-0 text-right">
+              <div className="w-32 shrink-0 flex justify-end items-start">
                 <span className="font-heading font-bold text-swansons-navy text-4xl leading-none">
                   {(b.recipientCount ?? 0).toLocaleString()}
                 </span>
