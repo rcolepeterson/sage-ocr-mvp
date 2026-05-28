@@ -1353,7 +1353,7 @@ function SendNotificationsTab() {
 
                 {/* Under STEP 3 — Audience Size */}
                 <div className="flex flex-col items-end shrink-0">
-                  <p className="text-xs font-body uppercase tracking-wide text-swansons-black mb-1">
+                  <p className="text-xs font-body font-bold uppercase tracking-wide text-swansons-black mb-1">
                     Audience Size:
                   </p>
                   {isLoadingCount ? (
