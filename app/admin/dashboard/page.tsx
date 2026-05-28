@@ -1216,20 +1216,30 @@ function SendNotificationsTab() {
   function StepIndicator() {
     return (
       <div className="max-w-3xl mb-10">
-        <div className="flex items-start">
-          {STEP_LABELS.map((label, i) => {
-            const num = i + 1;
-            const isActive = step >= num;
-            return (
-              <React.Fragment key={num}>
-                {/* Pill + label — label left-aligns with pill */}
-                <div className="flex flex-col items-start shrink-0">
-                  <div
-                    className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white ${
-                      isActive ? "bg-swansons-navy" : "bg-swansons-muted"
-                    }`}
-                  >
-                    STEP {num}
+        <div className="relative">
+          {/* Line behind pills — masked by pill background */}
+          <div className="absolute top-4 left-0 right-0 border-t border-swansons-muted/30" />
+          <div className="grid grid-cols-3">
+            {STEP_LABELS.map((label, i) => {
+              const num = i + 1;
+              const isActive = step >= num;
+              const align =
+                i === 0
+                  ? "items-start"
+                  : i === 1
+                    ? "items-center"
+                    : "items-end";
+              return (
+                <div key={num} className={`flex flex-col ${align}`}>
+                  {/* bg-swansons-cream masks the line behind the pill */}
+                  <div className="relative z-10 bg-swansons-cream">
+                    <div
+                      className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white ${
+                        isActive ? "bg-swansons-navy" : "bg-swansons-muted"
+                      }`}
+                    >
+                      STEP {num}
+                    </div>
                   </div>
                   <span
                     className={`text-sm font-body font-semibold mt-2 ${
@@ -1239,13 +1249,9 @@ function SendNotificationsTab() {
                     {label}
                   </span>
                 </div>
-                {/* Line between steps */}
-                {i < STEP_LABELS.length - 1 && (
-                  <div className="flex-1 border-t border-swansons-muted/30 mx-3 mt-4" />
-                )}
-              </React.Fragment>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     );
@@ -1295,9 +1301,10 @@ function SendNotificationsTab() {
           {/* ── STEP 1 ── */}
           {step === 1 && (
             <div>
-              {/* Top row: category + toggle + audience size */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="relative w-64">
+              {/* Controls row — category under STEP 1, toggle under STEP 2, audience under STEP 3 */}
+              <div className="flex items-center justify-between mb-6 max-w-3xl">
+                {/* Under STEP 1 — Category dropdown */}
+                <div className="relative w-64 shrink-0">
                   <select
                     className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-3 rounded-full text-sm bg-transparent px-5 appearance-none"
                     value={selectedCategory}
@@ -1322,6 +1329,7 @@ function SendNotificationsTab() {
                   </span>
                 </div>
 
+                {/* Under STEP 2 — Send to All toggle */}
                 <div className="flex items-center gap-3">
                   <span className="font-body text-sm text-swansons-navy font-semibold whitespace-nowrap">
                     Send to All
@@ -1343,10 +1351,10 @@ function SendNotificationsTab() {
                   </button>
                 </div>
 
-                {/* Audience size */}
-                <div className="ml-auto flex flex-col items-end">
-                  <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
-                    Audience Size
+                {/* Under STEP 3 — Audience Size */}
+                <div className="flex flex-col items-end shrink-0">
+                  <p className="text-xs font-body uppercase tracking-wide text-swansons-black mb-1">
+                    Audience Size:
                   </p>
                   {isLoadingCount ? (
                     <p className="font-body text-swansons-muted text-sm">
