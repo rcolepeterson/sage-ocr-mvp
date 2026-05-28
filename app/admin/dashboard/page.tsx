@@ -18,7 +18,6 @@ import {
   UserRole,
   AppUser,
 } from "@/lib/firebase/users";
-import { PlantSchema } from "@/lib/llm/schema";
 import {
   onBroadcastsSnapshot,
   getRecipientCount,
@@ -1014,10 +1013,57 @@ function ThreadQueueTab({
 }
 
 /* ─── SendNotificationsTab ──────────────────────────────────────────────── */
-/* ─── SendNotificationsTab ──────────────────────────────────────────────── */
+
+const TAG_CATEGORIES: Record<string, string[]> = {
+  "Plant Type": [
+    "fruit-tree", "ornamental-tree", "evergreen-tree",
+    "deciduous-shrub", "evergreen-shrub", "flowering-shrub",
+    "shade-perennial", "sun-perennial", "ornamental-grass",
+    "ground-cover", "climbing-vine", "annual-flower",
+    "tropical-annual", "bulb", "fern", "hosta", "rose",
+    "rhododendron", "azalea", "hydrangea", "lavender", "herb",
+    "vegetable-starts", "tomato", "berry-bush", "succulent",
+    "houseplant", "bonsai", "water-plant", "edible-flower",
+  ],
+  "Light": [
+    "full-sun-plant", "part-shade-plant",
+    "full-shade-plant", "adaptable-light",
+  ],
+  "Water": [
+    "drought-tolerant", "moderate-water",
+    "high-water", "moisture-lover",
+  ],
+  "Seasonal": [
+    "spring-bloomer", "summer-bloomer", "fall-bloomer",
+    "winter-interest", "spring-ephemeral",
+    "deciduous", "evergreen",
+  ],
+  "Care Complexity": [
+    "beginner-friendly", "intermediate-care", "expert-care",
+  ],
+  "Pest & Disease": [
+    "slug-risk", "aphid-risk", "powdery-mildew-risk",
+    "deer-risk", "root-rot-risk", "virus-risk", "scale-risk",
+  ],
+  "Container": [
+    "container-friendly", "needs-ground-space",
+    "raised-bed-ideal", "hanging-basket",
+  ],
+  "PNW Specific": [
+    "pnw-native", "pnw-adapted", "rain-tolerant",
+    "heat-sensitive", "frost-tender", "winter-hardy",
+  ],
+  "Upsell": [
+    "needs-fertilizer-spring", "needs-fertilizer-fall",
+    "needs-pruning-tools", "needs-support-structure",
+    "needs-soil-amendment", "needs-pest-control",
+    "needs-mulch", "pot-upgrade-candidate",
+    "companion-planting-opportunity",
+  ],
+};
+
 function SendNotificationsTab() {
   const { user } = useAuth();
-  const tagList = PlantSchema.shape.tags.unwrap().element.options;
 
   // Form state
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -1026,6 +1072,10 @@ function SendNotificationsTab() {
   const [body, setBody] = useState("");
   const [ctaLabel, setCtaLabel] = useState("");
   const [ctaUrl, setCtaUrl] = useState("");
+
+  // Wizard state
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [selectedCategory, setSelectedCategory] = useState("Plant Type");
 
   // UI state
   const [recipientCount, setRecipientCount] = useState<number | null>(null);
@@ -1063,11 +1113,6 @@ function SendNotificationsTab() {
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
-
-  const isFormValid =
-    title.trim().length > 0 &&
-    body.trim().length > 0 &&
-    (sendToAll || selectedTags.length > 0);
 
   const handleSendClick = () => {
     setError(null);
@@ -1114,6 +1159,7 @@ function SendNotificationsTab() {
       setSelectedTags([]);
       setSendToAll(false);
       setRecipientCount(null);
+      setStep(1);
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err: any) {
       setError(err.message || "Failed to send notification. Please try again.");
@@ -1121,6 +1167,60 @@ function SendNotificationsTab() {
       setIsSending(false);
     }
   };
+
+  /* ── Step indicator ── */
+  const STEP_LABELS = ["Build Audience", "Create Notification", "Add CTA / Link"];
+  function StepIndicator() {
+    return (
+      <div className="flex items-start gap-0 mb-10">
+        {STEP_LABELS.map((label, i) => {
+          const num = i + 1;
+          const isActive = step === num;
+          const isDone = step > num;
+          const isPill = isActive || isDone;
+          return (
+            <div key={num} className="flex items-start flex-1">
+              <div className="flex flex-col items-center flex-1">
+                <p className="text-xs font-body uppercase tracking-widest text-swansons-muted mb-1.5">
+                  STEP {num}
+                </p>
+                <div
+                  className={`px-4 py-1.5 rounded-full text-xs font-body font-semibold whitespace-nowrap ${
+                    isPill
+                      ? "bg-swansons-navy text-white"
+                      : "bg-swansons-muted/30 text-swansons-muted"
+                  }`}
+                >
+                  {label}
+                </div>
+              </div>
+              {i < STEP_LABELS.length - 1 && (
+                <div className="flex-1 border-t border-swansons-muted/30 mt-8" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* ── Right column — audience size ── */
+  function AudiencePanel() {
+    return (
+      <div className="w-64 shrink-0 flex flex-col items-start pt-12">
+        <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-2">
+          Audience Size
+        </p>
+        {isLoadingCount ? (
+          <p className="font-body text-swansons-muted text-sm">Calculating…</p>
+        ) : (
+          <p className="font-heading font-bold text-swansons-navy text-6xl leading-none">
+            {recipientCount !== null ? recipientCount.toLocaleString() : "—"}
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -1137,94 +1237,91 @@ function SendNotificationsTab() {
         </p>
       </div>
 
-      <div className="flex gap-8 items-start">
-        {/* ── Compose panel ── */}
-        <div className="flex-1 max-w-2xl">
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
-            {/* Success banner */}
-            {successMessage && (
-              <div className="mb-6 px-4 py-3 rounded-full bg-swansons-green/10 border border-swansons-green text-swansons-green-dark font-body text-sm flex items-center justify-between">
-                <span>{successMessage}</span>
-                <button
-                  onClick={() => setSuccessMessage(null)}
-                  className="ml-4 text-swansons-green-dark hover:opacity-70 text-lg leading-none"
+      {/* ── Success / error banners ── */}
+      {successMessage && (
+        <div className="mb-6 px-4 py-3 rounded-full bg-swansons-green/10 border border-swansons-green text-swansons-green-dark font-body text-sm flex items-center justify-between">
+          <span>{successMessage}</span>
+          <button
+            onClick={() => setSuccessMessage(null)}
+            className="ml-4 text-swansons-green-dark hover:opacity-70 text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {error && (
+        <div className="mb-6 px-4 py-3 rounded-full bg-red-50 border border-red-200 text-red-600 font-body text-sm flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="ml-4 text-red-400 hover:opacity-70 text-lg leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* ── Wizard card ── */}
+      <div className="bg-white rounded-2xl p-8 shadow-sm mb-4">
+        <StepIndicator />
+
+        {/* ── STEP 1 ── */}
+        {step === 1 && (
+          <div className="flex gap-8 items-start">
+            <div className="flex-1">
+              {/* Category + send-to-all row */}
+              <div className="flex items-center gap-4 mb-4">
+                <select
+                  className="input font-body text-sm w-64"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
                 >
-                  ×
-                </button>
-              </div>
-            )}
+                  {Object.keys(TAG_CATEGORIES).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
 
-            {/* Error banner */}
-            {error && (
-              <div className="mb-6 px-4 py-3 rounded-full bg-red-50 border border-red-200 text-red-600 font-body text-sm flex items-center justify-between">
-                <span>{error}</span>
-                <button
-                  onClick={() => setError(null)}
-                  className="ml-4 text-red-400 hover:opacity-70 text-lg leading-none"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-            {/* Send to all toggle */}
-            <div className="flex items-center justify-between mb-6 p-4 bg-swansons-cream rounded-xl">
-              <div>
-                <p className="font-body font-semibold text-swansons-navy text-sm">
-                  Send to all customers
-                </p>
-                <p className="font-body text-swansons-muted text-xs mt-0.5">
-                  Bypass tag filter — send to every customer
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setSendToAll((v) => !v);
-                  setSelectedTags([]);
-                }}
-                className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${
-                  sendToAll ? "bg-swansons-green" : "bg-swansons-muted/30"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 left-0 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                    sendToAll ? "translate-x-6" : "translate-x-0.5"
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Tag filter */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide">
-                  Filter by plant tags
-                </label>
-                {selectedTags.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <span className="font-body text-sm text-swansons-navy font-semibold whitespace-nowrap">
+                    Send to All
+                  </span>
                   <button
-                    onClick={() => setSelectedTags([])}
-                    className="text-xs font-body text-swansons-muted underline underline-offset-2 hover:text-swansons-navy"
+                    onClick={() => {
+                      setSendToAll((v) => !v);
+                      setSelectedTags([]);
+                    }}
+                    className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${
+                      sendToAll ? "bg-swansons-green" : "bg-swansons-muted/30"
+                    }`}
                   >
-                    Clear all
+                    <span
+                      className={`absolute top-0.5 left-0 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        sendToAll ? "translate-x-6" : "translate-x-0.5"
+                      }`}
+                    />
                   </button>
-                )}
+                </div>
               </div>
+
+              {/* Tag pills */}
               <div
                 className={`flex flex-wrap gap-2 transition-opacity ${
                   sendToAll ? "opacity-40 pointer-events-none" : ""
                 }`}
               >
-                {tagList.map((tag: string) => {
+                {(TAG_CATEGORIES[selectedCategory] ?? []).map((tag) => {
                   const isSelected = selectedTags.includes(tag);
                   return (
                     <button
                       key={tag}
                       onClick={() => toggleTag(tag)}
                       disabled={sendToAll}
-                      className={`rounded-full px-3 py-1 text-xs font-body font-medium border transition-all ${
+                      className={`rounded-full px-3 py-1 text-xs font-body border transition-all ${
                         isSelected
                           ? "bg-swansons-navy text-white border-swansons-navy"
-                          : "bg-swansons-green-muted text-swansons-green-dark border-swansons-green hover:bg-swansons-navy hover:text-white hover:border-swansons-navy"
+                          : "bg-white border-swansons-navy/30 text-swansons-navy"
                       }`}
                     >
                       {tag}
@@ -1232,176 +1329,230 @@ function SendNotificationsTab() {
                   );
                 })}
               </div>
-            </div>
 
-            {/* Live recipient count */}
-            {(sendToAll || selectedTags.length > 0) && (
-              <div className="mb-6 px-4 py-3 rounded-xl bg-swansons-cream border border-swansons-green/30">
-                <p className="font-body text-sm text-swansons-navy">
-                  {isLoadingCount ? (
-                    <span className="text-swansons-muted">
-                      Calculating recipients...
-                    </span>
-                  ) : (
-                    <>
-                      <span className="font-semibold">
-                        {recipientCount ?? 0}
-                      </span>{" "}
-                      customer
-                      {recipientCount !== 1 ? "s" : ""} will receive this
-                      notification
-                    </>
-                  )}
+              <div className="mt-6">
+                <Button
+                  variant={sendToAll || selectedTags.length > 0 ? "primary" : "disabled"}
+                  disabled={!sendToAll && selectedTags.length === 0}
+                  onClick={() => setStep(2)}
+                  className="rounded-full"
+                >
+                  Next Step →
+                </Button>
+              </div>
+            </div>
+            <AudiencePanel />
+          </div>
+        )}
+
+        {/* ── STEP 2 ── */}
+        {step === 2 && (
+          <div className="flex gap-8 items-start">
+            <div className="flex-1">
+              {/* Headline */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide">
+                    Headline
+                  </label>
+                  <span className="text-xs font-body text-swansons-muted">
+                    50 characters max
+                  </span>
+                </div>
+                <input
+                  className="input w-full font-body text-sm"
+                  placeholder="Enter headline here"
+                  value={title}
+                  maxLength={50}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <p className="text-xs text-swansons-muted font-body mt-1 text-right">
+                  {title.length}/50
                 </p>
               </div>
-            )}
 
-            {/* Title */}
-            <div className="mb-4">
-              <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-2">
-                Title
-              </label>
-              <input
-                className="input w-full font-body text-sm"
-                placeholder="e.g. Pruning season is here!"
-                value={title}
-                maxLength={100}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <p className="text-xs text-swansons-muted font-body mt-1 text-right">
-                {title.length}/100
-              </p>
-            </div>
-
-            {/* Body */}
-            <div className="mb-6">
-              <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-2">
-                Message
-              </label>
-              <textarea
-                className="input w-full font-body text-sm resize-none"
-                placeholder="e.g. The pruning window is open for your fruit tree..."
-                value={body}
-                maxLength={500}
-                rows={4}
-                onChange={(e) => setBody(e.target.value)}
-              />
-              <p className="text-xs text-swansons-muted font-body mt-1 text-right">
-                {body.length}/500
-              </p>
-            </div>
-
-            {/* CTA Label */}
-            <div className="mb-4">
-              <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-2">
-                Button Label (optional)
-              </label>
-              <input
-                className="input w-full font-body text-sm"
-                placeholder="e.g. Shop now"
-                value={ctaLabel}
-                maxLength={50}
-                onChange={(e) => setCtaLabel(e.target.value)}
-              />
-              <p className="text-xs text-swansons-muted font-body mt-1 text-right">
-                {ctaLabel.length}/50
-              </p>
-            </div>
-
-            {/* CTA URL */}
-            <div className="mb-6">
-              <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-2">
-                Button URL (optional)
-              </label>
-              <input
-                className="input w-full font-body text-sm"
-                placeholder="e.g. https://swansonsnursery.com or /ask"
-                value={ctaUrl}
-                onChange={(e) => setCtaUrl(e.target.value)}
-              />
-            </div>
-
-            {/* SEND BTN */}
-            <Button
-              variant={isFormValid && !isSending ? "primary" : "disabled"}
-              disabled={!isFormValid || isSending}
-              onClick={handleSendClick}
-              className="w-full rounded-full"
-            >
-              {isSending ? "Sending..." : "Send Notification →"}
-            </Button>
-          </div>
-        </div>
-
-        {/* ── Broadcast history ── */}
-        <div className="w-96 shrink-0">
-          <h2 className="font-heading font-bold text-swansons-navy text-xl mb-4">
-            Past Broadcasts
-          </h2>
-          {broadcasts.length === 0 ? (
-            <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-swansons-muted font-body text-sm">
-              No broadcasts sent yet.
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {broadcasts.map((b) => (
-                <div key={b.id} className="bg-white rounded-2xl p-5 shadow-sm">
-                  {/* Title + status */}
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="font-heading font-semibold text-swansons-navy text-sm">
-                      {b.title}
-                    </p>
-                    <span
-                      className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-body font-medium ${
-                        b.status === "sent"
-                          ? "bg-swansons-green/10 text-swansons-green-dark"
-                          : b.status === "sending"
-                            ? "bg-orange-100 text-orange-600"
-                            : "bg-red-100 text-red-600"
-                      }`}
-                    >
-                      {b.status}
-                    </span>
-                  </div>
-
-                  {/* Body preview */}
-                  <p className="font-body text-swansons-muted text-xs leading-relaxed mb-3 line-clamp-2">
-                    {b.body}
-                  </p>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {b.sendToAll ? (
-                      <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-2 py-0.5 text-xs font-body">
-                        All customers
-                      </span>
-                    ) : (
-                      b.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-2 py-0.5 text-xs font-body"
-                        >
-                          {tag}
-                        </span>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Meta */}
-                  <div className="flex items-center justify-between text-xs font-body text-swansons-muted">
-                    <span>
-                      {b.recipientCount} recipient
-                      {b.recipientCount !== 1 ? "s" : ""}
-                    </span>
-                    <span>{b.sentByName}</span>
-                    <span>{formatTimeAgo(b.createdAt)}</span>
-                  </div>
+              {/* Description */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide">
+                    Description
+                  </label>
+                  <span className="text-xs font-body text-swansons-muted">
+                    160 characters max
+                  </span>
                 </div>
-              ))}
+                <textarea
+                  className="input w-full font-body text-sm resize-none"
+                  placeholder="Enter description here"
+                  value={body}
+                  maxLength={160}
+                  rows={4}
+                  onChange={(e) => setBody(e.target.value)}
+                />
+                <p className="text-xs text-swansons-muted font-body mt-1 text-right">
+                  {body.length}/160
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setStep(1)}
+                  className="rounded-full"
+                >
+                  Back
+                </Button>
+                <Button
+                  variant={title.trim() && body.trim() ? "primary" : "disabled"}
+                  disabled={!title.trim() || !body.trim()}
+                  onClick={() => setStep(3)}
+                  className="rounded-full"
+                >
+                  Next Step →
+                </Button>
+              </div>
             </div>
-          )}
-        </div>
+            <AudiencePanel />
+          </div>
+        )}
+
+        {/* ── STEP 3 ── */}
+        {step === 3 && (
+          <div className="flex gap-8 items-start">
+            <div className="flex-1">
+              {/* CTA copy */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide">
+                    CTA Copy (optional)
+                  </label>
+                  <span className="text-xs font-body text-swansons-muted">
+                    35 characters max
+                  </span>
+                </div>
+                <input
+                  className="input w-full font-body text-sm"
+                  placeholder="Enter CTA copy here"
+                  value={ctaLabel}
+                  maxLength={35}
+                  onChange={(e) => setCtaLabel(e.target.value)}
+                />
+              </div>
+
+              {/* URL */}
+              <div className="mb-6">
+                <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-1.5">
+                  URL / Link (optional)
+                </label>
+                <input
+                  className="input w-full font-body text-sm"
+                  placeholder="Enter url/link here"
+                  value={ctaUrl}
+                  onChange={(e) => setCtaUrl(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setStep(2)}
+                  className="rounded-full"
+                >
+                  Back
+                </Button>
+                <Button
+                  variant={isSending ? "disabled" : "primary"}
+                  disabled={isSending}
+                  onClick={handleSendClick}
+                  className="rounded-full"
+                >
+                  {isSending ? "Sending..." : "Send Notification →"}
+                </Button>
+              </div>
+            </div>
+            <AudiencePanel />
+          </div>
+        )}
       </div>
+
+      {/* ── Broadcast history ── */}
+      <h2 className="font-heading font-bold text-swansons-navy text-2xl mb-4 mt-10">
+        Past Broadcasts
+      </h2>
+      {broadcasts.length === 0 ? (
+        <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-swansons-muted font-body text-sm">
+          No broadcasts sent yet.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {broadcasts.map((b) => (
+            <div
+              key={b.id}
+              className="bg-white rounded-2xl p-5 shadow-sm flex items-start gap-6"
+            >
+              {/* DATE */}
+              <div className="w-28 shrink-0">
+                <p className="font-body text-swansons-muted text-sm">
+                  {b.createdAt
+                    ? new Date(b.createdAt.toMillis())
+                        .toLocaleDateString("en-US", {
+                          month: "2-digit",
+                          day: "2-digit",
+                          year: "numeric",
+                        })
+                        .replace(/\//g, ".")
+                    : "—"}
+                </p>
+              </div>
+
+              {/* NOTIFICATION */}
+              <div className="flex-1 min-w-0">
+                <p className="font-body font-semibold text-swansons-navy text-sm">
+                  {b.title}
+                </p>
+                <p className="font-body text-swansons-muted text-sm mt-1 line-clamp-2">
+                  {b.body}
+                </p>
+                {b.ctaUrl && (
+                  <a
+                    href={b.ctaUrl}
+                    className="font-body text-sm text-swansons-navy underline underline-offset-2 mt-1 inline-block"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {b.ctaLabel || b.ctaUrl}
+                  </a>
+                )}
+              </div>
+
+              {/* TAGS */}
+              <div className="w-48 shrink-0 flex flex-wrap gap-1">
+                {b.sendToAll ? (
+                  <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-2 py-0.5 text-xs font-body">
+                    All customers
+                  </span>
+                ) : (
+                  b.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-2 py-0.5 text-xs font-body"
+                    >
+                      {tag}
+                    </span>
+                  ))
+                )}
+              </div>
+
+              {/* AUDIENCE */}
+              <div className="w-24 shrink-0 text-right">
+                <p className="font-heading font-bold text-swansons-navy text-4xl leading-none">
+                  {b.recipientCount.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Confirmation dialog ── */}
       {showConfirm && (

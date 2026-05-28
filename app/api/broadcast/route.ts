@@ -80,8 +80,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const safeTitle = title.slice(0, 100);
-    const safeBody = body.slice(0, 500);
+    const safeTitle = title.slice(0, 50);
+    const safeBody = body.slice(0, 160);
 
     // ── 5. Query target customers ────────────────────────────────────────────
     // Staff and admins are always excluded — only role: "customer" receives broadcasts
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
       status: "sending",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       ...(ctaUrl ? { ctaUrl: String(ctaUrl).slice(0, 500) } : {}),
-      ...(ctaLabel ? { ctaLabel: String(ctaLabel).slice(0, 50) } : {}),
+      ...(ctaLabel ? { ctaLabel: String(ctaLabel).slice(0, 35) } : {}),
     });
 
     // ── 7. Write notifications in batches of 499 ─────────────────────────────
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           broadcastId: broadcastRef.id,
           ...(ctaUrl ? { ctaUrl: String(ctaUrl).slice(0, 500) } : {}),
-          ...(ctaLabel ? { ctaLabel: String(ctaLabel).slice(0, 50) } : {}),
+          ...(ctaLabel ? { ctaLabel: String(ctaLabel).slice(0, 35) } : {}),
         });
       });
 

@@ -158,18 +158,18 @@ function NotificationsCard() {
                     (notifications[currentIndex].ctaUrl!.startsWith("/") ? (
                       <Link
                         href={notifications[currentIndex].ctaUrl!}
-                        className="bg-swansons-navy text-white font-body text-xs px-4 py-2 rounded-full inline-block mt-3"
+                        className="font-body text-sm text-swansons-navy underline underline-offset-2 mt-3 inline-block"
                       >
-                        {notifications[currentIndex].ctaLabel || "Learn more →"}
+                        {notifications[currentIndex].ctaLabel || "Learn more"}
                       </Link>
                     ) : (
                       <a
                         href={notifications[currentIndex].ctaUrl!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-swansons-navy text-white font-body text-xs px-4 py-2 rounded-full inline-block mt-3"
+                        className="font-body text-sm text-swansons-navy underline underline-offset-2 mt-3 inline-block"
                       >
-                        {notifications[currentIndex].ctaLabel || "Learn more →"}
+                        {notifications[currentIndex].ctaLabel || "Learn more"}
                       </a>
                     ))}
                 </motion.div>
