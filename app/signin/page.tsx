@@ -13,7 +13,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/auth";
 import { useAuth } from "@/lib/firebase/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/ui/Logo";
 
@@ -38,9 +38,14 @@ export default function SignInPage() {
   );
   const [phoneLoading, setPhoneLoading] = useState(false);
 
+  const searchParams = useSearchParams();
+
   useEffect(() => {
-    if (!loading && user) router.push("/dashboard");
-  }, [user, loading, router]);
+    if (!loading && user) {
+      const returnTo = searchParams.get("returnTo");
+      router.push(returnTo ? decodeURIComponent(returnTo) : "/dashboard");
+    }
+  }, [user, loading, router, searchParams]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

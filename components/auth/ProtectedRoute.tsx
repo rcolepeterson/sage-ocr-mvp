@@ -31,7 +31,8 @@ export default function ProtectedRoute({
     if (isPublicPath) return; // ✅ Don't run any redirects on public paths
 
     if (!loading && !user) {
-      router.push("/signin");
+      const returnTo = window.location.pathname + window.location.search;
+      router.push(`/signin?returnTo=${encodeURIComponent(returnTo)}`);
     }
 
     if (

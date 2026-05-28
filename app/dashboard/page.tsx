@@ -10,6 +10,9 @@ import { useSpaces } from "@/lib/hooks/useSpaces";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import type { PanInfo } from "motion/react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+
 import {
   onNotificationsSnapshot,
   markNotificationAsRead,
@@ -57,7 +60,11 @@ function LatestPlantCard() {
 // ─── Notifications card ────────────────────────────────────────────────────
 function NotificationsCard() {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const [open, setOpen] = useState(
+    searchParams.get("notifications") === "open",
+  );
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -354,7 +361,9 @@ export default function Home() {
 
           {/* Notifications */}
           <motion.div variants={itemVariants} className="mb-4">
-            <NotificationsCard />
+            <Suspense fallback={null}>
+              <NotificationsCard />
+            </Suspense>
           </motion.div>
 
           {/* Latest Plant */}
