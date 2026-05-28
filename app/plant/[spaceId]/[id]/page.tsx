@@ -301,7 +301,11 @@ function PlantProfilePage({
             <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted">
               Light / Shade
             </span>
-            <span className="text-xl">⛅</span>
+            <img
+              src="/images/LightShadeIcon.svg"
+              alt="Light / Shade"
+              className="w-6 h-6"
+            />
           </div>
           <p className="font-body text-swansons-text text-sm leading-relaxed">
             {plant.careInfo?.light || plant.lightLevel || "—"}
@@ -314,7 +318,11 @@ function PlantProfilePage({
             <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted">
               Water / Soil
             </span>
-            <span className="text-xl">💧</span>
+            <img
+              src="/images/WaterSoilIcon.svg"
+              alt="Water / Soil"
+              className="w-6 h-6"
+            />
           </div>
           <p className="font-body text-swansons-text text-sm leading-relaxed">
             {plant.careInfo?.water || "—"}
