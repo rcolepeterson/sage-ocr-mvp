@@ -56,8 +56,16 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 4. Parse + validate body ─────────────────────────────────────────────
-    const { title, body, tags, sendToAll, sentBy, sentByName, ctaUrl, ctaLabel } =
-      await req.json();
+    const {
+      title,
+      body,
+      tags,
+      sendToAll,
+      sentBy,
+      sentByName,
+      ctaUrl,
+      ctaLabel,
+    } = await req.json();
 
     if (!title || typeof title !== "string") {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -148,7 +156,40 @@ export async function POST(req: NextRequest) {
       await batch.commit();
     }
 
-    // ── 8. Mark broadcast as sent ────────────────────────────────────────────
+    // ── 8. Send emails to each recipient ─────────────────────────────────────
+    const { Resend } = await import("resend");
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const ctaButtonHtml = ctaUrl
+      ? `<p style="margin-top:20px"><a href="${ctaUrl}" style="background:#1a2e44;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;font-family:sans-serif;font-size:14px;display:inline-block">${ctaLabel || "Learn more →"}</a></p>`
+      : "";
+
+    const emailHtml = `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px">
+        <h1 style="font-size:22px;color:#1a2e44;margin-bottom:12px">${safeTitle}</h1>
+        <p style="font-size:15px;color:#333;line-height:1.6;margin-bottom:0">${safeBody}</p>
+        ${ctaButtonHtml}
+      </div>
+    `;
+
+    const emailPromises = [
+      resend.emails
+        .send({
+          from: "onboarding@resend.dev",
+          // TODO: replace with actual recipient emails once
+          // Swansons domain is verified at resend.com/domains
+          to: "rcolepeterson@gmail.com",
+          subject: safeTitle,
+          html: emailHtml,
+        })
+        .catch((err) =>
+          console.warn("[broadcast] email failed:", err?.message),
+        ),
+    ];
+
+    await Promise.all(emailPromises);
+
+    // ── 9. Mark broadcast as sent ─────────────────────────────────────────────
     await broadcastRef.update({ status: "sent" });
 
     console.log(

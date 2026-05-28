@@ -1321,22 +1321,7 @@ function SendNotificationsTab() {
               />
             </div>
 
-            {/* FCM toggle — stubbed / coming soon */}
-            <div className="flex items-center justify-between mb-8 p-4 bg-swansons-cream/60 rounded-xl border border-dashed border-swansons-muted/30 opacity-50 cursor-not-allowed">
-              <div>
-                <p className="font-body font-semibold text-swansons-navy text-sm">
-                  Also send push notification
-                </p>
-                <p className="font-body text-swansons-muted text-xs mt-0.5">
-                  Push notification — coming soon
-                </p>
-              </div>
-              <div className="w-12 h-6 rounded-full bg-swansons-muted/30 relative shrink-0">
-                <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow" />
-              </div>
-            </div>
-
-            {/* Send button */}
+            {/* SEND BTN */}
             <Button
               variant={isFormValid && !isSending ? "primary" : "disabled"}
               disabled={!isFormValid || isSending}
