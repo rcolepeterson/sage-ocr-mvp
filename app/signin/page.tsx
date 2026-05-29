@@ -173,7 +173,7 @@ function SignInContent() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-swansons-cream">
+    <main className="min-h-screen flex items-center justify-center px-4 ">
       <div id="recaptcha-container" />
 
       {loading ? (
@@ -181,7 +181,7 @@ function SignInContent() {
           <div className="animate-spin w-8 h-8 border-2 border-swansons-green border-t-transparent rounded-full" />
         </div>
       ) : (
-        <div className="card p-8 w-full max-w-md text-center">
+        <div className="px-8 w-full max-w-md text-center">
           <div className="flex justify-center mb-4">
             <Logo width={120} height={60} />
           </div>
