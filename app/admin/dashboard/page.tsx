@@ -1378,7 +1378,7 @@ function SendNotificationsTab() {
                       className={`rounded-full px-3 py-1 text-xs font-body border transition-all ${
                         isSelected
                           ? "bg-swansons-green text-white border-swansons-green"
-                          : "bg-white border-swansons-navy/30 text-swansons-navy"
+                          : "bg-white border-swansons-navy border-2 text-swansons-navy"
                       }`}
                     >
                       {tag}
