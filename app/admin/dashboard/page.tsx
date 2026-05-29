@@ -1215,7 +1215,7 @@ function SendNotificationsTab() {
   ];
   function StepIndicator() {
     return (
-      <div className="max-w-3xl mb-10">
+      <div className="max-w-5xl mb-10">
         <div className="relative">
           {/* Line behind pills — masked by pill background */}
           <div className="absolute top-4 left-0 right-0 border-t border-swansons-muted/30" />
@@ -1223,14 +1223,9 @@ function SendNotificationsTab() {
             {STEP_LABELS.map((label, i) => {
               const num = i + 1;
               const isActive = step >= num;
-              const align =
-                i === 0
-                  ? "items-start"
-                  : i === 1
-                    ? "items-center"
-                    : "items-end";
+
               return (
-                <div key={num} className={`flex flex-col ${align}`}>
+                <div key={num} className={`flex flex-col items-start`}>
                   {/* bg-swansons-cream masks the line behind the pill */}
                   <div className="relative z-10 bg-swansons-cream">
                     <div
@@ -1302,9 +1297,10 @@ function SendNotificationsTab() {
           {step === 1 && (
             <div>
               {/* Controls row — category under STEP 1, toggle under STEP 2, audience under STEP 3 */}
-              <div className="flex items-center justify-between mb-6 max-w-3xl">
-                {/* Under STEP 1 — Category dropdown */}
-                <div className="relative w-64 shrink-0">
+              {/* Controls row — aligned to step columns */}
+              <div className="max-w-5xl grid grid-cols-3 items-start mb-6">
+                {/* Col 1 — under STEP 1 */}
+                <div className="relative w-64">
                   <select
                     className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-3 rounded-full text-sm bg-transparent px-5 appearance-none"
                     value={selectedCategory}
@@ -1329,8 +1325,8 @@ function SendNotificationsTab() {
                   </span>
                 </div>
 
-                {/* Under STEP 2 — Send to All toggle */}
-                <div className="flex items-center gap-3">
+                {/* Col 2 — under STEP 2 */}
+                <div className="flex items-center justify-start gap-3">
                   <span className="font-body text-sm text-swansons-navy font-semibold whitespace-nowrap">
                     Send to All
                   </span>
@@ -1339,20 +1335,16 @@ function SendNotificationsTab() {
                       setSendToAll((v) => !v);
                       setSelectedTags([]);
                     }}
-                    className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${
-                      sendToAll ? "bg-swansons-green" : "bg-swansons-muted/30"
-                    }`}
+                    className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${sendToAll ? "bg-swansons-green" : "bg-swansons-muted/30"}`}
                   >
                     <span
-                      className={`absolute top-0.5 left-0 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                        sendToAll ? "translate-x-6" : "translate-x-0.5"
-                      }`}
+                      className={`absolute top-0.5 left-0 w-5 h-5 rounded-full bg-white shadow transition-transform ${sendToAll ? "translate-x-6" : "translate-x-0.5"}`}
                     />
                   </button>
                 </div>
 
-                {/* Under STEP 3 — Audience Size */}
-                <div className="flex flex-col items-end shrink-0">
+                {/* Col 3 — under STEP 3 */}
+                <div className="flex flex-col items-start">
                   <p className="text-xs font-body font-bold uppercase tracking-wide text-swansons-black mb-1">
                     Audience Size:
                   </p>
@@ -1579,8 +1571,8 @@ function SendNotificationsTab() {
 
       {/* ── Broadcast history ── */}
       {/* <h2 className="font-heading font-bold text-swansons-navy text-2xl mb-4 mt-10">
-        Past Broadcasts
-      </h2> */}
+          Past Broadcasts
+        </h2> */}
       {broadcasts.length === 0 ? (
         <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-swansons-muted font-body text-sm">
           No broadcasts sent yet.
