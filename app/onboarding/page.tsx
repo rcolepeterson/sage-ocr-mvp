@@ -41,7 +41,7 @@ function OnboardingForm() {
     <main className="min-h-screen px-4 pt-6">
       {/* Logo */}
       <div className="flex justify-center mb-16">
-        <Logo width={160} height={80} />
+        <Logo width={120} height={60} />
       </div>
 
       {/* Content */}

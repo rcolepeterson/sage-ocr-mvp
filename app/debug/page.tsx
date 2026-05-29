@@ -108,6 +108,20 @@ export default function DebugPage() {
           <ResetOnboardingTool />
 
           <div className="border border-gray-200 rounded-lg p-4 mb-4 text-left">
+            <a
+              href="/terms?preview=true"
+              className="text-sm text-swansons-navy underline"
+            >
+              /terms?preview=true — Terms & Conditions page
+            </a>
+
+            <a
+              href="/onboarding?onboarding=preview"
+              className="text-sm text-swansons-navy underline"
+            >
+              /onboarding?onboarding=preview — Welcome / Name capture page
+            </a>
+
             <h2 className="font-semibold text-gray-700 mb-2">📧 Email Test</h2>
             <p className="text-xs text-gray-500 mb-3">
               Send a test email using Resend to confirm email notifications are
