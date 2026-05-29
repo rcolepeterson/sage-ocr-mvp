@@ -38,12 +38,13 @@ export default function LandingPage() {
 
   return (
     <main
-      className="min-h-screen flex flex-col items-center justify-center px-6  pt-12"
+      className="min-h-screen flex flex-col items-center justify-center px-6"
       style={{
         backgroundImage: "url('/images/LandingPage_BG.png')",
         backgroundSize: "cover",
         backgroundPosition: "top",
         backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
       }}
     >
       <motion.div
