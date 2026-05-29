@@ -122,7 +122,7 @@ function OnboardingModalInner() {
             animate="center"
             exit="exit"
             transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="text-center px-0 pt-6 pb-4 whitespace-pre-line leading-snug"
+            className="text-center px-0 pt-7 pb-4 whitespace-pre-line"
           >
             {current.title}
           </motion.h2>
