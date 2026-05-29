@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import Image from "next/image";
 import { markOnboardingComplete } from "@/lib/firebase/users";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import type { PanInfo } from "motion/react";
@@ -65,6 +71,14 @@ function OnboardingModalInner() {
     setStep(0);
     if (user && !preview) {
       await markOnboardingComplete(user.uid);
+      await addDoc(collection(db, "notifications"), {
+        userId: user.uid,
+        title: "Welcome to Sage! 🌿",
+        body: "Scan your first plant tag to get started, or Ask an Expert if you have a question about a plant.",
+        type: "system",
+        read: false,
+        createdAt: serverTimestamp(),
+      });
     }
   };
 
