@@ -9,6 +9,8 @@ import Image from "next/image";
 import { markOnboardingComplete } from "@/lib/firebase/users";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/firestore";
+import { motion, AnimatePresence } from "motion/react";
+import type { PanInfo } from "motion/react";
 
 const STEPS = [
   {
@@ -28,7 +30,6 @@ const STEPS = [
   },
 ];
 
-// ─── Inner component (uses useSearchParams — must be inside Suspense) ──────────
 function OnboardingModalInner() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
@@ -36,6 +37,7 @@ function OnboardingModalInner() {
 
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
 
   // Preload all step images on mount
   useEffect(() => {
@@ -66,11 +68,28 @@ function OnboardingModalInner() {
     }
   };
 
+  const goTo = (index: number) => {
+    setDirection(index > step ? 1 : -1);
+    setStep(index);
+  };
+
   const handleNext = () => {
     if (step < STEPS.length - 1) {
-      setStep((s) => s + 1);
+      goTo(step + 1);
     } else {
       dismiss();
+    }
+  };
+
+  const handleDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) => {
+    const threshold = 50;
+    if (info.offset.x < -threshold && step < STEPS.length - 1) {
+      goTo(step + 1);
+    } else if (info.offset.x > threshold && step > 0) {
+      goTo(step - 1);
     }
   };
 
@@ -79,36 +98,73 @@ function OnboardingModalInner() {
   const isLastStep = step === STEPS.length - 1;
   const current = STEPS[step];
 
+  const variants = {
+    enter: (dir: number) => ({ x: dir > 0 ? 200 : -200, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir: number) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
+  };
+
   return (
     <div
-      className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50 p-6"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-6"
       onClick={(e) => {
         if (!preview && e.target === e.currentTarget) dismiss();
       }}
     >
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden px-4">
-        {/* Heading — now at the top */}
-        <h2 className="text-center px-0 pt-6 pb-4 whitespace-pre-line leading-snug">
-          {current.title}
-        </h2>
-        {/* Illustration */}
-        <div className="w-full flex justify-center py-2">
-          <Image
-            src={current.image}
-            alt={current.title}
-            width={300}
-            height={250}
-            className="w-full h-auto max-h-48 lg:max-h-none object-contain"
-            priority
-          />
-        </div>
-        <div className="px-6 pt-5 pb-7 flex flex-col items-center">
-          {/**Step dots (scrolling indicator) commented out for design */}
+        {/* Heading */}
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.h2
+            key={`title-${step}`}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="text-center px-0 pt-6 pb-4 whitespace-pre-line leading-snug"
+          >
+            {current.title}
+          </motion.h2>
+        </AnimatePresence>
 
+        {/* Swipeable illustration */}
+        <div className="overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={`image-${step}`}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleDragEnd}
+              className="w-full flex justify-center py-2 cursor-grab active:cursor-grabbing select-none"
+            >
+              <Image
+                src={current.image}
+                alt={current.title}
+                width={300}
+                height={250}
+                className="w-full h-auto max-h-48 lg:max-h-none object-contain pointer-events-none"
+                priority
+                draggable={false}
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="px-6 pt-5 pb-7 flex flex-col items-center">
+          {/* Step dots */}
           <div className="flex gap-2 mb-5">
             {STEPS.map((_, i) => (
-              <div
+              <button
                 key={i}
+                onClick={() => goTo(i)}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
                   i === step ? "bg-swansons-green w-4" : "bg-gray-300 w-2",
@@ -118,9 +174,21 @@ function OnboardingModalInner() {
           </div>
 
           {/* Body */}
-          <p className="text-center text-black text-base leading-snug mb-7 mx-auto">
-            {current.body}
-          </p>
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.p
+              key={`body-${step}`}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="text-center text-black text-base leading-snug mb-7 mx-auto"
+            >
+              {current.body}
+            </motion.p>
+          </AnimatePresence>
+
           {/* CTA button */}
           <Button
             onClick={handleNext}
@@ -130,6 +198,7 @@ function OnboardingModalInner() {
           >
             {isLastStep ? "Get Started" : "Next"}
           </Button>
+
           {/* Skip */}
           <Button
             onClick={dismiss}
@@ -140,19 +209,12 @@ function OnboardingModalInner() {
           >
             Skip
           </Button>
-          {/* Preview badge — visible to designer so they know they're in preview mode */}
-          {/* {preview && (
-            <span className="mt-4 text-xs text-orange-400 font-medium tracking-wide uppercase">
-              Preview mode — changes not saved
-            </span>
-          )} */}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Public export — Suspense boundary is self-contained ─────────────────────
 export function OnboardingModal() {
   return (
     <Suspense fallback={null}>
