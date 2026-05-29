@@ -53,6 +53,8 @@ function SignInContent() {
       const returnTo = searchParams.get("returnTo");
       router.push(returnTo ? decodeURIComponent(returnTo) : "/dashboard");
     }
+    const urlMode = searchParams.get("mode");
+    if (urlMode === "signup") setMode("signup");
   }, [user, loading, router, searchParams]);
 
   useEffect(() => {

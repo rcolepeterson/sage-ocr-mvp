@@ -80,22 +80,22 @@ export default function LandingPage() {
           variants={itemVariants}
           className="flex flex-col gap-3 w-full"
         >
-          <Link href="/signin?mode=signup" className="w-full">
+          <Link href="/signin" className="w-full">
             <Button
               variant="primary"
               size="md"
               className="w-full rounded-full text-base"
             >
-              Sign Up
+              Log In
             </Button>
           </Link>
-          <Link href="/signin" className="w-full">
+          <Link href="/signin?mode=signup" className="w-full">
             <Button
               variant="secondary"
               size="md"
               className="w-full rounded-full text-base"
             >
-              Log In
+              Sign Up
             </Button>
           </Link>
         </motion.div>
