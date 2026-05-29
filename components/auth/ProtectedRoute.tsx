@@ -10,6 +10,16 @@ interface ProtectedRouteProps {
   requiredRole?: "customer" | "staff" | "admin";
 }
 
+const LoadingScreen = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-swansons-cream">
+    <Logo width={120} height={60} />
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-8 h-8 rounded-full border-2 border-swansons-green border-t-transparent animate-spin" />
+      <p className="font-body text-swansons-muted text-sm">Loading...</p>
+    </div>
+  </div>
+);
+
 export default function ProtectedRoute({
   children,
   requiredRole,
@@ -28,7 +38,7 @@ export default function ProtectedRoute({
   const isPublicPath = publicPaths.includes(pathname);
 
   useEffect(() => {
-    if (isPublicPath) return; // ✅ Don't run any redirects on public paths
+    if (isPublicPath) return;
 
     if (!loading && !user) {
       const returnTo = window.location.pathname + window.location.search;
@@ -51,7 +61,6 @@ export default function ProtectedRoute({
       return;
     }
 
-    // Onboarding: if displayName is missing/null and not Google sign-in
     if (
       !loading &&
       user &&
@@ -64,7 +73,6 @@ export default function ProtectedRoute({
       return;
     }
 
-    // Prevent /onboarding for users who already have displayName
     if (!loading && user && user.displayName && pathname === "/onboarding") {
       router.replace("/dashboard");
       return;
@@ -87,18 +95,9 @@ export default function ProtectedRoute({
 
   if (isPublicPath) return <>{children}</>;
 
-  if (loading)
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-swansons-cream">
-        <Logo width={120} height={60} />
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-swansons-green border-t-transparent animate-spin" />
-          <p className="font-body text-swansons-muted text-sm">Loading...</p>
-        </div>
-      </div>
-    );
+  if (loading) return <LoadingScreen />;
 
-  if (!user) return null;
+  if (!user) return <LoadingScreen />;
 
   if (requiredRole && role) {
     if (
