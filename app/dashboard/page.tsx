@@ -372,16 +372,30 @@ export default function Home() {
           </motion.div>
 
           {/* Action Buttons */}
+          {/* Action Buttons */}
           <motion.div variants={itemVariants} className="flex gap-3 mb-8">
-            <Link href="/scan" className="flex-1">
-              <Button
-                variant="primary"
-                size="md"
-                className="w-full rounded-full text-base"
-              >
-                Add A Plant
-              </Button>
-            </Link>
+            <motion.div
+              className="flex-1"
+              style={{ borderRadius: "9999px" }}
+              animate={{
+                boxShadow: [
+                  "0 0 0 0 rgba(20,31,98,0.5)",
+                  "0 0 0 10px rgba(20,31,98,0)",
+                  "0 0 0 0 rgba(20,31,98,0)",
+                ],
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+            >
+              <Link href="/scan" className="block w-full">
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full rounded-full text-base"
+                >
+                  Add A Plant
+                </Button>
+              </Link>
+            </motion.div>
             <Link href="/ask" className="flex-1">
               <Button
                 variant="primary"
