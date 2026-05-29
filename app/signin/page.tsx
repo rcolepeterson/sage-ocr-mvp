@@ -14,12 +14,20 @@ import {
 import { auth } from "@/lib/firebase/auth";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Logo } from "@/components/ui/Logo";
 
 type Mode = "signin" | "signup" | "reset";
 
 export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInContent />
+    </Suspense>
+  );
+}
+
+function SignInContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
