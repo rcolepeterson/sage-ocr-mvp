@@ -6,41 +6,94 @@ import { resetOnboarding } from "@/lib/firebase/users";
 import { auth } from "@/lib/firebase/auth";
 import { db } from "@/lib/firebase/firestore";
 import { updateProfile } from "firebase/auth";
-import { doc, updateDoc, deleteField } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  deleteField,
+  collection,
+  getDocs,
+  deleteDoc,
+} from "firebase/firestore";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
-function ResetOnboardingTool() {
+function CleanupMyDataTool() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [confirm, setConfirm] = useState(false);
 
-  const handleReset = async () => {
+  const handleCleanup = useCallback(async () => {
     if (!user) return;
-    await resetOnboarding(user.uid);
-    setDone(true);
-    setTimeout(() => setDone(false), 3000);
-  };
+    setLoading(true);
+    try {
+      const threadsSnap = await getDocs(collection(db, "threads"));
+      await Promise.all(
+        threadsSnap.docs
+          .filter((d) => d.data().userId === user.uid)
+          .map(async (threadDoc) => {
+            const repliesSnap = await getDocs(
+              collection(db, "threads", threadDoc.id, "replies"),
+            );
+            await Promise.all(repliesSnap.docs.map((r) => deleteDoc(r.ref)));
+            await deleteDoc(threadDoc.ref);
+          }),
+      );
+      const spacesSnap = await getDocs(
+        collection(db, `users/${user.uid}/spaces`),
+      );
+      await Promise.all(
+        spacesSnap.docs.map(async (spaceDoc) => {
+          const plantsSnap = await getDocs(
+            collection(db, `users/${user.uid}/spaces/${spaceDoc.id}/plants`),
+          );
+          await Promise.all(plantsSnap.docs.map((p) => deleteDoc(p.ref)));
+          await deleteDoc(spaceDoc.ref);
+        }),
+      );
+      setDone(true);
+      setConfirm(false);
+      setTimeout(() => setDone(false), 3000);
+    } catch (err: any) {
+      console.error("Cleanup error:", err);
+    }
+    setLoading(false);
+  }, [user]);
+
+  if (done) return <p className="text-xs text-green-600">✅ Data deleted.</p>;
+
+  if (confirm)
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-red-500">
+          This cannot be undone. All your test threads, spaces and plants will
+          be deleted.
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={handleCleanup}
+            disabled={loading}
+            className="flex-1 text-xs bg-red-500 text-white py-2 rounded-lg disabled:opacity-50"
+          >
+            {loading ? "Deleting..." : "Confirm Delete"}
+          </button>
+          <button
+            onClick={() => setConfirm(false)}
+            className="flex-1 text-xs bg-gray-100 text-gray-600 py-2 rounded-lg"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
 
   return (
-    <div className="border rounded-xl p-4 flex items-center justify-between mb-4">
-      <div>
-        <p className="font-medium text-sm">Reset Onboarding</p>
-        <p className="text-xs text-gray-500 mt-0.5">
-          Clears your onboardingCompletedAt flag — modal will show on next page
-          load. Or use{" "}
-          <code className="bg-gray-100 px-1 rounded text-orange-500">
-            ?onboarding=preview
-          </code>{" "}
-          for a non-destructive preview.
-        </p>
-      </div>
-      <button
-        onClick={handleReset}
-        className="ml-4 shrink-0 text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"
-      >
-        {done ? "✅ Reset!" : "Reset"}
-      </button>
-    </div>
+    <button
+      onClick={() => setConfirm(true)}
+      className="text-xs bg-red-50 text-red-600 border border-red-200 py-2 px-4 rounded-lg w-full hover:bg-red-100 transition"
+    >
+      Delete My Test Data
+    </button>
   );
 }
 
@@ -51,6 +104,11 @@ export default function DebugPage() {
   const [email, setEmail] = useState("");
   const [emailResult, setEmailResult] = useState<string | null>(null);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(false);
+
+  const isGoogleUser = user?.providerData?.some(
+    (p) => p.providerId === "google.com",
+  );
 
   async function handleSendTestEmail() {
     setEmailResult(null);
@@ -62,121 +120,189 @@ export default function DebugPage() {
         body: JSON.stringify({
           to: email,
           subject: "Sage — Test Email",
-          html: `<h1>🌿 Sage Email Test</h1><p>This is a test email from the Sage plant care app. If you received this, email notifications are working correctly.</p>`,
+          html: `<h1>🌿 Sage Email Test</h1><p>This is a test email from Sage. If you received this, email is working correctly.</p>`,
         }),
       });
       const data = await res.json();
-      if (res.ok && data.success) {
-        setEmailResult("✅ Test email sent! Check your inbox.");
-      } else {
-        setEmailResult(`❌ Error: ${data.error || "Unknown error"}`);
-      }
+      setEmailResult(
+        res.ok && data.success
+          ? "✅ Sent! Check your inbox."
+          : `❌ ${data.error || "Unknown error"}`,
+      );
     } catch (err: any) {
-      setEmailResult(`❌ Error: ${err.message || "Unknown error"}`);
+      setEmailResult(`❌ ${err.message}`);
     } finally {
       setEmailLoading(false);
     }
   }
 
-  const isGoogleUser = user?.providerData?.some(
-    (p) => p.providerId === "google.com",
-  );
+  const handleResetOnboarding = async () => {
+    if (!user) return;
+    await resetOnboarding(user.uid);
+    setOnboardingDone(true);
+    setTimeout(() => setOnboardingDone(false), 3000);
+  };
 
   const handleClearDisplayName = async () => {
     setStatus(null);
     setError(null);
     try {
       if (!user?.uid) throw new Error("No user UID");
-      if (auth.currentUser) {
+      if (auth.currentUser)
         await updateProfile(auth.currentUser, { displayName: null });
-      }
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { displayName: deleteField() });
-      setStatus("Display name cleared. Reloading...");
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await updateDoc(doc(db, "users", user.uid), {
+        displayName: deleteField(),
+      });
+      setStatus("Cleared. Reloading...");
+      setTimeout(() => window.location.reload(), 1000);
     } catch (err: any) {
-      setError(err.message || "Error clearing display name");
+      setError(err.message || "Error");
     }
   };
 
   return (
     <ProtectedRoute requiredRole="admin">
-      <main className="min-h-screen flex flex-col items-center justify-start px-4 pt-10">
-        <div className="card p-6 w-full max-w-md text-center">
-          <ResetOnboardingTool />
+      <main className="min-h-screen bg-white px-4 pt-10 pb-20">
+        <div className="w-full max-w-md mx-auto">
+          {/* Header */}
+          <h1 className="text-base font-semibold text-swansons-navy mb-1">
+            Debug Tools
+          </h1>
+          <p className="text-xs text-swansons-muted mb-8">
+            Admin only — not visible to customers
+          </p>
 
-          <div className="border border-gray-200 rounded-lg p-4 mb-4 text-left">
-            <a
-              href="/terms?preview=true"
-              className="text-sm text-swansons-navy underline"
-            >
-              /terms?preview=true — Terms & Conditions page
-            </a>
-
-            <a
-              href="/onboarding?onboarding=preview"
-              className="text-sm text-swansons-navy underline"
-            >
-              /onboarding?onboarding=preview — Welcome / Name capture page
-            </a>
-
-            <h2 className="font-semibold text-gray-700 mb-2">📧 Email Test</h2>
-            <p className="text-xs text-gray-500 mb-3">
-              Send a test email using Resend to confirm email notifications are
-              working.
+          {/* Preview Links */}
+          <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-swansons-muted mb-3">
+              Preview
             </p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-2">
-              <input
-                type="email"
-                className="input w-full text-sm"
-                placeholder="Recipient email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={emailLoading}
-              />
-              <button
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition w-full sm:w-auto disabled:opacity-60"
-                onClick={handleSendTestEmail}
-                disabled={!email || emailLoading}
-              >
-                {emailLoading ? "Sending..." : "Send Test Email"}
-              </button>
+            <div className="flex flex-col gap-2">
+              {[
+                {
+                  href: "/dashboard?onboarding=preview",
+                  label: "Onboarding modal",
+                },
+                {
+                  href: "/onboarding?onboarding=preview",
+                  label: "Welcome page",
+                },
+                { href: "/terms?preview=true", label: "Terms & Conditions" },
+              ].map(({ href, label }) => (
+                <a
+                  key={href}
+                  href={href}
+                  className="flex items-center justify-between bg-swansons-cream rounded-lg px-4 py-3 text-sm text-swansons-navy hover:bg-swansons-green-muted/50 transition"
+                >
+                  <span>{label}</span>
+                  <span className="text-swansons-muted text-xs">→</span>
+                </a>
+              ))}
             </div>
-            {emailResult && (
-              <div className="mt-2 text-sm text-center">{emailResult}</div>
-            )}
           </div>
 
-          <h1 className="text-2xl font-bold mb-4 text-red-600">DEV TOOLS</h1>
-
-          <div className="border border-gray-200 rounded-lg p-4 mb-4 text-left">
-            <h2 className="font-semibold text-gray-700 mb-2">
-              Clear Display Name
-            </h2>
-            <p className="text-xs text-gray-500 mb-3">
-              Clears your display name from Firebase Auth and Firestore,
-              triggering the onboarding flow on reload.
+          {/* Reset Tools */}
+          <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-swansons-muted mb-3">
+              Reset
             </p>
-            {isGoogleUser ? (
-              <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded p-3">
-                ⚠️ You are signed in with Google. Clearing your display name
-                won&apos;t work correctly as Google will restore it on next
-                sign-in. Use a test email/password account instead.
-              </p>
-            ) : (
-              <button
-                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded w-full transition"
-                onClick={handleClearDisplayName}
-              >
-                Clear Display Name
-              </button>
-            )}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between bg-swansons-cream rounded-lg px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-swansons-navy">
+                    Onboarding modal
+                  </p>
+                  <p className="text-xs text-swansons-muted">
+                    Shows again on next page load
+                  </p>
+                </div>
+                <button
+                  onClick={handleResetOnboarding}
+                  className="text-xs bg-white border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition ml-4 shrink-0"
+                >
+                  {onboardingDone ? "✅ Done" : "Reset"}
+                </button>
+              </div>
+
+              {!isGoogleUser ? (
+                <div className="flex items-center justify-between bg-swansons-cream rounded-lg px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-swansons-navy">
+                      Display name
+                    </p>
+                    <p className="text-xs text-swansons-muted">
+                      Triggers name capture on reload
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleClearDisplayName}
+                    className="text-xs bg-white border border-red-200 text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition ml-4 shrink-0"
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                  ⚠️ Google account — display name cannot be cleared.
+                </p>
+              )}
+
+              {status && (
+                <p className="text-xs text-green-600 px-1">{status}</p>
+              )}
+              {error && <p className="text-xs text-red-500 px-1">{error}</p>}
+            </div>
           </div>
 
-          {status && <p className="text-green-600 mt-2">{status}</p>}
-          {error && <p className="text-red-600 mt-2">{error}</p>}
+          {/* Clean Up Data */}
+          <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-swansons-muted mb-3">
+              Data
+            </p>
+            <div className="bg-swansons-cream rounded-lg px-4 py-3">
+              <p className="text-sm font-medium text-swansons-navy mb-1">
+                Clean up test data
+              </p>
+              <p className="text-xs text-swansons-muted mb-3">
+                Deletes your threads, spaces and plants
+              </p>
+              <CleanupMyDataTool />
+            </div>
+          </div>
+
+          {/* Email Test */}
+          <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-swansons-muted mb-3">
+              Email
+            </p>
+            <div className="bg-swansons-cream rounded-lg px-4 py-3">
+              <p className="text-sm font-medium text-swansons-navy mb-3">
+                Send test email
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  className="input flex-1 text-sm"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={emailLoading}
+                />
+                <button
+                  onClick={handleSendTestEmail}
+                  disabled={!email || emailLoading}
+                  className="text-xs bg-swansons-navy text-white px-4 py-2 rounded-lg disabled:opacity-50 hover:opacity-90 transition shrink-0"
+                >
+                  {emailLoading ? "..." : "Send"}
+                </button>
+              </div>
+              {emailResult && (
+                <p className="text-xs mt-2 text-swansons-muted">
+                  {emailResult}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </ProtectedRoute>
