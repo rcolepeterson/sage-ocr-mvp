@@ -1778,9 +1778,20 @@ export default function AdminDashboardPage() {
 
   return (
     <ProtectedRoute requiredRole="admin">
-      <div className="flex min-h-screen bg-swansons-cream">
+      <div className="flex min-h-screen bg-swansons-cream relative">
+        {/* Botanical background — bottom right */}
+        <div
+          className="fixed bottom-0 right-0 w-80 pointer-events-none select-none"
+          style={{ zIndex: 0 }}
+        >
+          <img src="/images/TestPlants5.png" alt="" className="w-full h-auto" />
+        </div>
+
         <Sidebar user={user} onTab={setTab} tab={tab} />
-        <main className="flex-1 p-6 md:p-10 overflow-x-auto">
+        <main
+          className="flex-1 p-6 md:p-10 overflow-x-auto"
+          style={{ position: "relative", zIndex: 1 }}
+        >
           <div className="md:hidden flex gap-2 mb-6 overflow-x-auto pb-1">
             {TABS.map((t, i) => (
               <button
