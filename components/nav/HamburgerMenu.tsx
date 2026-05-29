@@ -62,6 +62,11 @@ export default function HamburgerMenu() {
     (p: { providerId: string }) => p.providerId === "google.com",
   );
 
+  /* close menu on route change */
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   /* close on outside click */
   useEffect(() => {
     if (!open) return;
