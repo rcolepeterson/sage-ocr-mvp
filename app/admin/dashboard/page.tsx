@@ -1364,7 +1364,7 @@ function SendNotificationsTab() {
 
               {/* Tag pills */}
               <div
-                className={`flex flex-wrap gap-2 transition-opacity ${
+                className={`flex flex-wrap gap-2 transition-opacity max-w-6xl ${
                   sendToAll ? "opacity-40 pointer-events-none" : ""
                 }`}
               >
