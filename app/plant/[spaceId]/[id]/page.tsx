@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import EditIcon from "@/components/ui/EditIcon";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
 import { getSpace } from "@/lib/firebase/spaces";
+import { motion } from "motion/react";
 
 /* ─── Tag Badges — staff/admin only ─────────────────────────────────────── */
 const TAG_CATEGORIES = [
@@ -167,6 +168,17 @@ function TagBadges({ tags }: { tags: string[] }) {
   );
 }
 
+/* ─── Animation variants ────────────────────────────────────────────────── */
+const containerVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+};
+
 /* ─── Plant Profile ──────────────────────────────────────────────────────── */
 function PlantProfilePage({
   params,
@@ -246,9 +258,17 @@ function PlantProfilePage({
 
   return (
     <main className="min-h-screen pb-28">
-      <div className="px-4 pt-8 max-w-lg mx-auto">
+      <motion.div
+        className="px-4 pt-8 max-w-lg mx-auto"
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+      >
         {/* ── Photo circle ── */}
-        <div className="flex justify-center mb-5">
+        <motion.div
+          variants={itemVariants}
+          className="flex justify-center mb-5"
+        >
           <div className="relative">
             <div className="w-32 h-32 rounded-full ring-4 ring-swansons-green overflow-hidden bg-swansons-green-muted flex items-center justify-center">
               {plant.photo ? (
@@ -278,25 +298,32 @@ function PlantProfilePage({
               </button>
             </PhotoPicker>
           </div>
-        </div>
+        </motion.div>
 
         {/* ── Name ── */}
-        <h1 className="font-heading text-3xl font-bold text-swansons-navy text-center mb-1">
-          {plant.commonName}
-        </h1>
-        <p className="font-body italic text-swansons-black font-bold text-center mb-5">
-          {plant.latinName}
-        </p>
+        <motion.div variants={itemVariants}>
+          <h1 className="font-heading text-3xl font-bold text-swansons-navy text-center mb-1">
+            {plant.commonName}
+          </h1>
+          <p className="font-body italic text-swansons-black font-bold text-center mb-5">
+            {plant.latinName}
+          </p>
+        </motion.div>
 
         {/* ── Description ── */}
         {plant.careInfo?.description && (
-          <p className="font-body text-swansons-text text-center leading-relaxed mb-6">
-            {plant.careInfo.description}
-          </p>
+          <motion.div variants={itemVariants}>
+            <p className="font-body text-swansons-text text-center leading-relaxed mb-6">
+              {plant.careInfo.description}
+            </p>
+          </motion.div>
         )}
 
         {/* ── Light / Shade card ── */}
-        <div className="bg-white rounded-2xl p-5 mb-4">
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-2xl p-5 mb-4"
+        >
           <div className="flex items-start justify-between mb-2">
             <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted">
               Light / Shade
@@ -310,10 +337,13 @@ function PlantProfilePage({
           <p className="font-body text-swansons-text text-sm leading-relaxed">
             {plant.careInfo?.light || plant.lightLevel || "—"}
           </p>
-        </div>
+        </motion.div>
 
         {/* ── Water / Soil card ── */}
-        <div className="bg-white rounded-2xl p-5 mb-6">
+        <motion.div
+          variants={itemVariants}
+          className="bg-white rounded-2xl p-5 mb-6"
+        >
           <div className="flex items-start justify-between mb-2">
             <span className="text-xs font-body font-semibold uppercase tracking-widest text-swansons-muted">
               Water / Soil
@@ -327,11 +357,11 @@ function PlantProfilePage({
           <p className="font-body text-swansons-text text-sm leading-relaxed">
             {plant.careInfo?.water || "—"}
           </p>
-        </div>
+        </motion.div>
 
         {/* ── Care Tips ── */}
         {plant.careInfo?.careTips?.length > 0 && (
-          <div className="mb-6">
+          <motion.div variants={itemVariants} className="mb-6">
             <div className="flex justify-center mb-4">
               <span className="bg-swansons-green-dark text-white font-body text-xs font-semibold uppercase tracking-widest px-6 py-2 rounded-full">
                 Care Tips
@@ -346,12 +376,12 @@ function PlantProfilePage({
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* ── Space name + tags ── */}
         {space && (
-          <div className="mb-6">
+          <motion.div variants={itemVariants} className="mb-6">
             <div className="flex items-center gap-2 mb-3">
               <p className="font-body font-bold text-swansons-navy uppercase tracking-widest text-sm">
                 {space.name}
@@ -375,14 +405,19 @@ function PlantProfilePage({
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* ── AI Tags — staff/admin ── */}
-        <TagBadges tags={plant.tags || []} />
+        <motion.div variants={itemVariants}>
+          <TagBadges tags={plant.tags || []} />
+        </motion.div>
 
         {/* ── Ask An Expert ── */}
-        <div className="mt-6 flex justify-center">
+        <motion.div
+          variants={itemVariants}
+          className="mt-6 flex justify-center"
+        >
           <Link
             href={`/ask?plantId=${spaceId}_${id}&plantName=${encodeURIComponent(plant.commonName)}`}
           >
@@ -394,8 +429,8 @@ function PlantProfilePage({
               Ask An Expert
             </Button>
           </Link>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </main>
   );
 }
