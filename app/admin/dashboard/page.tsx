@@ -1544,13 +1544,13 @@ function SendNotificationsTab() {
             <span className="w-28 shrink-0 text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
               Date
             </span>
-            <span className="flex-1 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
+            <span className="w-120 shrink-0 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
               Notification
             </span>
-            <span className="w-48 shrink-0 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
+            <span className="flex-1 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
               Tags
             </span>
-            <div className="w-32 shrink-0 flex justify-end">
+            <div className="w-32 shrink-0 flex justify-start">
               <span className="text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
                 Audience
               </span>
@@ -1577,7 +1577,7 @@ function SendNotificationsTab() {
               </div>
 
               {/* NOTIFICATION */}
-              <div className="flex-1 min-w-0">
+              <div className="w-120 shrink-0 min-w-0">
                 <p className="font-body font-semibold text-swansons-navy text-sm">
                   {b.title}
                 </p>
@@ -1597,7 +1597,7 @@ function SendNotificationsTab() {
               </div>
 
               {/* TAGS */}
-              <div className="w-48 shrink-0 flex flex-wrap gap-1">
+              <div className="flex-1 flex flex-wrap gap-1">
                 {b.sendToAll || b.tags.length === 0 ? (
                   <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-3 py-1 text-xs font-body font-medium">
                     All customers
@@ -1615,7 +1615,7 @@ function SendNotificationsTab() {
               </div>
 
               {/* AUDIENCE */}
-              <div className="w-32 shrink-0 flex justify-end items-start">
+              <div className="w-32 shrink-0 flex justify-start items-start">
                 <span className="font-heading font-bold text-swansons-navy text-4xl leading-none">
                   {(b.recipientCount ?? 0).toLocaleString()}
                 </span>
