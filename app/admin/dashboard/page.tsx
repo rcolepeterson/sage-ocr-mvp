@@ -1298,7 +1298,7 @@ function SendNotificationsTab() {
             <div>
               {/* Controls row — category under STEP 1, toggle under STEP 2, audience under STEP 3 */}
               {/* Controls row — aligned to step columns */}
-              <div className="max-w-5xl grid grid-cols-3 items-start mb-6">
+              <div className="max-w-5xl grid grid-cols-3 items-center mb-6">
                 {/* Col 1 — under STEP 1 */}
                 <div className="relative w-64">
                   <select
@@ -1345,7 +1345,7 @@ function SendNotificationsTab() {
 
                 {/* Col 3 — under STEP 3 */}
                 <div className="flex flex-col items-start">
-                  <p className="text-xs font-body font-bold uppercase tracking-wide text-swansons-black mb-1">
+                  <p className="text-xs font-body font-bold uppercase tracking-wide text-swansons-black ">
                     Audience Size:
                   </p>
                   {isLoadingCount ? (
@@ -1353,7 +1353,7 @@ function SendNotificationsTab() {
                       Calculating…
                     </p>
                   ) : (
-                    <p className="font-heading font-bold text-swansons-navy text-5xl leading-none">
+                    <p className="font-heading font-bold text-swansons-navy text-4xl leading-none">
                       {recipientCount !== null
                         ? recipientCount.toLocaleString()
                         : "—"}
@@ -1407,26 +1407,6 @@ function SendNotificationsTab() {
           {/* ── STEP 2 ── */}
           {step === 2 && (
             <div>
-              {/* Audience size row */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="ml-auto flex flex-col items-end">
-                  <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
-                    Audience Size
-                  </p>
-                  {isLoadingCount ? (
-                    <p className="font-body text-swansons-muted text-sm">
-                      Calculating…
-                    </p>
-                  ) : (
-                    <p className="font-heading font-bold text-swansons-navy text-5xl leading-none">
-                      {recipientCount !== null
-                        ? recipientCount.toLocaleString()
-                        : "—"}
-                    </p>
-                  )}
-                </div>
-              </div>
-
               {/* Headline */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
@@ -1495,26 +1475,6 @@ function SendNotificationsTab() {
           {/* ── STEP 3 ── */}
           {step === 3 && (
             <div>
-              {/* Audience size row */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="ml-auto flex flex-col items-end">
-                  <p className="text-xs font-body uppercase tracking-wide text-swansons-muted mb-1">
-                    Audience Size
-                  </p>
-                  {isLoadingCount ? (
-                    <p className="font-body text-swansons-muted text-sm">
-                      Calculating…
-                    </p>
-                  ) : (
-                    <p className="font-heading font-bold text-swansons-navy text-5xl leading-none">
-                      {recipientCount !== null
-                        ? recipientCount.toLocaleString()
-                        : "—"}
-                    </p>
-                  )}
-                </div>
-              </div>
-
               {/* CTA copy */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
