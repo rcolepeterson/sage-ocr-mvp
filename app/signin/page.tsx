@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  sendEmailVerification,
   signInWithPhoneNumber,
   RecaptchaVerifier,
   ConfirmationResult,
@@ -135,6 +136,9 @@ function SignInContent() {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
+        if (auth.currentUser) {
+          await sendEmailVerification(auth.currentUser);
+        }
       }
     } catch (e: any) {
       if (

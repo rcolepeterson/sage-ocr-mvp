@@ -34,6 +34,7 @@ export default function ProtectedRoute({
     "/unauthorized",
     "/terms",
     "/onboarding",
+    "/verify-email",
   ];
   const isPublicPath = publicPaths.includes(pathname);
 
@@ -98,6 +99,13 @@ export default function ProtectedRoute({
   if (loading) return <LoadingScreen />;
 
   if (!user) return <LoadingScreen />;
+
+  // Redirect unverified email/password users to verify-email
+  const isEmailUser = user?.providerData?.[0]?.providerId === "password";
+  if (isEmailUser && !user.emailVerified && pathname !== "/verify-email") {
+    router.replace("/verify-email");
+    return <LoadingScreen />;
+  }
 
   if (requiredRole && role) {
     if (
