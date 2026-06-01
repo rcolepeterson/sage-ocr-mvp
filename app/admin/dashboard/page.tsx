@@ -724,8 +724,22 @@ type AssignDropdownProps = {
 
 function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
   const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       <button
         className="px-3 py-1.5 rounded-full border border-swansons-navy text-xs font-body text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
         onClick={() => setOpen((v) => !v)}
@@ -733,7 +747,7 @@ function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
         {thread.assignedTo ? "Reassign" : "Assign"}
       </button>
       {open && (
-        <div className="absolute z-10 bg-white border rounded-xl shadow-lg mt-1 w-48 overflow-hidden">
+        <div className="absolute z-50 bg-white border rounded-xl shadow-lg bottom-full mb-1 w-48 overflow-hidden">
           {staffUsers.map((u) => (
             <button
               key={u.uid}
