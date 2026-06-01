@@ -805,6 +805,21 @@ function ThreadQueueTab({
   setFilters,
 }: ThreadQueueTabProps) {
   const [previewThread, setPreviewThread] = useState<Thread | null>(null);
+  const [sortBy, setSortBy] = useState<"assigned" | "urgent" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (col: "assigned" | "urgent") => {
+    if (sortBy === col) {
+      if (sortDir === "asc") setSortDir("desc");
+      else {
+        setSortBy(null);
+        setSortDir("asc");
+      }
+    } else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  };
 
   const unassigned = threads.filter((t) => !t.assignedTo && t.status === "new");
   const urgent = threads.filter((t) => t.urgent && t.status !== "closed");
@@ -839,6 +854,25 @@ function ThreadQueueTab({
         match = true;
       if (filters.includes("closed") && t.status === "closed") match = true;
       return match;
+    });
+  }
+
+  // Sort
+  const sorted = [...filtered];
+  if (sortBy === "assigned") {
+    sorted.sort((a, b) => {
+      const nameA =
+        staffUsers.find((u) => u.uid === a.assignedTo)?.displayName ?? "";
+      const nameB =
+        staffUsers.find((u) => u.uid === b.assignedTo)?.displayName ?? "";
+      return sortDir === "asc"
+        ? nameA.localeCompare(nameB)
+        : nameB.localeCompare(nameA);
+    });
+  } else if (sortBy === "urgent") {
+    sorted.sort((a, b) => {
+      if (sortDir === "asc") return (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0);
+      return (a.urgent ? 1 : 0) - (b.urgent ? 1 : 0);
     });
   }
 
@@ -900,14 +934,42 @@ function ThreadQueueTab({
               <th className="px-4 py-3 text-left">Customer</th>
               <th className="px-4 py-3 text-left">Plant</th>
               <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Urgent</th>
+              <th className="px-4 py-3 text-left">
+                <button
+                  onClick={() => handleSort("urgent")}
+                  className="flex items-center gap-1 font-body text-xs uppercase tracking-wide text-swansons-muted hover:text-swansons-navy transition"
+                >
+                  Urgent
+                  <span className="text-swansons-muted">
+                    {sortBy === "urgent"
+                      ? sortDir === "asc"
+                        ? "↓"
+                        : "↑"
+                      : "↕"}
+                  </span>
+                </button>
+              </th>
               <th className="px-4 py-3 text-left">Wait (hrs)</th>
-              <th className="px-4 py-3 text-left">Assigned</th>
+              <th className="px-4 py-3 text-left">
+                <button
+                  onClick={() => handleSort("assigned")}
+                  className="flex items-center gap-1 font-body text-xs uppercase tracking-wide text-swansons-muted hover:text-swansons-navy transition"
+                >
+                  Assigned
+                  <span className="text-swansons-muted">
+                    {sortBy === "assigned"
+                      ? sortDir === "asc"
+                        ? "↑"
+                        : "↓"
+                      : "↕"}
+                  </span>
+                </button>
+              </th>
               <th className="px-4 py-3 text-left">Action</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((t) => {
+            {sorted.map((t) => {
               const waitHrs = Math.round(
                 (now - ((t.createdAt as any)?.toMillis?.() || 0)) / 3600000,
               );
