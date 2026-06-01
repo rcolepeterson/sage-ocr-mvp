@@ -121,7 +121,14 @@ function AskPageInner() {
         photoFile,
         () => {},
       );
-      await addReply(threadId, user.uid, question.trim(), false, photoURL);
+      await addReply(
+        threadId,
+        user.uid,
+        question.trim(),
+        false,
+        photoURL,
+        true,
+      );
       setUploading(false);
     }
     setQuestion("");

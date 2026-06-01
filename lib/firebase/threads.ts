@@ -203,6 +203,7 @@ export async function addReply(
   message: string,
   isStaff: boolean,
   photoURL?: string,
+  skipStatusUpdate: boolean = false,
 ) {
   const replyRef = await addDoc(
     collection(db, "threads", threadId, "replies"),
@@ -214,10 +215,12 @@ export async function addReply(
       ...(photoURL ? { photoURL } : {}),
     },
   );
-  if (isStaff) {
-    await updateThreadStatus(threadId, "waiting-on-customer");
-  } else {
-    await updateThreadStatus(threadId, "needs-followup");
+  if (!skipStatusUpdate) {
+    if (isStaff) {
+      await updateThreadStatus(threadId, "waiting-on-customer");
+    } else {
+      await updateThreadStatus(threadId, "needs-followup");
+    }
   }
   // TODO: re-enable when notifications are ready to ship
   // if (isStaff) {
