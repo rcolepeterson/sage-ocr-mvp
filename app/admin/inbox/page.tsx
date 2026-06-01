@@ -131,6 +131,57 @@ function AdminInboxPage() {
         true,
         photoURL || undefined,
       );
+
+      // ── Notify customer ──────────────────────────────────────────────────
+      try {
+        // 1. Get customer data
+        const customerData = await getUser(selectedThread.userId);
+
+        // 2. Create in-app notification
+        const { addDoc, collection, serverTimestamp } =
+          await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase/firestore");
+        await addDoc(collection(db, "notifications"), {
+          userId: selectedThread.userId,
+          title: "New reply from Swansons",
+          body: reply.trim() || "A photo was attached to your thread.",
+          type: "reply",
+          read: false,
+          createdAt: serverTimestamp(),
+          threadId: selectedThread.id,
+          ctaUrl: `/ask/${selectedThread.id}`,
+          ctaLabel: "View reply →",
+        });
+
+        // 3. Send email
+        if (customerData?.email) {
+          await fetch("/api/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: customerData.email,
+              subject: "You have a new reply from Swansons Nursery",
+              html: `
+            <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px">
+              <h2 style="color:#141f62;margin-bottom:12px">New reply from Swansons</h2>
+              <p style="color:#3d3d3d;font-size:15px;line-height:1.6;margin-bottom:20px">
+                ${reply.trim() || "A staff member has replied to your question with a photo."}
+              </p>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://sage-ocr-mvp-one.vercel.app"}/ask/${selectedThread.id}"
+                 style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-family:sans-serif;font-size:14px;display:inline-block">
+                View reply →
+              </a>
+            </div>
+          `,
+            }),
+          });
+        }
+      } catch (notifyErr) {
+        // Notification errors are non-fatal — reply already sent
+        console.warn("[notify] failed to notify customer:", notifyErr);
+      }
+      // ────────────────────────────────────────────────────────────────────
+
       setReply("");
       setPhotoFile(null);
       setPhotoPreview("");

@@ -724,9 +724,19 @@ type AssignDropdownProps = {
 
 function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-  // Close on outside click
+  const handleToggle = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setOpenUpward(spaceBelow < 150);
+    }
+    setOpen((v) => !v);
+  };
+
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
@@ -741,13 +751,18 @@ function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={buttonRef}
         className="px-3 py-1.5 rounded-full border border-swansons-navy text-xs font-body text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
       >
         {thread.assignedTo ? "Reassign" : "Assign"}
       </button>
       {open && (
-        <div className="absolute z-50 bg-white border rounded-xl shadow-lg bottom-full mb-1 w-48 overflow-hidden">
+        <div
+          className={`absolute z-50 bg-white border rounded-xl shadow-lg w-48 overflow-hidden ${
+            openUpward ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
+        >
           {staffUsers.map((u) => (
             <button
               key={u.uid}
