@@ -161,7 +161,7 @@ export function subscribeToAllThreadsAdmin(
   onUpdate: (threads: Thread[]) => void,
 ) {
   return onSnapshot(
-    query(collection(db, "threads"), orderBy("createdAt", "asc")),
+    query(collection(db, "threads"), orderBy("createdAt", "desc")),
     (snapshot) => {
       const threads = snapshot.docs.map(
         (doc) => ({ id: doc.id, ...doc.data() }) as Thread,
