@@ -46,6 +46,15 @@ export default function ProtectedRoute({
       router.push(`/signin?returnTo=${encodeURIComponent(returnTo)}`);
     }
 
+    // Email verification check — before terms so unverified users aren't sent to /terms first
+    if (!loading && user) {
+      const isEmailUser = user?.providerData?.[0]?.providerId === "password";
+      if (isEmailUser && !user.emailVerified && pathname !== "/verify-email") {
+        router.replace("/verify-email");
+        return;
+      }
+    }
+
     if (
       !loading &&
       user &&
@@ -99,13 +108,6 @@ export default function ProtectedRoute({
   if (loading) return <LoadingScreen />;
 
   if (!user) return <LoadingScreen />;
-
-  // Redirect unverified email/password users to verify-email
-  const isEmailUser = user?.providerData?.[0]?.providerId === "password";
-  if (isEmailUser && !user.emailVerified && pathname !== "/verify-email") {
-    router.replace("/verify-email");
-    return <LoadingScreen />;
-  }
 
   if (requiredRole && role) {
     if (
