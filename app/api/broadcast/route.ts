@@ -84,11 +84,11 @@ export async function POST(req: NextRequest) {
     const safeBody = body.slice(0, 160);
 
     // ── 5. Query target customers ────────────────────────────────────────────
-    // Staff and admins are always excluded — only role: "customer" receives broadcasts
+    // All users receive broadcasts regardless of role
     let usersQuery;
 
     if (sendToAll) {
-      usersQuery = adminDb.collection("users").where("role", "==", "customer");
+      usersQuery = adminDb.collection("users");
     } else {
       // array-contains-any = OR logic across tags (Firestore limit: 30)
       const queryTags = tags.slice(0, 30);
@@ -99,7 +99,6 @@ export async function POST(req: NextRequest) {
       }
       usersQuery = adminDb
         .collection("users")
-        .where("role", "==", "customer")
         .where("plantTags", "array-contains-any", queryTags);
     }
 
@@ -108,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     if (recipientCount === 0) {
       return NextResponse.json(
-        { error: "No customers match the selected tags" },
+        { error: "No users match the selected tags" },
         { status: 400 },
       );
     }
