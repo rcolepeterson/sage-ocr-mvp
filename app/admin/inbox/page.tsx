@@ -1,8 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { Button } from "@/components/ui/Button";
+import { Logo } from "@/components/ui/Logo";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -15,11 +17,120 @@ import {
 } from "@/lib/firebase/threads";
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { getUser } from "@/lib/firebase/users";
+import { getSpaces, getPlantsInSpace } from "@/lib/firebase/spaces";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase/firestore";
-//import { compressImage } from "@/lib/utils/imageCompression";
 
+/* ─── Helpers ───────────────────────────────────────────────────────────── */
+function formatDate(ts: any): string {
+  if (!ts) return "—";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d
+    .toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+    })
+    .replace(/\//g, ".");
+}
+
+function formatTime(ts: any): string {
+  if (!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatTimeAgo(ts: any): string {
+  if (!ts) return "";
+  const diffMs = Date.now() - (ts?.toMillis?.() || 0);
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}hrs ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function getWaitHrs(ts: any): number {
+  return Math.round((Date.now() - (ts?.toMillis?.() || 0)) / 3600000);
+}
+
+function firstNameOnly(name?: string | null): string {
+  if (!name) return "Customer";
+  return name.trim().split(" ")[0];
+}
+
+function getStatusInfo(status: string, urgent?: boolean) {
+  if (status === "waiting-on-customer")
+    return {
+      label: "Waiting on Customer",
+      className: "bg-teal-200 text-teal-800",
+      needsReply: false,
+    };
+  if (status === "closed")
+    return {
+      label: "Closed",
+      className: "bg-gray-200 text-gray-500",
+      needsReply: false,
+    };
+  if (urgent)
+    return {
+      label: "Urgent",
+      className: "bg-red-500 text-white",
+      needsReply: true,
+    };
+  return {
+    label: "Needs Reply",
+    className: "bg-orange-400 text-white",
+    needsReply: true,
+  };
+}
+
+/* ─── Staff Profile ─────────────────────────────────────────────────────── */
+function StaffProfile({ user }: { user: any }) {
+  const firstName = firstNameOnly(user?.displayName);
+  const lastInitial = user?.displayName?.trim().split(" ")[1]?.[0];
+  const shortName = lastInitial ? `${firstName} ${lastInitial}.` : firstName;
+
+  return (
+    <div className="flex flex-col items-center px-6 py-4">
+      <div className="relative mb-2">
+        <div className="w-16 h-16 rounded-full overflow-hidden bg-swansons-green-muted flex items-center justify-center">
+          {user?.photoURL ? (
+            <img
+              src={user.photoURL}
+              alt=""
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <span className="text-swansons-green-dark font-heading font-bold text-xl">
+              {user?.displayName?.[0]?.toUpperCase() || "S"}
+            </span>
+          )}
+        </div>
+        <span className="absolute bottom-0 right-0 w-4 h-4 bg-swansons-green rounded-full border-2 border-swansons-navy" />
+      </div>
+      <p className="font-body text-sm text-white/80">{shortName}</p>
+    </div>
+  );
+}
+
+/* ─── Filter categories ─────────────────────────────────────────────────── */
+const FILTERS = [
+  { key: "all", label: "All Open Threads" },
+  { key: "needs-reply", label: "Needs Reply" },
+  { key: "waiting", label: "Waiting on Customer" },
+  { key: "closed", label: "Closed/Archived" },
+  { key: "urgent", label: "Urgent" },
+];
+
+/* ─── Main page ─────────────────────────────────────────────────────────── */
 function AdminInboxPage() {
   const { user, loading, role } = useAuth();
   const searchParams = useSearchParams();
@@ -33,41 +144,81 @@ function AdminInboxPage() {
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
-  const [staffFilter, setStaffFilter] = useState<string>("all");
+  const [activeFilter, setActiveFilter] = useState("all");
   const bottomRef = useRef<HTMLDivElement>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>("");
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [customerContext, setCustomerContext] = useState<{
+    plantCount: number;
+    spaceCount: number;
+  } | null>(null);
 
+  // Subscribe to all threads
   useEffect(() => {
     const unsub = subscribeToAllThreads(setThreads);
     return () => unsub();
   }, []);
 
+  // Fetch customer display names
   useEffect(() => {
+    if (!threads.length) return;
     const fetchNames = async () => {
-      const uniqueUserIds = [...new Set(threads.map((t) => t.userId))];
+      const uniqueIds = [...new Set(threads.map((t) => t.userId))];
       const names: Record<string, string> = {};
       await Promise.all(
-        uniqueUserIds.map(async (uid) => {
+        uniqueIds.map(async (uid) => {
           if (!userNames[uid]) {
-            const userData = await getUser(uid);
-            names[uid] = userData?.displayName || userData?.email || "Unknown";
+            const data = await getUser(uid);
+            names[uid] = data?.displayName || data?.email || "Customer";
           }
         }),
       );
       setUserNames((prev) => ({ ...prev, ...names }));
     };
-    if (threads.length > 0) fetchNames();
+    fetchNames();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threads]);
 
+  // Subscribe to selected thread
   useEffect(() => {
     if (!selectedThreadId) return;
     const unsub = subscribeToThread(selectedThreadId, setSelectedThread);
     return () => unsub();
   }, [selectedThreadId]);
 
+  // Auto-scroll to bottom when replies update
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedThread?.replies]);
+
+  // Fetch customer plant + space counts when thread opens
+  useEffect(() => {
+    if (!selectedThread) {
+      setCustomerContext(null);
+      return;
+    }
+    const fetchContext = async () => {
+      try {
+        const spaces = await getSpaces(selectedThread.userId);
+        let plantCount = 0;
+        for (const space of spaces) {
+          const plants = await getPlantsInSpace(
+            selectedThread.userId,
+            space.id,
+          );
+          plantCount += plants.length;
+        }
+        setCustomerContext({ plantCount, spaceCount: spaces.length });
+      } catch {
+        setCustomerContext(null);
+      }
+    };
+    fetchContext();
+  }, [selectedThread?.userId]);
+
+  // Lock body scroll while inbox is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
@@ -77,32 +228,29 @@ function AdminInboxPage() {
     };
   }, []);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [selectedThread?.replies]);
-
-  // ─── Filter logic ────────────────────────────────────────────────────────
+  // ── Filter logic — both staff and admin see only THEIR assigned threads ──
   const visibleThreads = (() => {
-    if (role === "staff") {
-      // Staff only see threads assigned to them
-      return threads.filter((t) => t.assignedTo === user?.uid);
+    // Staff and admin both see only threads assigned to them
+    const base = threads.filter((t) => t.assignedTo === user?.uid);
+
+    switch (activeFilter) {
+      case "needs-reply":
+        return base.filter((t) =>
+          ["new", "assigned", "needs-followup"].includes(t.status),
+        );
+      case "waiting":
+        return base.filter((t) => t.status === "waiting-on-customer");
+      case "closed":
+        return base.filter((t) => t.status === "closed");
+      case "urgent":
+        return base.filter((t) => !!t.urgent && t.status !== "closed");
+      default: // "all" — everything except closed
+        return base.filter((t) => t.status !== "closed");
     }
-    // Admin — filter by selected staff member
-    if (staffFilter === "all") return threads;
-    if (staffFilter === "unassigned")
-      return threads.filter((t) => !t.assignedTo);
-    return threads.filter((t) => t.assignedTo === staffFilter);
   })();
 
-  // Unique staff members who have assigned threads (for admin filter dropdown)
-  const assignedStaffIds = [
-    ...new Set(
-      threads.filter((t) => t.assignedTo).map((t) => t.assignedTo as string),
-    ),
-  ];
+  const handleSelectThread = (id: string) => setSelectedThreadId(id);
 
-  const handleSelectThread = (threadId: string) =>
-    setSelectedThreadId(threadId);
   const handleBack = () => {
     setSelectedThreadId(null);
     setSelectedThread(null);
@@ -122,7 +270,7 @@ function AdminInboxPage() {
           user.uid,
           selectedThread.id,
           photoFile,
-          (progress) => setUploadProgress(progress),
+          (p) => setUploadProgress(p),
         );
         setUploading(false);
       }
@@ -134,11 +282,9 @@ function AdminInboxPage() {
         photoURL || undefined,
       );
 
-      // ── Notify customer ──────────────────────────────────────────────────
+      // Notify customer
       try {
         const customerData = await getUser(selectedThread.userId);
-
-        // 1. In-app notification
         await addDoc(collection(db, "notifications"), {
           userId: selectedThread.userId,
           title: "New reply from Swansons",
@@ -150,8 +296,6 @@ function AdminInboxPage() {
           ctaUrl: `/ask/${selectedThread.id}`,
           ctaLabel: "View reply →",
         });
-
-        // 2. Email
         if (customerData?.email) {
           fetch("/api/email", {
             method: "POST",
@@ -159,23 +303,13 @@ function AdminInboxPage() {
             body: JSON.stringify({
               to: customerData.email,
               subject: "You have a new reply from Swansons Nursery",
-              html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px">
-        <h2 style="color:#141f62">New reply from Swansons</h2>
-        <p style="color:#3d3d3d;font-size:15px;line-height:1.6">${reply.trim() || "A staff member replied to your thread."}</p>
-        <a href="https://sage-ocr-mvp-one.vercel.app/ask/${selectedThread.id}" style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;display:inline-block;margin-top:20px">View reply →</a>
-      </div>`,
+              html: `<div style="font-family:sans-serif;padding:32px"><h2 style="color:#141f62">New reply from Swansons</h2><p>${reply.trim() || "A staff member replied."}</p><a href="https://sage-ocr-mvp-one.vercel.app/ask/${selectedThread.id}" style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;display:inline-block;margin-top:20px">View reply →</a></div>`,
             }),
-          }).catch(() => {
-            console.warn(
-              "error sending email notification — likely because domain not verified yet",
-            );
-            // Email failed silently — domain not verified yet
-          });
+          }).catch(() => {});
         }
       } catch (notifyErr) {
-        console.warn("[notify] failed:", notifyErr);
+        console.warn("[notify]", notifyErr);
       }
-      // ────────────────────────────────────────────────────────────────────
 
       setReply("");
       setPhotoFile(null);
@@ -200,23 +334,6 @@ function AdminInboxPage() {
     await updateThreadStatus(selectedThread.id, status);
   };
 
-  function getStatusLabel(status: string) {
-    switch (status) {
-      case "new":
-        return "🆕 New";
-      case "assigned":
-        return "👤 Assigned";
-      case "waiting-on-customer":
-        return "⏳ Waiting on Customer";
-      case "needs-followup":
-        return "🔁 Needs Follow-Up";
-      case "closed":
-        return "✅ Closed";
-      default:
-        return status;
-    }
-  }
-
   if (loading)
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -224,260 +341,416 @@ function AdminInboxPage() {
       </div>
     );
 
-  return (
-    <main className="h-screen bg-swansons-cream flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white flex items-center gap-3">
-        {selectedThread && (
+  /* ── FILTER SIDEBAR ─────────────────────────────────────────────────────── */
+  const filterSidebar = (
+    <div className="flex flex-col h-full">
+      <div className="p-5 pb-2">
+        <Logo width={80} height={40} />
+      </div>
+      <StaffProfile user={user} />
+      <nav className="flex-1 px-3 flex flex-col gap-0.5 mt-2">
+        {FILTERS.map(({ key, label }) => (
           <button
-            onClick={handleBack}
-            className="md:hidden text-swansons-navy font-body font-medium text-sm"
+            key={key}
+            onClick={() => setActiveFilter(key)}
+            className={`text-left font-body text-sm py-2.5 px-3 rounded-lg transition-all w-full ${
+              activeFilter === key
+                ? "bg-white/20 text-white font-semibold"
+                : "text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
           >
-            ← Back
+            {label}
           </button>
-        )}
-        <h1 className="font-heading font-semibold text-swansons-navy text-lg">
-          {selectedThread
-            ? "Thread"
-            : role === "staff"
-              ? "My Threads"
-              : "Staff Inbox"}
-        </h1>
+        ))}
+      </nav>
+    </div>
+  );
 
-        {/* Admin only — filter by staff */}
-        {role === "admin" && !selectedThread && (
-          <div className="ml-auto">
-            <select
-              className="input text-xs font-body py-1.5"
-              value={staffFilter}
-              onChange={(e) => setStaffFilter(e.target.value)}
-            >
-              <option value="all">All Staff</option>
-              <option value="unassigned">Unassigned</option>
-              {assignedStaffIds.map((uid) => (
-                <option key={uid} value={uid}>
-                  {userNames[uid] || uid.slice(0, 8)}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+  /* ── THREAD CONTEXT SIDEBAR ─────────────────────────────────────────────── */
+  const threadContextSidebar = selectedThread ? (
+    <div className="flex flex-col h-full overflow-y-auto" data-lenis-prevent>
+      <div className="p-5 pb-2">
+        <Logo width={80} height={40} />
+      </div>
+      <StaffProfile user={user} />
+
+      {/* Back button */}
+      <div className="px-4 pb-5">
+        <button
+          onClick={handleBack}
+          className="w-full flex items-center justify-center gap-2 border-2 border-white/60 rounded-full py-2.5 font-body text-sm text-white hover:bg-white/10 transition"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 12H5M5 12l7-7M5 12l7 7" />
+          </svg>
+          Back to Threads
+        </button>
       </div>
 
-      {/* Content */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
-        {/* Left Panel — Thread List */}
-        <div
-          className={`w-full md:w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col min-h-0 ${selectedThread ? "hidden md:flex" : "flex"}`}
-        >
-          <div
-            data-lenis-prevent
-            className="flex-1 overflow-y-auto min-h-0 p-4 space-y-2"
-          >
-            {visibleThreads.map((thread) => (
-              <div
-                key={thread.id}
-                className={`rounded-xl p-3 cursor-pointer flex flex-col gap-1 ${
-                  selectedThread?.id === thread.id
-                    ? "bg-swansons-green-muted border-2 border-swansons-green"
-                    : "bg-swansons-cream hover:bg-swansons-green-muted/50"
-                }`}
-                onClick={() => handleSelectThread(thread.id)}
-              >
-                <span className="text-xs text-swansons-muted font-body">
-                  {userNames[thread.userId] || "Loading..."}
-                </span>
-                <span className="font-body font-medium text-sm text-swansons-navy truncate">
-                  {thread.question}
-                </span>
-                {thread.plantName && (
-                  <span className="text-xs text-swansons-green font-body mt-0.5">
-                    🌱 {thread.plantName}
-                  </span>
-                )}
-                <span className="text-xs px-2 py-0.5 rounded-full bg-white text-swansons-muted font-body self-start">
-                  {getStatusLabel(thread.status)}
+      {/* Thread Status */}
+      <div className="px-4 py-4 border-t border-white/10">
+        <p className="text-xs font-body uppercase tracking-widest text-white/40 mb-3">
+          Thread Status
+        </p>
+        {(() => {
+          const si = getStatusInfo(
+            selectedThread.status,
+            selectedThread.urgent,
+          );
+          return (
+            <span
+              className={`px-4 py-1.5 rounded-full text-xs font-body font-semibold ${si.className}`}
+            >
+              {si.label}
+            </span>
+          );
+        })()}
+        <div className="mt-3 space-y-2">
+          <div className="flex justify-between font-body text-sm">
+            <span className="text-white/50">Wait Time:</span>
+            <span className="font-bold text-white">
+              {getWaitHrs(selectedThread.createdAt)}hrs
+            </span>
+          </div>
+          <div className="flex justify-between font-body text-sm">
+            <span className="text-white/50">Replies:</span>
+            <span className="font-bold text-white">
+              {selectedThread.replies?.length || 0}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Customer */}
+      <div className="px-4 py-4 border-t border-white/10">
+        <p className="text-xs font-body uppercase tracking-widest text-white/40 mb-3">
+          Customer
+        </p>
+        <div className="space-y-2">
+          <div className="flex justify-between font-body text-sm">
+            <span className="text-white/50">Name:</span>
+            <span className="font-bold text-white">
+              {firstNameOnly(userNames[selectedThread.userId])}
+            </span>
+          </div>
+          {customerContext && (
+            <>
+              <div className="flex justify-between font-body text-sm">
+                <span className="text-white/50">Plants:</span>
+                <span className="font-bold text-white">
+                  {customerContext.plantCount}
                 </span>
               </div>
-            ))}
-            {visibleThreads.length === 0 && (
-              <p className="font-body text-swansons-muted text-sm text-center mt-8">
-                {role === "staff"
-                  ? "No threads assigned to you yet."
-                  : "No threads found."}
-              </p>
-            )}
+              <div className="flex justify-between font-body text-sm">
+                <span className="text-white/50">Spaces:</span>
+                <span className="font-bold text-white">
+                  {customerContext.spaceCount}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Plant Context */}
+      {selectedThread.plantName && (
+        <div className="px-4 py-4 border-t border-white/10">
+          <p className="text-xs font-body uppercase tracking-widest text-white/40 mb-3">
+            Plant Context
+          </p>
+          <p className="font-body font-bold text-white text-sm">
+            {selectedThread.plantName}
+          </p>
+          <p className="font-body text-white/40 text-xs mt-1">N/A</p>
+        </div>
+      )}
+
+      {/* Close thread */}
+      <div className="px-4 py-4 border-t border-white/10 mt-auto">
+        <button
+          onClick={() => handleStatus("closed")}
+          className="w-full text-xs font-body text-white/40 hover:text-white underline underline-offset-2 transition text-center"
+        >
+          Close Thread
+        </button>
+      </div>
+    </div>
+  ) : null;
+
+  /* ── THREAD LIST VIEW ───────────────────────────────────────────────────── */
+  const threadListView = (
+    <div className="flex-1 overflow-y-auto px-8 py-8" data-lenis-prevent>
+      <h1
+        className="font-heading font-bold text-swansons-navy mb-6"
+        style={{ fontSize: "2rem" }}
+      >
+        My Threads
+      </h1>
+
+      {/* Column headers */}
+      <div className="grid grid-cols-[140px_1fr_180px_180px] gap-4 px-5 mb-2">
+        {[
+          "Date / Time",
+          "Customer / Thread",
+          "Plant/Location",
+          "Wait/Status",
+        ].map((h) => (
+          <span
+            key={h}
+            className="text-xs font-body font-bold uppercase tracking-widest text-swansons-muted"
+          >
+            {h}
+          </span>
+        ))}
+      </div>
+
+      {/* Thread cards */}
+      <div className="flex flex-col gap-3">
+        {visibleThreads.length === 0 && (
+          <div className="text-center py-16">
+            <p className="font-body text-swansons-muted text-sm">
+              {activeFilter === "all"
+                ? "No threads assigned to you yet. Grab some from the dashboard!"
+                : "No threads in this category."}
+            </p>
+          </div>
+        )}
+
+        {visibleThreads.map((t) => {
+          const si = getStatusInfo(t.status, t.urgent);
+          const waitHrs = getWaitHrs(t.createdAt);
+          const customerName = userNames[t.userId] || "Customer";
+
+          return (
+            <div
+              key={t.id}
+              onClick={() => handleSelectThread(t.id)}
+              className={`grid grid-cols-[140px_1fr_180px_180px] gap-4 items-center px-5 py-4 rounded-2xl cursor-pointer transition-opacity hover:opacity-90 ${
+                si.needsReply ? "bg-swansons-navy" : "bg-white shadow-sm"
+              }`}
+            >
+              {/* Date / Time */}
+              <div>
+                <p
+                  className={`font-body text-sm ${si.needsReply ? "text-white/70" : "text-swansons-muted"}`}
+                >
+                  {formatDate(t.createdAt)}
+                </p>
+                <p
+                  className={`font-body text-sm ${si.needsReply ? "text-white/50" : "text-swansons-muted/60"}`}
+                >
+                  {formatTime(t.createdAt)}
+                </p>
+              </div>
+
+              {/* Customer / Thread */}
+              <div className="min-w-0">
+                <p
+                  className={`font-body font-bold text-sm mb-1 ${si.needsReply ? "text-white" : "text-swansons-navy"}`}
+                >
+                  {firstNameOnly(customerName)}
+                </p>
+                <p
+                  className={`font-body text-sm line-clamp-2 ${si.needsReply ? "text-white/70" : "text-swansons-text"}`}
+                >
+                  {t.question}
+                </p>
+              </div>
+
+              {/* Plant / Location */}
+              <div>
+                {t.plantName ? (
+                  <p
+                    className={`font-body font-bold text-sm ${si.needsReply ? "text-white" : "text-swansons-navy"}`}
+                  >
+                    {t.plantName}
+                  </p>
+                ) : (
+                  <p
+                    className={`font-body text-sm ${si.needsReply ? "text-white/40" : "text-swansons-muted"}`}
+                  >
+                    N/A
+                  </p>
+                )}
+              </div>
+
+              {/* Wait / Status */}
+              <div className="flex flex-col items-end gap-1.5">
+                <span
+                  className={`font-heading font-bold leading-none ${si.needsReply ? "text-white" : "text-swansons-navy"}`}
+                  style={{ fontSize: "1.5rem" }}
+                >
+                  {waitHrs}hrs
+                </span>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-body font-semibold ${si.className}`}
+                >
+                  {si.label}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  /* ── THREAD DETAIL VIEW ─────────────────────────────────────────────────── */
+  const threadDetailView = selectedThread ? (
+    <div className="flex flex-col h-full overflow-hidden bg-swansons-cream">
+      {/* Scrollable messages */}
+      <div
+        className="flex-1 overflow-y-auto px-6 py-6 space-y-4"
+        data-lenis-prevent
+      >
+        {/* Initial question bubble */}
+        <div className="flex flex-col w-full items-start">
+          <span className="text-xs text-swansons-muted font-body mb-1 px-1">
+            {userNames[selectedThread.userId] || "Customer"}
+          </span>
+          <div className="max-w-[75%] rounded-2xl px-4 py-3 bg-white shadow-sm border border-gray-100">
+            <p className="font-body text-sm text-swansons-navy leading-relaxed">
+              {selectedThread.question}
+            </p>
           </div>
         </div>
 
-        {/* Right Panel — Thread Detail */}
-        <div
-          className={`flex-1 flex flex-col min-h-0 overflow-hidden ${selectedThread ? "flex" : "hidden md:flex"}`}
-        >
-          {selectedThread ? (
-            <>
-              {/* Thread Header */}
-              <div className="shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
-                <p className="text-xs text-swansons-muted font-body mb-1">
-                  {userNames[selectedThread.userId] || "Loading..."}
-                </p>
-                <p className="font-body font-medium text-swansons-navy">
-                  Q: {selectedThread.question}
-                </p>
-                {selectedThread.plantName && (
-                  <span className="text-xs text-swansons-green font-body mt-0.5 block">
-                    🌱 {selectedThread.plantName}
-                  </span>
-                )}
-                <span className="text-xs px-2 py-0.5 rounded-full bg-swansons-cream text-swansons-muted font-body">
-                  {getStatusLabel(selectedThread.status)}
-                </span>
-              </div>
-
-              {/* Scrollable Replies */}
+        {/* Replies */}
+        {selectedThread.replies?.length > 0 ? (
+          selectedThread.replies.map((r: any) => (
+            <div
+              key={r.id}
+              className={`flex flex-col w-full ${r.isStaff ? "items-end" : "items-start"}`}
+            >
+              <span className="text-xs text-swansons-muted font-body mb-1 px-1">
+                {r.isStaff
+                  ? "Staff"
+                  : userNames[selectedThread.userId] || "Customer"}{" "}
+                • {formatTimeAgo(r.createdAt)}
+              </span>
               <div
-                data-lenis-prevent
-                className="flex-1 overflow-y-auto min-h-0 px-6 py-4 space-y-3"
+                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                  r.isStaff
+                    ? "bg-swansons-navy text-white"
+                    : "bg-white shadow-sm border border-gray-100"
+                }`}
               >
-                {/* Initial question — always show first */}
-                <div className="flex flex-col w-full mb-4 items-start">
-                  <span className="text-xs text-swansons-muted font-body mb-1 px-1">
-                    {userNames[selectedThread.userId] || "Customer"}
-                  </span>
-                  <div className="max-w-[75%] rounded-2xl px-4 py-3 bg-white shadow-sm border border-gray-100">
-                    <span className="font-body text-sm leading-relaxed text-swansons-navy">
-                      {selectedThread.question}
-                    </span>
-                  </div>
-                </div>
-
-                {selectedThread.replies?.length > 0 ? (
-                  selectedThread.replies.map((r: any) => (
-                    <div
-                      key={r.id}
-                      className={`flex flex-col w-full mb-4 ${r.isStaff ? "items-end" : "items-start"}`}
-                    >
-                      <span className="text-xs text-swansons-muted font-body mb-1 px-1">
-                        {r.isStaff
-                          ? "Staff"
-                          : userNames[selectedThread.userId] || "Customer"}
-                      </span>
-                      <div
-                        className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                          r.isStaff
-                            ? "bg-swansons-navy text-white"
-                            : "bg-white shadow-sm border border-gray-100"
-                        }`}
-                      >
-                        <span
-                          className={`font-body text-sm leading-relaxed ${r.isStaff ? "text-white" : "text-swansons-navy"}`}
-                        >
-                          {r.message}
-                        </span>
-                        {r.photoURL && (
-                          <a
-                            href={r.photoURL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 block"
-                          >
-                            <img
-                              src={r.photoURL}
-                              alt="Attached photo"
-                              className="rounded-xl max-h-48 object-cover mt-2"
-                            />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="font-body text-swansons-muted text-sm">
-                    No replies yet.
-                  </p>
-                )}
-                <div ref={bottomRef} />
-              </div>
-
-              {/* Reply Box */}
-              <div className="shrink-0 px-6 py-4 border-t border-gray-200 bg-white">
-                <form onSubmit={handleReply} className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <PhotoPicker
-                      onFile={(file) => {
-                        setPhotoFile(file);
-                        setPhotoPreview(URL.createObjectURL(file));
-                      }}
-                      disabled={submitting || uploading}
-                    >
-                      <button
-                        type="button"
-                        className="text-2xl px-2 py-1 bg-swansons-cream rounded-full hover:bg-swansons-green-muted focus:outline-none"
-                        disabled={submitting || uploading}
-                      >
-                        📎
-                      </button>
-                    </PhotoPicker>
-                    <textarea
-                      className="flex-1 input"
-                      placeholder="Type a reply..."
-                      value={reply}
-                      onChange={(e) => setReply(e.target.value)}
-                      disabled={submitting || uploading}
-                      required={!photoFile}
+                <p
+                  className={`font-body text-sm leading-relaxed ${
+                    r.isStaff ? "text-white" : "text-swansons-navy"
+                  }`}
+                >
+                  {r.message}
+                </p>
+                {r.photoURL && (
+                  <a
+                    href={r.photoURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 block"
+                  >
+                    <img
+                      src={r.photoURL}
+                      alt="Attached"
+                      className="rounded-xl max-h-48 object-cover mt-2"
                     />
-                  </div>
-                  {photoPreview && (
-                    <div className="flex flex-col items-center mt-2">
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        className="rounded-xl object-cover max-h-48 border mb-2"
-                      />
-                      <button
-                        type="button"
-                        className="text-xs font-body text-red-400 underline mb-1"
-                        onClick={() => {
-                          setPhotoFile(null);
-                          setPhotoPreview("");
-                        }}
-                      >
-                        Remove photo
-                      </button>
-                    </div>
-                  )}
-                  {uploading && (
-                    <div className="text-xs font-body text-swansons-green mt-1">
-                      Uploading photo... {uploadProgress.toFixed(0)}%
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      type="submit"
-                      className=""
-                      disabled={
-                        submitting || uploading || (!reply.trim() && !photoFile)
-                      }
-                    >
-                      {submitting || uploading ? "Sending..." : "Send Reply"}
-                    </Button>
-                    <button
-                      type="button"
-                      className="bg-swansons-green-muted text-swansons-green-dark font-body font-medium py-2 px-4 rounded-full hover:opacity-90 transition"
-                      onClick={() => handleStatus("closed")}
-                    >
-                      Close Thread
-                    </button>
-                  </div>
-                </form>
+                  </a>
+                )}
               </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center font-body text-swansons-muted text-sm">
-              Select a thread to view details.
+            </div>
+          ))
+        ) : (
+          <p className="font-body text-swansons-muted text-sm text-center mt-8">
+            No replies yet.
+          </p>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Reply box */}
+      <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
+        <form onSubmit={handleReply} className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <PhotoPicker
+              onFile={(file) => {
+                setPhotoFile(file);
+                setPhotoPreview(URL.createObjectURL(file));
+              }}
+              disabled={submitting || uploading}
+            >
+              <button
+                type="button"
+                className="text-2xl px-2 py-1 bg-swansons-cream rounded-full hover:bg-swansons-green-muted focus:outline-none"
+                disabled={submitting || uploading}
+              >
+                📎
+              </button>
+            </PhotoPicker>
+            <textarea
+              className="flex-1 input"
+              placeholder="Type a reply..."
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              disabled={submitting || uploading}
+              required={!photoFile}
+            />
+          </div>
+          {photoPreview && (
+            <div className="flex flex-col items-center mt-2">
+              <img
+                src={photoPreview}
+                alt="Preview"
+                className="rounded-xl object-cover max-h-48 border mb-2"
+              />
+              <button
+                type="button"
+                className="text-xs font-body text-red-400 underline"
+                onClick={() => {
+                  setPhotoFile(null);
+                  setPhotoPreview("");
+                }}
+              >
+                Remove photo
+              </button>
             </div>
           )}
-        </div>
+          {uploading && (
+            <p className="text-xs font-body text-swansons-green">
+              Uploading... {uploadProgress.toFixed(0)}%
+            </p>
+          )}
+          <Button
+            type="submit"
+            className="w-full rounded-full"
+            disabled={submitting || uploading || (!reply.trim() && !photoFile)}
+          >
+            {submitting || uploading ? "Sending..." : "Send Reply"}
+          </Button>
+        </form>
+      </div>
+    </div>
+  ) : null;
+
+  /* ── RENDER ─────────────────────────────────────────────────────────────── */
+  return (
+    <main className="h-screen flex overflow-hidden">
+      {/* Left sidebar — changes between filter nav and thread context */}
+      <aside className="w-60 bg-swansons-navy shrink-0 flex flex-col overflow-hidden">
+        {selectedThread ? threadContextSidebar : filterSidebar}
+      </aside>
+
+      {/* Main content area */}
+      <div className="flex-1 bg-swansons-cream flex flex-col overflow-hidden">
+        {selectedThread ? threadDetailView : threadListView}
       </div>
     </main>
   );
