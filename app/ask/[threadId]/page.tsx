@@ -35,7 +35,7 @@ export default function ThreadDetailPage() {
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null); // kept for bottomRef pattern
+  //const fileInputRef = useRef<HTMLInputElement>(null); // kept for bottomRef pattern
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -103,6 +103,16 @@ export default function ThreadDetailPage() {
         <div className="flex flex-col h-full max-w-lg mx-auto w-full">
           {/* ── Scrollable messages ── */}
           <div className="flex-1 overflow-y-auto px-4 pt-14 pb-6 space-y-6">
+            {/* Initial question — always show first */}
+            <div className="border-l-4 border-orange-400 pl-4">
+              <p className="font-body text-white text-base leading-relaxed">
+                {thread.question}
+              </p>
+              <p className="font-body text-xs text-white/50 mt-2">
+                You • {formatTimeAgo(thread.createdAt)}
+              </p>
+            </div>
+
             {thread.replies?.length > 0 ? (
               thread.replies.map((r: any) => {
                 const isStaff = r.isStaff;
