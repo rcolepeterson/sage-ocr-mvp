@@ -19,6 +19,7 @@ const NAV_ITEMS = {
     { label: "Spaces", href: "/spaces" },
     { label: "Add a Plant", href: "/scan" },
     { label: "Ask an Expert", href: "/ask" },
+    { label: "Inbox", href: "/ask" }, // ← add this
   ],
   staff: [
     { label: "Home", href: "/dashboard" },
