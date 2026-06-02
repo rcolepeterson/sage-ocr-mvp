@@ -153,7 +153,7 @@ function AdminInboxPage() {
 
         // 2. Email
         if (customerData?.email) {
-          await fetch("/api/email", {
+          fetch("/api/email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -165,6 +165,11 @@ function AdminInboxPage() {
         <a href="https://sage-ocr-mvp-one.vercel.app/ask/${selectedThread.id}" style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;display:inline-block;margin-top:20px">View reply →</a>
       </div>`,
             }),
+          }).catch(() => {
+            console.warn(
+              "error sending email notification — likely because domain not verified yet",
+            );
+            // Email failed silently — domain not verified yet
           });
         }
       } catch (notifyErr) {
