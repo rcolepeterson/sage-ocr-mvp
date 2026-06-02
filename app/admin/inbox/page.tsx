@@ -56,7 +56,8 @@ function formatTimeAgo(ts: any): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function getWaitHrs(ts: any): number {
+function getWaitHrs(thread: Thread): number {
+  const ts = thread.lastActivityAt || thread.createdAt;
   return Math.round((Date.now() - (ts?.toMillis?.() || 0)) / 3600000);
 }
 
@@ -132,7 +133,7 @@ const FILTERS = [
 
 /* ─── Main page ─────────────────────────────────────────────────────────── */
 function AdminInboxPage() {
-  const { user, loading, role } = useAuth();
+  const { user, loading } = useAuth();
   const searchParams = useSearchParams();
   const threadIdParam = searchParams.get("threadId");
 
@@ -418,7 +419,7 @@ function AdminInboxPage() {
           <div className="flex justify-between font-body text-sm">
             <span className="text-white/50">Wait Time:</span>
             <span className="font-bold text-white">
-              {getWaitHrs(selectedThread.createdAt)}hrs
+              {getWaitHrs(selectedThread)}hrs
             </span>
           </div>
           <div className="flex justify-between font-body text-sm">
@@ -527,7 +528,7 @@ function AdminInboxPage() {
 
         {visibleThreads.map((t) => {
           const si = getStatusInfo(t.status, t.urgent);
-          const waitHrs = getWaitHrs(t.createdAt);
+          const waitHrs = getWaitHrs(t);
           const customerName = userNames[t.userId] || "Customer";
 
           return (

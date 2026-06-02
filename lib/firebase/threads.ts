@@ -97,6 +97,7 @@ export interface Thread {
   question: string;
   status: ThreadStatus;
   createdAt: any;
+  lastActivityAt?: any;
   assignedTo?: string | null;
   urgent?: boolean;
 }
@@ -216,11 +217,10 @@ export async function addReply(
     },
   );
   if (!skipStatusUpdate) {
-    if (isStaff) {
-      await updateThreadStatus(threadId, "waiting-on-customer");
-    } else {
-      await updateThreadStatus(threadId, "needs-followup");
-    }
+    await updateDoc(doc(db, "threads", threadId), {
+      status: isStaff ? "waiting-on-customer" : "needs-followup",
+      lastActivityAt: serverTimestamp(),
+    });
   }
   // TODO: re-enable when notifications are ready to ship
   // if (isStaff) {
