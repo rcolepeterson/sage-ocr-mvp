@@ -33,6 +33,8 @@ export default function ProtectedRoute({
     "/signin",
     "/unauthorized",
     "/terms",
+    "/terms/full",
+    "/privacy",
     "/onboarding",
     "/verify-email",
   ];

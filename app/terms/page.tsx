@@ -104,14 +104,14 @@ function TermsContent() {
         <p className="font-body text-swansons-black text-sm text-center leading-relaxed">
           By continuing, you agree to our{" "}
           <a
-            href="#"
+            href="/terms/full"
             className="text-swansons-navy underline underline-offset-2 font-semibold"
           >
-            Terms & Conditions
+            Terms &amp; Conditions
           </a>{" "}
           and{" "}
           <a
-            href="#"
+            href="/privacy"
             className="text-swansons-navy underline underline-offset-2 font-semibold"
           >
             Privacy Policy
