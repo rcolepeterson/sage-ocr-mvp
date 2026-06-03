@@ -71,7 +71,7 @@ function TermsContent() {
           <h1 className="text-swansons-navy mb-3">
             A quick hello before we start
           </h1>
-          <p className="font-body text-swansons-muted leading-relaxed">
+          <p className="font-body text-swansons-black leading-relaxed">
             Welcome to Sage. So we can keep track of your plants and send the
             right reminders, here's the short version of how it works.
           </p>
@@ -101,7 +101,7 @@ function TermsContent() {
         </div>
 
         {/* Legal text with tappable links */}
-        <p className="font-body text-swansons-muted text-sm text-center leading-relaxed">
+        <p className="font-body text-swansons-black text-sm text-center leading-relaxed">
           By continuing, you agree to our{" "}
           <a
             href="#"
