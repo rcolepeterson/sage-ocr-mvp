@@ -11,7 +11,6 @@ import { useParams } from "next/navigation";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
 import { getUser } from "@/lib/firebase/users";
 
-/* ─── Helpers ────────────────────────────────────────────────────────────── */
 function formatTimeAgo(timestamp: any): string {
   if (!timestamp) return "";
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -25,7 +24,6 @@ function formatTimeAgo(timestamp: any): string {
   return `${days} day${days > 1 ? "s" : ""} ago`;
 }
 
-/* ─── Page ───────────────────────────────────────────────────────────────── */
 export default function ThreadDetailPage() {
   const { user, loading } = useAuth();
   const { threadId } = useParams() as { threadId: string };
@@ -57,7 +55,7 @@ export default function ThreadDetailPage() {
 
   useEffect(() => {
     if (!thread?.replies?.length) return;
-    const fetchStaffNames = async () => {
+    const fetchStaffData = async () => {
       const uniqueIds: string[] = Array.from(
         new Set(
           thread.replies
@@ -71,14 +69,13 @@ export default function ThreadDetailPage() {
       await Promise.all(
         uniqueIds.map(async (uid) => {
           try {
-            const data = await getUser(uid as string);
-            if (data?.displayName) names[uid as string] = data.displayName;
-            if ((data as any)?.photoURL)
-              photos[uid as string] = (data as any).photoURL;
+            const data = await getUser(uid);
+            if (data?.displayName) names[uid] = data.displayName;
+            if ((data as any)?.photoURL) photos[uid] = (data as any).photoURL;
             if ((data as any)?.specialty)
-              specialties[uid as string] = (data as any).specialty;
+              specialties[uid] = (data as any).specialty;
           } catch {
-            // Customer doesn't have permission to read other users — fallback handled in UI
+            /* fallback */
           }
         }),
       );
@@ -86,7 +83,7 @@ export default function ThreadDetailPage() {
       setStaffPhotos((prev) => ({ ...prev, ...photos }));
       setStaffSpecialties((prev) => ({ ...prev, ...specialties }));
     };
-    fetchStaffNames();
+    fetchStaffData();
   }, [thread?.replies]);
 
   const handleReply = async (e: React.FormEvent) => {
@@ -122,11 +119,6 @@ export default function ThreadDetailPage() {
     setUploading(false);
   };
 
-  function handlePhotoChange(file: File) {
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  }
-
   if (loading || !thread) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -144,98 +136,104 @@ export default function ThreadDetailPage() {
         <div className="flex flex-col h-full max-w-lg mx-auto w-full">
           {/* ── Scrollable messages ── */}
           <div className="flex-1 overflow-y-auto px-4 pt-14 pb-6 space-y-6">
-            {/* Initial question — always show first */}
-            <div className="border-l-4 border-orange-400 pl-4">
-              <p className="font-body text-white text-base leading-relaxed">
-                {thread.question}
-              </p>
-              <p className="font-body text-xs text-white/50 mt-2">
-                You • {formatTimeAgo(thread.createdAt)}
-              </p>
+            {/* Initial question */}
+            <div>
+              <div className="border-l-4 border-orange-400 pl-4">
+                <p className="font-body text-white text-base leading-relaxed">
+                  {thread.question}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 mt-3 pl-5">
+                <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-orange-400/20">
+                  {user?.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="font-heading font-bold text-orange-300 text-xs">
+                      {user?.displayName?.[0]?.toUpperCase() || "Y"}
+                    </span>
+                  )}
+                </div>
+                <p className="font-body text-xs text-white/50">
+                  You · {formatTimeAgo(thread.createdAt)}
+                </p>
+              </div>
             </div>
 
+            {/* Replies */}
             {thread.replies?.length > 0 ? (
               thread.replies.map((r: any) => {
                 const isStaff = r.isStaff;
                 const fullName = staffNames[r.authorId];
-                const firstNameOnly = fullName ? fullName.split(" ")[0] : null;
+                const firstName = fullName ? fullName.split(" ")[0] : null;
                 const specialty =
                   staffSpecialties[r.authorId] || "Swansons Expert";
                 const staffPhoto = staffPhotos[r.authorId];
-                const customerPhoto = user?.photoURL;
 
                 return (
-                  <div
-                    key={r.id}
-                    className={
-                      isStaff
-                        ? "border-l-4 border-swansons-green pl-4"
-                        : "border-l-4 border-orange-400 pl-4"
-                    }
-                  >
-                    <p className="font-body text-white text-base leading-relaxed">
-                      {r.message}
-                    </p>
-                    {r.photoURL && (
-                      <a
-                        href={r.photoURL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <img
-                          src={r.photoURL}
-                          alt="Attached"
-                          className="rounded-xl mt-3 max-h-48 object-cover"
-                        />
-                      </a>
-                    )}
-
-                    {/* Avatar + name row at bottom */}
+                  <div key={r.id}>
+                    {/* Border ONLY on the text */}
                     <div
-                      className={`flex items-center gap-2 mt-2 ${isStaff ? "justify-start" : "justify-end"}`}
+                      className={`border-l-4 pl-4 ${isStaff ? "border-swansons-green" : "border-orange-400"}`}
                     >
-                      {isStaff ? (
-                        <>
-                          <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0">
-                            {staffPhoto ? (
-                              <img
-                                src={staffPhoto}
-                                alt={fullName || "Swansons Expert"}
-                                referrerPolicy="no-referrer"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="font-heading font-bold bg-swansons-green-muted text-swansons-green-dark w-7 h-7 inline-flex items-center justify-center rounded-full">
-                                {firstNameOnly?.[0] || "S"}
-                              </span>
-                            )}
-                          </div>
-                          <p className="font-body text-xs text-white/50">
-                            {firstNameOnly} · {specialty} ·{" "}
-                            {formatTimeAgo(r.createdAt)}
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="font-body text-xs text-white/50">
-                            You · {formatTimeAgo(r.createdAt)}
-                          </p>
-                          <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0">
-                            {customerPhoto ? (
-                              <img
-                                src={customerPhoto}
-                                alt={user?.displayName || "You"}
-                                referrerPolicy="no-referrer"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="font-heading font-bold bg-orange-400/20 text-orange-300 w-7 h-7 inline-flex items-center justify-center rounded-full">
-                                {user?.displayName?.[0] || "Y"}
-                              </span>
-                            )}
-                          </div>
-                        </>
+                      <p className="font-body text-white text-base leading-relaxed">
+                        {r.message}
+                      </p>
+                      {r.photoURL && (
+                        <a
+                          href={r.photoURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            src={r.photoURL}
+                            alt="Attached"
+                            className="rounded-xl mt-3 max-h-48 object-cover"
+                          />
+                        </a>
                       )}
+                    </div>
+
+                    {/* Avatar + name — SIBLING div, below the border */}
+                    <div className="flex items-center gap-2 mt-3 pl-5">
+                      <div
+                        className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0 ${isStaff ? "bg-swansons-green-muted" : "bg-orange-400/20"}`}
+                      >
+                        {isStaff ? (
+                          staffPhoto ? (
+                            <img
+                              src={staffPhoto}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <span className="font-heading font-bold text-swansons-green-dark text-xs">
+                              {firstName?.[0]?.toUpperCase() || "S"}
+                            </span>
+                          )
+                        ) : user?.photoURL ? (
+                          <img
+                            src={user.photoURL}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <span className="font-heading font-bold text-orange-300 text-xs">
+                            {user?.displayName?.[0]?.toUpperCase() || "Y"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-body text-xs text-white/50">
+                        {isStaff
+                          ? `${firstName || "Swansons Expert"} · ${specialty} · ${formatTimeAgo(r.createdAt)}`
+                          : `You · ${formatTimeAgo(r.createdAt)}`}
+                      </p>
                     </div>
                   </div>
                 );
@@ -267,7 +265,10 @@ export default function ThreadDetailPage() {
                 />
                 <div className="flex items-center justify-between mt-2">
                   <PhotoPicker
-                    onFile={handlePhotoChange}
+                    onFile={(file) => {
+                      setPhotoFile(file);
+                      setPhotoPreview(URL.createObjectURL(file));
+                    }}
                     disabled={submitting || uploading}
                   >
                     <button
@@ -278,7 +279,6 @@ export default function ThreadDetailPage() {
                       <span className="text-4xl leading-none">+</span>
                     </button>
                   </PhotoPicker>
-
                   <button
                     type="submit"
                     disabled={
@@ -318,7 +318,6 @@ export default function ThreadDetailPage() {
                   </button>
                 </div>
               )}
-
               {uploading && (
                 <p className="text-xs font-body text-swansons-green mt-2">
                   Uploading... {uploadProgress.toFixed(0)}%
