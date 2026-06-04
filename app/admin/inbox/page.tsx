@@ -19,7 +19,13 @@ import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { getUser } from "@/lib/firebase/users";
 import { getSpaces, getPlantsInSpace } from "@/lib/firebase/spaces";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase/firestore";
 
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
@@ -155,6 +161,11 @@ function AdminInboxPage() {
     plantCount: number;
     spaceCount: number;
   } | null>(null);
+  const [plantContext, setPlantContext] = useState<{
+    lightLevel?: string;
+    indoor?: boolean;
+    container?: boolean;
+  } | null>(null);
 
   // Subscribe to all threads
   useEffect(() => {
@@ -219,6 +230,65 @@ function AdminInboxPage() {
     fetchContext();
   }, [selectedThread?.userId]);
 
+  // Fetch plant context details when thread opens
+  useEffect(() => {
+    if (!selectedThread?.plantId || !selectedThread?.userId) {
+      setPlantContext(null);
+      return;
+    }
+    const fetchPlantContext = async () => {
+      try {
+        const parts = selectedThread.plantId.split("_");
+
+        // Format A: spaceId_plantId (from plant profile button)
+        if (parts.length >= 2) {
+          const spaceId = parts[0];
+          const plantId = parts.slice(1).join("_");
+          const snap = await getDoc(
+            doc(
+              db,
+              `users/${selectedThread.userId}/spaces/${spaceId}/plants/${plantId}`,
+            ),
+          );
+          if (snap.exists()) {
+            const d = snap.data();
+            setPlantContext({
+              lightLevel: d.lightLevel,
+              indoor: d.indoor,
+              container: d.container,
+            });
+            return;
+          }
+        }
+
+        // Format B: plain plantId (from /ask dropdown) — search all spaces
+        const spaces = await getSpaces(selectedThread.userId);
+        for (const space of spaces) {
+          const snap = await getDoc(
+            doc(
+              db,
+              `users/${selectedThread.userId}/spaces/${space.id}/plants/${selectedThread.plantId}`,
+            ),
+          );
+          if (snap.exists()) {
+            const d = snap.data();
+            setPlantContext({
+              lightLevel: d.lightLevel,
+              indoor: d.indoor,
+              container: d.container,
+            });
+            return;
+          }
+        }
+
+        setPlantContext(null);
+      } catch {
+        setPlantContext(null);
+      }
+    };
+    fetchPlantContext();
+  }, [selectedThread?.plantId, selectedThread?.userId]);
+
   // Lock body scroll while inbox is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -231,9 +301,7 @@ function AdminInboxPage() {
 
   // ── Filter logic — both staff and admin see only THEIR assigned threads ──
   const visibleThreads = (() => {
-    // Staff and admin both see only threads assigned to them
     const base = threads.filter((t) => t.assignedTo === user?.uid);
-
     switch (activeFilter) {
       case "needs-reply":
         return base.filter((t) =>
@@ -245,7 +313,7 @@ function AdminInboxPage() {
         return base.filter((t) => t.status === "closed");
       case "urgent":
         return base.filter((t) => !!t.urgent && t.status !== "closed");
-      default: // "all" — everything except closed
+      default:
         return base.filter((t) => t.status !== "closed");
     }
   })();
@@ -471,7 +539,31 @@ function AdminInboxPage() {
           <p className="font-body font-bold text-white text-sm">
             {selectedThread.plantName}
           </p>
-          <p className="font-body text-white/40 text-xs mt-1">N/A</p>
+          {plantContext ? (
+            <div className="mt-2 space-y-1">
+              {plantContext.lightLevel && (
+                <p className="font-body text-white/70 text-xs">
+                  {plantContext.lightLevel === "high"
+                    ? "Full Sun"
+                    : plantContext.lightLevel === "medium"
+                      ? "Part Shade"
+                      : "Full Shade"}
+                </p>
+              )}
+              {plantContext.indoor !== undefined && (
+                <p className="font-body text-white/70 text-xs">
+                  {plantContext.indoor ? "Indoor" : "Outdoor"}
+                </p>
+              )}
+              {plantContext.container !== undefined && (
+                <p className="font-body text-white/70 text-xs">
+                  {plantContext.container ? "Container" : "In-ground"}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="font-body text-white/40 text-xs mt-1">N/A</p>
+          )}
         </div>
       )}
 
@@ -744,12 +836,9 @@ function AdminInboxPage() {
   /* ── RENDER ─────────────────────────────────────────────────────────────── */
   return (
     <main className="h-screen flex overflow-hidden">
-      {/* Left sidebar — changes between filter nav and thread context */}
       <aside className="w-60 bg-swansons-navy shrink-0 flex flex-col overflow-hidden">
         {selectedThread ? threadContextSidebar : filterSidebar}
       </aside>
-
-      {/* Main content area */}
       <div className="flex-1 bg-swansons-cream flex flex-col overflow-hidden">
         {selectedThread ? threadDetailView : threadListView}
       </div>
