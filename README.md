@@ -72,3 +72,20 @@ Next.js, TypeScript, Tailwind, Firebase, Vercel
 
 Dashboard
 https://imagine.wpp.ai/chat/6jQJv4kOvypySOa1V4LYj/foundational?resultId=4xrTZ3wV9OnRGqTYPSr2M
+
+## Finding a Firestore Document by ID
+
+### Get the document ID
+
+The document ID appears in the app URL when viewing a thread:
+/admin/inbox?threadId=UYDHQASiXC1BtpK2tQcc ^^^^^^^^^^^^^^^^^^^^ this is the document ID
+
+### Jump directly to it in Firebase Console
+
+Paste this URL pattern into your browser — replace the ID at the end:
+https://console.firebase.google.com/project/sage-swansons-e4677/firestore/databases/-default-/data/threads/YOUR_DOCUMENT_ID
+
+Example:
+https://console.firebase.google.com/project/sage-swansons-e4677/firestore/databases/-default-/data/threads/UYDHQASiXC1BtpK2tQcc
+
+Works for any collection — just swap `threads` for `users`, `notifications` etc.

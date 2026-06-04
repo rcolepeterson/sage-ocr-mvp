@@ -795,7 +795,7 @@ function AdminInboxPage() {
             </PhotoPicker>
             <textarea
               className="flex-1 input"
-              placeholder="Type a reply..."
+              placeholder="Type your response to the customer here..."
               value={reply}
               onChange={(e) => setReply(e.target.value)}
               disabled={submitting || uploading}
