@@ -776,8 +776,9 @@ function AdminInboxPage() {
 
       {/* Reply box */}
       <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
-        <form onSubmit={handleReply} className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+        <form onSubmit={handleReply}>
+          <div className="border border-gray-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+            {/* + attach button */}
             <PhotoPicker
               onFile={(file) => {
                 setPhotoFile(file);
@@ -787,23 +788,76 @@ function AdminInboxPage() {
             >
               <button
                 type="button"
-                className="text-2xl px-2 py-1 bg-swansons-cream rounded-full hover:bg-swansons-green-muted focus:outline-none"
                 disabled={submitting || uploading}
+                className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition shrink-0"
               >
-                📎
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
               </button>
             </PhotoPicker>
+
+            {/* Textarea */}
             <textarea
-              className="flex-1 input"
-              placeholder="Type your response to the customer here..."
+              className="flex-1 font-body text-swansons-text placeholder:text-swansons-muted text-sm resize-none focus:outline-none bg-transparent min-h-[40px] max-h-32"
+              placeholder="Type your response to customer here"
               value={reply}
               onChange={(e) => setReply(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleReply(e as any);
+                }
+              }}
               disabled={submitting || uploading}
-              required={!photoFile}
             />
+
+            {/* Close Thread button */}
+            <button
+              type="button"
+              onClick={() => handleStatus("closed")}
+              className="shrink-0 font-body text-sm text-swansons-navy border-2 border-swansons-navy rounded-full px-4 py-2 hover:bg-swansons-navy hover:text-white transition whitespace-nowrap"
+            >
+              Close Thread
+            </button>
+
+            {/* Send button — circle with up arrow */}
+            <button
+              type="submit"
+              disabled={
+                submitting || uploading || (!reply.trim() && !photoFile)
+              }
+              className="w-10 h-10 rounded-full bg-swansons-navy flex items-center justify-center text-white disabled:opacity-40 hover:opacity-90 transition shrink-0"
+            >
+              {submitting || uploading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 19V5M5 12l7-7 7 7"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </button>
           </div>
+
+          {/* Photo preview */}
           {photoPreview && (
-            <div className="flex flex-col items-center mt-2">
+            <div className="mt-3 flex flex-col items-center">
               <img
                 src={photoPreview}
                 alt="Preview"
@@ -821,18 +875,12 @@ function AdminInboxPage() {
               </button>
             </div>
           )}
+
           {uploading && (
-            <p className="text-xs font-body text-swansons-green">
+            <p className="text-xs font-body text-swansons-green mt-2">
               Uploading... {uploadProgress.toFixed(0)}%
             </p>
           )}
-          <Button
-            type="submit"
-            className="w-full rounded-full"
-            disabled={submitting || uploading || (!reply.trim() && !photoFile)}
-          >
-            {submitting || uploading ? "Sending..." : "Send Reply"}
-          </Button>
         </form>
       </div>
     </div>
