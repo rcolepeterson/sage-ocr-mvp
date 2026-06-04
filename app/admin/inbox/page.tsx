@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import { useEffect, useState, useRef, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   subscribeToAllThreads,
   subscribeToThread,
@@ -142,6 +142,7 @@ function AdminInboxPage() {
   const { user, loading } = useAuth();
   const searchParams = useSearchParams();
   const threadIdParam = searchParams.get("threadId");
+  const router = useRouter();
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedThread, setSelectedThread] = useState<any>(null);
@@ -318,11 +319,15 @@ function AdminInboxPage() {
     }
   })();
 
-  const handleSelectThread = (id: string) => setSelectedThreadId(id);
+  const handleSelectThread = (id: string) => {
+    setSelectedThreadId(id);
+    router.replace(`/admin/inbox?threadId=${id}`);
+  };
 
   const handleBack = () => {
     setSelectedThreadId(null);
     setSelectedThread(null);
+    router.replace("/admin/inbox");
   };
 
   const handleReply = async (e: React.FormEvent) => {
