@@ -162,7 +162,9 @@ function AdminInboxPage() {
     plantCount: number;
     spaceCount: number;
   } | null>(null);
-  const [staffProfiles, setStaffProfiles] = useState<Record<string, { displayName: string; photoURL?: string }>>({});
+  const [staffProfiles, setStaffProfiles] = useState<
+    Record<string, { displayName: string; photoURL?: string }>
+  >({});
   const [plantContext, setPlantContext] = useState<{
     lightLevel?: string;
     indoor?: boolean;
@@ -302,7 +304,10 @@ function AdminInboxPage() {
             .map((r: any) => String(r.authorId)),
         ),
       );
-      const profiles: Record<string, { displayName: string; photoURL?: string }> = {};
+      const profiles: Record<
+        string,
+        { displayName: string; photoURL?: string }
+      > = {};
       await Promise.all(
         uniqueIds.map(async (uid) => {
           try {
@@ -766,47 +771,72 @@ function AdminInboxPage() {
                 key={r.id}
                 className={`flex flex-col w-full mb-4 ${isStaff ? "items-end" : "items-start"}`}
               >
-                <div className={`flex items-end gap-3 ${isStaff ? "flex-row-reverse" : "flex-row"}`}>
+                <div
+                  className={`flex items-end gap-3 ${isStaff ? "flex-row-reverse" : "flex-row"}`}
+                >
                   {/* Avatar */}
                   <div className="shrink-0 w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden flex items-center justify-center">
                     {isStaff ? (
                       staffProfile?.photoURL ? (
-                        <img src={staffProfile.photoURL} alt={staffProfile.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img
+                          src={staffProfile.photoURL}
+                          alt={staffProfile.displayName}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
                       ) : (
                         <span className="font-heading font-bold text-swansons-green-dark">
-                          {firstNameOnly(staffProfile?.displayName || "Swansons")[0] || "S"}
+                          {firstNameOnly(
+                            staffProfile?.displayName || "Swansons",
+                          )[0] || "S"}
                         </span>
                       )
+                    ) : userNames[selectedThread.userId] ? (
+                      <span className="font-heading font-bold text-swansons-navy">
+                        {firstNameOnly(userNames[selectedThread.userId])[0] ||
+                          "C"}
+                      </span>
                     ) : (
-                      userNames[selectedThread.userId] ? (
-                        <span className="font-heading font-bold text-swansons-navy">
-                          {firstNameOnly(userNames[selectedThread.userId])[0] || "C"}
-                        </span>
-                      ) : (
-                        <span className="font-heading font-bold text-swansons-navy">C</span>
-                      )
+                      <span className="font-heading font-bold text-swansons-navy">
+                        C
+                      </span>
                     )}
                   </div>
 
                   {/* Message bubble */}
                   <div
                     className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                      isStaff ? "bg-swansons-navy text-white" : "bg-white shadow-sm border border-gray-100"
+                      isStaff
+                        ? "bg-swansons-navy text-white"
+                        : "bg-white shadow-sm border border-gray-100"
                     }`}
                   >
-                    <p className={`font-body text-sm leading-relaxed ${isStaff ? "text-white" : "text-swansons-navy"}`}>
+                    <p
+                      className={`font-body text-sm leading-relaxed ${isStaff ? "text-white" : "text-swansons-navy"}`}
+                    >
                       {r.message}
                     </p>
                     {r.photoURL && (
-                      <a href={r.photoURL} target="_blank" rel="noopener noreferrer" className="mt-2 block">
-                        <img src={r.photoURL} alt="Attached" className="rounded-xl max-h-48 object-cover mt-2" />
+                      <a
+                        href={r.photoURL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 block"
+                      >
+                        <img
+                          src={r.photoURL}
+                          alt="Attached"
+                          className="rounded-xl max-h-48 object-cover mt-2"
+                        />
                       </a>
                     )}
                   </div>
                 </div>
 
                 {/* Name label */}
-                <p className={`font-body text-xs text-swansons-muted mt-2 ${isStaff ? "text-right" : "text-left"}`}>
+                <p
+                  className={`font-body text-xs text-swansons-muted mt-2 ${isStaff ? "text-right" : "text-left"}`}
+                >
                   {isStaff
                     ? `${firstNameOnly(staffProfile?.displayName)} · Swansons Expert · ${formatTimeAgo(r.createdAt)}`
                     : `${firstNameOnly(customerName)} · Customer · ${formatTimeAgo(r.createdAt)}`}
@@ -815,7 +845,9 @@ function AdminInboxPage() {
             );
           })
         ) : (
-          <p className="font-body text-swansons-muted text-sm text-center mt-8">No replies yet.</p>
+          <p className="font-body text-swansons-muted text-sm text-center mt-8">
+            No replies yet.
+          </p>
         )}
         <div ref={bottomRef} />
       </div>
