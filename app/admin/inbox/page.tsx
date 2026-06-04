@@ -162,6 +162,7 @@ function AdminInboxPage() {
     plantCount: number;
     spaceCount: number;
   } | null>(null);
+  const [staffProfiles, setStaffProfiles] = useState<Record<string, { displayName: string; photoURL?: string }>>({});
   const [plantContext, setPlantContext] = useState<{
     lightLevel?: string;
     indoor?: boolean;
@@ -289,6 +290,37 @@ function AdminInboxPage() {
     };
     fetchPlantContext();
   }, [selectedThread?.plantId, selectedThread?.userId]);
+
+  // Fetch staff profiles for avatar display when replies change
+  useEffect(() => {
+    if (!selectedThread?.replies?.length) return;
+    const fetchProfiles = async () => {
+      const uniqueIds: string[] = Array.from(
+        new Set(
+          selectedThread.replies
+            .filter((r: any) => r.isStaff)
+            .map((r: any) => String(r.authorId)),
+        ),
+      );
+      const profiles: Record<string, { displayName: string; photoURL?: string }> = {};
+      await Promise.all(
+        uniqueIds.map(async (uid) => {
+          try {
+            const data = await getUser(uid);
+            if (data)
+              profiles[uid] = {
+                displayName: data.displayName || "Swansons Expert",
+                photoURL: (data as any).photoURL,
+              };
+          } catch {
+            /* ignore */
+          }
+        }),
+      );
+      setStaffProfiles((prev) => ({ ...prev, ...profiles }));
+    };
+    fetchProfiles();
+  }, [selectedThread?.replies]);
 
   // Lock body scroll while inbox is open
   useEffect(() => {
@@ -724,52 +756,66 @@ function AdminInboxPage() {
 
         {/* Replies */}
         {selectedThread.replies?.length > 0 ? (
-          selectedThread.replies.map((r: any) => (
-            <div
-              key={r.id}
-              className={`flex flex-col w-full ${r.isStaff ? "items-end" : "items-start"}`}
-            >
-              <span className="text-xs text-swansons-muted font-body mb-1 px-1">
-                {r.isStaff
-                  ? "Staff"
-                  : userNames[selectedThread.userId] || "Customer"}{" "}
-                • {formatTimeAgo(r.createdAt)}
-              </span>
+          selectedThread.replies.map((r: any) => {
+            const isStaff = r.isStaff;
+            const authorId = r.authorId as string;
+            const staffProfile = isStaff ? staffProfiles[authorId] : null;
+            const customerName = userNames[selectedThread.userId] || "Customer";
+            return (
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                  r.isStaff
-                    ? "bg-swansons-navy text-white"
-                    : "bg-white shadow-sm border border-gray-100"
-                }`}
+                key={r.id}
+                className={`flex flex-col w-full mb-4 ${isStaff ? "items-end" : "items-start"}`}
               >
-                <p
-                  className={`font-body text-sm leading-relaxed ${
-                    r.isStaff ? "text-white" : "text-swansons-navy"
-                  }`}
-                >
-                  {r.message}
-                </p>
-                {r.photoURL && (
-                  <a
-                    href={r.photoURL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 block"
+                <div className={`flex items-end gap-3 ${isStaff ? "flex-row-reverse" : "flex-row"}`}>
+                  {/* Avatar */}
+                  <div className="shrink-0 w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden flex items-center justify-center">
+                    {isStaff ? (
+                      staffProfile?.photoURL ? (
+                        <img src={staffProfile.photoURL} alt={staffProfile.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <span className="font-heading font-bold text-swansons-green-dark">
+                          {firstNameOnly(staffProfile?.displayName || "Swansons")[0] || "S"}
+                        </span>
+                      )
+                    ) : (
+                      userNames[selectedThread.userId] ? (
+                        <span className="font-heading font-bold text-swansons-navy">
+                          {firstNameOnly(userNames[selectedThread.userId])[0] || "C"}
+                        </span>
+                      ) : (
+                        <span className="font-heading font-bold text-swansons-navy">C</span>
+                      )
+                    )}
+                  </div>
+
+                  {/* Message bubble */}
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                      isStaff ? "bg-swansons-navy text-white" : "bg-white shadow-sm border border-gray-100"
+                    }`}
                   >
-                    <img
-                      src={r.photoURL}
-                      alt="Attached"
-                      className="rounded-xl max-h-48 object-cover mt-2"
-                    />
-                  </a>
-                )}
+                    <p className={`font-body text-sm leading-relaxed ${isStaff ? "text-white" : "text-swansons-navy"}`}>
+                      {r.message}
+                    </p>
+                    {r.photoURL && (
+                      <a href={r.photoURL} target="_blank" rel="noopener noreferrer" className="mt-2 block">
+                        <img src={r.photoURL} alt="Attached" className="rounded-xl max-h-48 object-cover mt-2" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Name label */}
+                <p className={`font-body text-xs text-swansons-muted mt-2 ${isStaff ? "text-right" : "text-left"}`}>
+                  {isStaff
+                    ? `${firstNameOnly(staffProfile?.displayName)} · Swansons Expert · ${formatTimeAgo(r.createdAt)}`
+                    : `${firstNameOnly(customerName)} · Customer · ${formatTimeAgo(r.createdAt)}`}
+                </p>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
-          <p className="font-body text-swansons-muted text-sm text-center mt-8">
-            No replies yet.
-          </p>
+          <p className="font-body text-swansons-muted text-sm text-center mt-8">No replies yet.</p>
         )}
         <div ref={bottomRef} />
       </div>
@@ -777,39 +823,10 @@ function AdminInboxPage() {
       {/* Reply box */}
       <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
         <form onSubmit={handleReply}>
-          <div className="border border-gray-200 rounded-2xl px-4 py-3 flex items-center gap-3">
-            {/* + attach button */}
-            <PhotoPicker
-              onFile={(file) => {
-                setPhotoFile(file);
-                setPhotoPreview(URL.createObjectURL(file));
-              }}
-              disabled={submitting || uploading}
-            >
-              <button
-                type="button"
-                disabled={submitting || uploading}
-                className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition shrink-0"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
-            </PhotoPicker>
-
-            {/* Textarea */}
+          <div className="border border-gray-200 rounded-2xl px-4 pt-3 pb-3 flex flex-col gap-2">
+            {/* Textarea — top */}
             <textarea
-              className="flex-1 font-body text-swansons-text placeholder:text-swansons-muted text-sm resize-none focus:outline-none bg-transparent min-h-[40px] max-h-32"
+              className="w-full font-body text-swansons-text placeholder:text-swansons-muted text-sm resize-none focus:outline-none bg-transparent min-h-[80px] max-h-40"
               placeholder="Type your response to customer here"
               value={reply}
               onChange={(e) => setReply(e.target.value)}
@@ -822,37 +839,70 @@ function AdminInboxPage() {
               disabled={submitting || uploading}
             />
 
-            {/* Close Thread button */}
-            <button
-              type="button"
-              onClick={() => handleStatus("closed")}
-              className="shrink-0 font-body text-sm text-swansons-navy border-2 border-swansons-navy rounded-full px-4 py-2 hover:bg-swansons-navy hover:text-white transition whitespace-nowrap"
-            >
-              Close Thread
-            </button>
-
-            {/* Send button — circle with up arrow */}
-            <button
-              type="submit"
-              disabled={
-                submitting || uploading || (!reply.trim() && !photoFile)
-              }
-              className="w-10 h-10 rounded-full bg-swansons-navy flex items-center justify-center text-white disabled:opacity-40 hover:opacity-90 transition shrink-0"
-            >
-              {submitting || uploading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 19V5M5 12l7-7 7 7"
+            {/* Bottom row */}
+            <div className="flex items-center justify-between">
+              {/* + attach button — bottom left */}
+              <PhotoPicker
+                onFile={(file) => {
+                  setPhotoFile(file);
+                  setPhotoPreview(URL.createObjectURL(file));
+                }}
+                disabled={submitting || uploading}
+              >
+                <button
+                  type="button"
+                  disabled={submitting || uploading}
+                  className="w-9 h-9 rounded-full border-2 border-swansons-navy flex items-center justify-center text-swansons-navy hover:bg-swansons-navy hover:text-white transition shrink-0"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
                     stroke="currentColor"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </button>
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </button>
+              </PhotoPicker>
+
+              {/* Right side — Close Thread + Send */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleStatus("closed")}
+                  className="font-body text-sm text-swansons-navy border-2 border-swansons-navy rounded-full px-4 py-2 hover:bg-swansons-navy hover:text-white transition whitespace-nowrap"
+                >
+                  Close Thread
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={
+                    submitting || uploading || (!reply.trim() && !photoFile)
+                  }
+                  className="w-10 h-10 rounded-full bg-swansons-navy flex items-center justify-center text-white disabled:opacity-40 hover:opacity-90 transition shrink-0"
+                >
+                  {submitting || uploading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 19V5M5 12l7-7 7 7"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Photo preview */}
