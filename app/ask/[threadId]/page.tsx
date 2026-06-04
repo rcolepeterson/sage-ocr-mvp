@@ -38,6 +38,12 @@ export default function ThreadDetailPage() {
   const [uploading, setUploading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [staffNames, setStaffNames] = useState<Record<string, string>>({});
+  const [staffPhotos, setStaffPhotos] = useState<
+    Record<string, string | undefined>
+  >({});
+  const [staffSpecialties, setStaffSpecialties] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     if (!threadId) return;
@@ -52,25 +58,33 @@ export default function ThreadDetailPage() {
   useEffect(() => {
     if (!thread?.replies?.length) return;
     const fetchStaffNames = async () => {
-      const uniqueIds = [
-        ...new Set(
+      const uniqueIds: string[] = Array.from(
+        new Set(
           thread.replies
             .filter((r: any) => r.isStaff)
-            .map((r: any) => r.authorId),
+            .map((r: any) => String(r.authorId)),
         ),
-      ];
+      );
       const names: Record<string, string> = {};
+      const photos: Record<string, string | undefined> = {};
+      const specialties: Record<string, string> = {};
       await Promise.all(
         uniqueIds.map(async (uid) => {
           try {
             const data = await getUser(uid as string);
             if (data?.displayName) names[uid as string] = data.displayName;
+            if ((data as any)?.photoURL)
+              photos[uid as string] = (data as any).photoURL;
+            if ((data as any)?.specialty)
+              specialties[uid as string] = (data as any).specialty;
           } catch {
-            // Customer doesn't have permission to read other users — fallback to "Swansons Expert"
+            // Customer doesn't have permission to read other users — fallback handled in UI
           }
         }),
       );
       setStaffNames((prev) => ({ ...prev, ...names }));
+      setStaffPhotos((prev) => ({ ...prev, ...photos }));
+      setStaffSpecialties((prev) => ({ ...prev, ...specialties }));
     };
     fetchStaffNames();
   }, [thread?.replies]);
@@ -144,9 +158,11 @@ export default function ThreadDetailPage() {
               thread.replies.map((r: any) => {
                 const isStaff = r.isStaff;
                 const fullName = staffNames[r.authorId];
-                const firstName = fullName
-                  ? `${fullName.split(" ")[0]} ${fullName.split(" ")[1]?.[0] || ""}.`.trim()
-                  : null;
+                const firstNameOnly = fullName ? fullName.split(" ")[0] : null;
+                const specialty =
+                  staffSpecialties[r.authorId] || "Swansons Expert";
+                const staffPhoto = staffPhotos[r.authorId];
+                const customerPhoto = user?.photoURL;
 
                 return (
                   <div
@@ -173,16 +189,54 @@ export default function ThreadDetailPage() {
                         />
                       </a>
                     )}
-                    <p className="font-body text-xs text-white/50 mt-2">
+
+                    {/* Avatar + name row at bottom */}
+                    <div
+                      className={`flex items-center gap-2 mt-2 ${isStaff ? "justify-start" : "justify-end"}`}
+                    >
                       {isStaff ? (
                         <>
-                          {firstName ? `${firstName} · ` : ""}Swansons Expert ·{" "}
-                          {formatTimeAgo(r.createdAt)}
+                          <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                            {staffPhoto ? (
+                              <img
+                                src={staffPhoto}
+                                alt={fullName || "Swansons Expert"}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="font-heading font-bold bg-swansons-green-muted text-swansons-green-dark w-7 h-7 inline-flex items-center justify-center rounded-full">
+                                {firstNameOnly?.[0] || "S"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-body text-xs text-white/50">
+                            {firstNameOnly} · {specialty} ·{" "}
+                            {formatTimeAgo(r.createdAt)}
+                          </p>
                         </>
                       ) : (
-                        <>You · {formatTimeAgo(r.createdAt)}</>
+                        <>
+                          <p className="font-body text-xs text-white/50">
+                            You · {formatTimeAgo(r.createdAt)}
+                          </p>
+                          <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                            {customerPhoto ? (
+                              <img
+                                src={customerPhoto}
+                                alt={user?.displayName || "You"}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="font-heading font-bold bg-orange-400/20 text-orange-300 w-7 h-7 inline-flex items-center justify-center rounded-full">
+                                {user?.displayName?.[0] || "Y"}
+                              </span>
+                            )}
+                          </div>
+                        </>
                       )}
-                    </p>
+                    </div>
                   </div>
                 );
               })
