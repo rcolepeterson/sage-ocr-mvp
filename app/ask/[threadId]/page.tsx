@@ -9,6 +9,7 @@ import { subscribeToThread, addReply } from "@/lib/firebase/threads";
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { useParams } from "next/navigation";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
+import { getUser } from "@/lib/firebase/users";
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 function formatTimeAgo(timestamp: any): string {
@@ -35,8 +36,8 @@ export default function ThreadDetailPage() {
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploading, setUploading] = useState(false);
-  //const fileInputRef = useRef<HTMLInputElement>(null); // kept for bottomRef pattern
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [staffNames, setStaffNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!threadId) return;
@@ -46,6 +47,32 @@ export default function ThreadDetailPage() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [thread?.replies]);
+
+  useEffect(() => {
+    if (!thread?.replies?.length) return;
+    const fetchStaffNames = async () => {
+      const uniqueIds = [
+        ...new Set(
+          thread.replies
+            .filter((r: any) => r.isStaff)
+            .map((r: any) => r.authorId),
+        ),
+      ];
+      const names: Record<string, string> = {};
+      await Promise.all(
+        uniqueIds.map(async (uid) => {
+          try {
+            const data = await getUser(uid as string);
+            if (data?.displayName) names[uid as string] = data.displayName;
+          } catch {
+            // Customer doesn't have permission to read other users — fallback to "Swansons Expert"
+          }
+        }),
+      );
+      setStaffNames((prev) => ({ ...prev, ...names }));
+    };
+    fetchStaffNames();
   }, [thread?.replies]);
 
   const handleReply = async (e: React.FormEvent) => {
@@ -116,9 +143,11 @@ export default function ThreadDetailPage() {
             {thread.replies?.length > 0 ? (
               thread.replies.map((r: any) => {
                 const isStaff = r.isStaff;
-                // TODO: Replace with actual staffName and specialty if available
-                const staffName = r.staffName || "Swansons Expert";
-                const specialty = r.specialty;
+                const fullName = staffNames[r.authorId];
+                const firstName = fullName
+                  ? `${fullName.split(" ")[0]} ${fullName.split(" ")[1]?.[0] || ""}.`.trim()
+                  : null;
+
                 return (
                   <div
                     key={r.id}
@@ -147,12 +176,11 @@ export default function ThreadDetailPage() {
                     <p className="font-body text-xs text-white/50 mt-2">
                       {isStaff ? (
                         <>
-                          {staffName}
-                          {specialty ? ` • ${specialty}` : ""} •{" "}
+                          {firstName ? `${firstName} · ` : ""}Swansons Expert ·{" "}
                           {formatTimeAgo(r.createdAt)}
                         </>
                       ) : (
-                        <>You • {formatTimeAgo(r.createdAt)}</>
+                        <>You · {formatTimeAgo(r.createdAt)}</>
                       )}
                     </p>
                   </div>
@@ -184,7 +212,6 @@ export default function ThreadDetailPage() {
                   disabled={submitting || uploading}
                 />
                 <div className="flex items-center justify-between mt-2">
-                  {/* + attach button */}
                   <PhotoPicker
                     onFile={handlePhotoChange}
                     disabled={submitting || uploading}
@@ -198,7 +225,6 @@ export default function ThreadDetailPage() {
                     </button>
                   </PhotoPicker>
 
-                  {/* Send button */}
                   <button
                     type="submit"
                     disabled={
@@ -219,7 +245,6 @@ export default function ThreadDetailPage() {
                 </div>
               </div>
 
-              {/* Photo preview */}
               {photoPreview && (
                 <div className="mt-3">
                   <img
