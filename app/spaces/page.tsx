@@ -168,7 +168,11 @@ export default function MyPlantsPage() {
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <span className="text-2xl">🌱</span>
+                                  <img
+                                    src="/images/PlantProfileIcon.png"
+                                    alt="Plant"
+                                    className="w-full h-full object-contain p-1"
+                                  />
                                 )}
                               </div>
                               <div>

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -178,7 +179,11 @@ function AskPageInner() {
           <motion.div variants={itemVariants}>
             {urlPlantName ? (
               <div className="bg-swansons-green-muted border border-swansons-green rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
-                <span className="text-xl">🌱</span>
+                <img
+                  src="/images/PlantProfileIcon.png"
+                  alt="Plant"
+                  className="w-full h-full object-contain p-1"
+                />
                 <div>
                   <p className="font-body text-xs text-swansons-green font-semibold">
                     Asking about:

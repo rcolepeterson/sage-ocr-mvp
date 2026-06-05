@@ -278,7 +278,12 @@ function PlantProfilePage({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-5xl">🌱</span>
+                // <span className="text-5xl">🌱</span>
+                <img
+                  src="/images/PlantProfileIcon.png"
+                  alt="Plant"
+                  className="w-full h-full object-contain p-1"
+                />
               )}
               {uploading && (
                 <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center rounded-full">

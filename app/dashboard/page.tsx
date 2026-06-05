@@ -266,7 +266,11 @@ function SpacesList() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-sm">
-                          🌱
+                          <img
+                            src="/images/PlantProfileIcon.png"
+                            alt="Plant"
+                            className="w-full h-full object-contain p-1"
+                          />
                         </div>
                       )}
                     </div>
@@ -280,7 +284,11 @@ function SpacesList() {
                           key={`placeholder-${i}`}
                           className="w-10 h-10 rounded-full border-2 border-white bg-swansons-green-muted flex items-center justify-center text-sm shrink-0"
                         >
-                          🌱
+                          <img
+                            src="/images/PlantProfileIcon.png"
+                            alt="Plant"
+                            className="w-full h-full object-contain p-1"
+                          />
                         </div>
                       ),
                     )}
