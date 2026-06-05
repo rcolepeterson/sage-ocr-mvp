@@ -282,7 +282,7 @@ function PlantProfilePage({
                 <img
                   src="/images/PlantProfileIcon.png"
                   alt="Plant"
-                  className="w-full h-full object-contain p-1"
+                  className="w-full h-full object-contain p-6"
                 />
               )}
               {uploading && (
