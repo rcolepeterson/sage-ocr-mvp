@@ -171,7 +171,7 @@ export default function MyPlantsPage() {
                                   <img
                                     src="/images/PlantProfileIcon.png"
                                     alt="Plant"
-                                    className="w-full h-full object-contain p-1"
+                                    className="w-full h-full object-contain p-3"
                                   />
                                 )}
                               </div>

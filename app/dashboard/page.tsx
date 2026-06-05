@@ -38,7 +38,11 @@ function LatestPlantCard() {
             className="w-full h-full object-cover"
           />
         ) : (
-          <span className="text-3xl">🌿</span>
+          <img
+            src="/images/PlantProfileIcon.png"
+            alt="Plant"
+            className="w-full h-full object-contain p-3"
+          />
         )}
       </div>
       <div>
@@ -269,7 +273,7 @@ function SpacesList() {
                           <img
                             src="/images/PlantProfileIcon.png"
                             alt="Plant"
-                            className="w-full h-full object-contain p-1"
+                            className="w-full h-full object-contain p-4"
                           />
                         </div>
                       )}
@@ -287,7 +291,7 @@ function SpacesList() {
                           <img
                             src="/images/PlantProfileIcon.png"
                             alt="Plant"
-                            className="w-full h-full object-contain p-1"
+                            className="w-full h-full object-contain p-2"
                           />
                         </div>
                       ),

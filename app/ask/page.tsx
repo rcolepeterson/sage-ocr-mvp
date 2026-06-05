@@ -182,7 +182,7 @@ function AskPageInner() {
                 <img
                   src="/images/PlantProfileIcon.png"
                   alt="Plant"
-                  className="w-full h-full object-contain p-1"
+                  className="w-full h-full object-contain p-4"
                 />
                 <div>
                   <p className="font-body text-xs text-swansons-green font-semibold">
