@@ -2,7 +2,9 @@
     {
         "origin": [
             "http://localhost:3000",
-            "https://sage-ocr-mvp-one.vercel.app"
+            "https://sage-ocr-mvp-one.vercel.app",
+            "https://sagebyswansons.com",
+            "https://www.sagebyswansons.com"
         ],
         "method": [
             "GET",
