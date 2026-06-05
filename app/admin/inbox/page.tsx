@@ -766,6 +766,11 @@ function AdminInboxPage() {
             const authorId = r.authorId as string;
             const staffProfile = isStaff ? staffProfiles[authorId] : null;
             const customerName = userNames[selectedThread.userId] || "Customer";
+            const avatarPhoto = isStaff
+              ? authorId === user?.uid
+                ? user?.photoURL || staffProfile?.photoURL
+                : staffProfile?.photoURL
+              : undefined;
             return (
               <div
                 key={r.id}
@@ -777,10 +782,10 @@ function AdminInboxPage() {
                   {/* Avatar */}
                   <div className="shrink-0 w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden flex items-center justify-center">
                     {isStaff ? (
-                      staffProfile?.photoURL ? (
+                      avatarPhoto ? (
                         <img
-                          src={staffProfile.photoURL}
-                          alt={staffProfile.displayName}
+                          src={avatarPhoto}
+                          alt={staffProfile?.displayName}
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                         />

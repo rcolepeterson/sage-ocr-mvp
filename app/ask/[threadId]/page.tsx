@@ -10,6 +10,7 @@ import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import { useParams } from "next/navigation";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
 import { getUser } from "@/lib/firebase/users";
+import { auth } from "@/lib/firebase/auth";
 
 function formatTimeAgo(timestamp: any): string {
   if (!timestamp) return "";
@@ -172,7 +173,11 @@ export default function ThreadDetailPage() {
                 const firstName = fullName ? fullName.split(" ")[0] : null;
                 const specialty =
                   staffSpecialties[r.authorId] || "Swansons Expert";
-                const staffPhoto = staffPhotos[r.authorId];
+                const staffPhoto =
+                  staffPhotos[r.authorId] ||
+                  (r.authorId === auth.currentUser?.uid
+                    ? (auth.currentUser?.photoURL ?? undefined)
+                    : undefined);
 
                 return (
                   <div key={r.id}>
