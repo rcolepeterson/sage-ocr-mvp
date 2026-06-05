@@ -318,7 +318,7 @@ function PlantProfilePage({
         {/* ── Description ── */}
         {plant.careInfo?.description && (
           <motion.div variants={itemVariants}>
-            <p className="font-body text-swansons-text text-center leading-relaxed mb-6">
+            <p className="font-body text-swansons-black text-center leading-relaxed mb-6">
               {plant.careInfo.description}
             </p>
           </motion.div>
