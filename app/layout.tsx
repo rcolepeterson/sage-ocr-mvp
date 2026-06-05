@@ -1,5 +1,7 @@
 import ClientLayout from "@/components/ClientLayout";
 import ScrollToTop from "@/components/ScrollToTop";
+import { InviteGate } from "@/components/InviteGate";
+
 import type { Metadata } from "next";
 import {
   Geist,
@@ -68,9 +70,11 @@ export default function RootLayout({
               <ScrollToTop />
               <HamburgerMenu />
               <BackButton />
-              <ProtectedRoute>
-                <LenisProvider>{children}</LenisProvider>
-              </ProtectedRoute>
+              <InviteGate>
+                <ProtectedRoute>
+                  <LenisProvider>{children}</LenisProvider>
+                </ProtectedRoute>
+              </InviteGate>
             </ClientLayout>
             {/* <BottomNav /> */}
           </div>
