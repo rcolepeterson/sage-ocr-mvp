@@ -50,6 +50,7 @@ export interface AppUser {
   uid: string;
   email: string;
   displayName: string;
+  photoURL?: string;
   role: UserRole;
   createdAt: any;
   termsAcceptedAt?: any;
@@ -57,6 +58,7 @@ export interface AppUser {
   fcmToken?: string;
   notificationsDeclined?: boolean;
   specialty?: string;
+  onboardingCompletedAt?: any;
 }
 
 // Get all staff and admin users
@@ -144,6 +146,15 @@ export async function getUserFcmToken(uid: string): Promise<string | null> {
 export async function setNotificationsDeclined(uid: string) {
   const userRef = doc(db, "users", uid);
   await setDoc(userRef, { notificationsDeclined: true }, { merge: true });
+}
+
+// Update user photoURL
+export async function updateUserPhotoURL(
+  uid: string,
+  photoURL: string,
+): Promise<void> {
+  const userRef = doc(db, "users", uid);
+  await setDoc(userRef, { photoURL }, { merge: true });
 }
 
 // Update user T&C acceptance

@@ -10,6 +10,7 @@ import { initFcm } from "./messaging";
 type ExtendedUser = User & {
   termsAcceptedAt?: any;
   termsVersion?: string | null;
+  specialty?: string | null;
 };
 
 interface AuthContextType {
@@ -40,12 +41,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await createUserIfNotExists(user);
         const userRole = await getUserRole(user.uid);
         setRole(userRole);
-        // Fetch Firestore user doc for terms fields
+        // Fetch Firestore user doc for terms fields and custom display data
         const userDoc = await getUser(user.uid);
         setUser({
           ...user,
+          photoURL: userDoc?.photoURL || user.photoURL,
+          displayName: userDoc?.displayName || user.displayName,
           termsAcceptedAt: userDoc?.termsAcceptedAt || null,
           termsVersion: userDoc?.termsVersion || null,
+          specialty: userDoc?.specialty || null,
         });
         // If the user has already granted notification permission, silently
         // refresh the FCM token on every sign-in. This keeps the token fresh

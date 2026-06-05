@@ -78,3 +78,32 @@ export async function deletePlantPhoto(photoURL: string): Promise<void> {
   const photoRef = ref(storage, photoURL);
   await deleteObject(photoRef);
 }
+
+export async function uploadUserAvatar(
+  userId: string,
+  file: File,
+  onProgress?: (progress: number) => void,
+): Promise<string> {
+  const storageRef = ref(storage, `users/${userId}/profile.jpg`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+
+  return new Promise((resolve, reject) => {
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        if (onProgress) {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          onProgress(progress);
+        }
+      },
+      (error) => {
+        reject(error);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        resolve(downloadURL);
+      },
+    );
+  });
+}

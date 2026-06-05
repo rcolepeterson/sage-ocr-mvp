@@ -20,12 +20,14 @@ const NAV_ITEMS = {
     { label: "Add a Plant", href: "/scan" },
     { label: "Ask an Expert", href: "/ask" },
     { label: "Inbox", href: "/ask" }, // ← add this
+    { label: "Settings", href: "/settings" },
   ],
   staff: [
     { label: "Home", href: "/dashboard" },
     { label: "Spaces", href: "/spaces" },
     { label: "Scan a Plant", href: "/scan" },
     { label: "Inbox", href: "/admin/inbox" },
+    { label: "Settings", href: "/settings" },
   ],
   admin: [
     { label: "Home", href: "/dashboard" },
@@ -34,6 +36,7 @@ const NAV_ITEMS = {
     { label: "Inbox", href: "/admin/inbox" },
     { label: "Dashboard", href: "/admin/dashboard" },
     { label: "Debug", href: "/debug" },
+    { label: "Settings", href: "/settings" },
   ],
 };
 

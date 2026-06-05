@@ -11,6 +11,7 @@ const HIDE_ON = [
   "/onboarding",
   "/ask",
   "/admin",
+  "/settings",
 ];
 
 export default function BackButton() {
