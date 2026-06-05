@@ -66,16 +66,17 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           <div className="min-h-screen relative">
-            <ClientLayout>
-              <ScrollToTop />
-              <HamburgerMenu />
-              <BackButton />
-              <InviteGate>
+            <InviteGate>
+              <ClientLayout>
+                <ScrollToTop />
+                <HamburgerMenu />
+                <BackButton />
+
                 <ProtectedRoute>
                   <LenisProvider>{children}</LenisProvider>
                 </ProtectedRoute>
-              </InviteGate>
-            </ClientLayout>
+              </ClientLayout>
+            </InviteGate>
             {/* <BottomNav /> */}
           </div>
         </AuthProvider>
