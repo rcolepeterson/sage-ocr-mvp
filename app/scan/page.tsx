@@ -101,17 +101,27 @@ function ThinkingOverlay() {
       transition={{ duration: 0.4 }}
       className="flex flex-col items-center justify-center py-16 px-8"
     >
-      {/* Spinning leaf */}
-      <div className="relative w-20 h-20 mb-8">
-        <div className="w-20 h-20 rounded-full border-4 border-swansons-green-muted border-t-swansons-navy animate-spin" />
-        <div className="absolute inset-0 flex items-center justify-center text-3xl">
-          🌿
+      {/* Spinning arc around plant image */}
+      <div className="relative w-44 h-44 mb-10">
+        {/* Spinning arc — navy partial border */}
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-swansons-navy animate-spin" />
+        {/* White circle with plant image */}
+        <div className="absolute inset-1 rounded-full bg-white flex items-center justify-center shadow-sm overflow-hidden">
+          <img
+            src="/images/IdentifyingPlantIcon.png"
+            alt="Identifying plant"
+            className="w-3/4 h-3/4 object-contain"
+          />
         </div>
       </div>
-      <p className="font-heading text-2xl font-bold text-swansons-navy mb-3 text-center">
-        Identifying your plant...
-      </p>
-      <p className="font-body text-swansons-black text-center text-sm leading-relaxed">
+
+      <h2
+        className="font-heading font-bold text-swansons-navy text-center mb-3"
+        style={{ fontSize: "2rem" }}
+      >
+        Identifying your plant
+      </h2>
+      <p className="font-body text-swansons-muted text-center text-sm leading-relaxed">
         You can put the tag down now.
         <br />
         This usually takes a few seconds.

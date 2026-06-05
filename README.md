@@ -89,3 +89,8 @@ Example:
 https://console.firebase.google.com/project/sage-swansons-e4677/firestore/databases/-default-/data/threads/UYDHQASiXC1BtpK2tQcc
 
 Works for any collection — just swap `threads` for `users`, `notifications` etc.
+
+# vercel
+
+https://vercel.com/swansons/sage-ocr-mvp
+rcolepeterson@gmail.com
