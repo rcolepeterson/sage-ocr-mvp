@@ -493,7 +493,7 @@ export default function ScanPage() {
       {/* Camera — only during idle + scanning */}
       {(step === "idle" || step === "scanning") && !cameraError && (
         <div className="px-4 pt-4 relative">
-          <div className="rounded-2xl overflow-hidden bg-black aspect-video">
+          <div className="rounded-2xl overflow-hidden bg-black aspect-[4/3]">
             <video
               ref={videoRef}
               autoPlay
