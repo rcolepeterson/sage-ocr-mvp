@@ -139,7 +139,7 @@ export default function ScanPage() {
 
   /* step */
   const [step, setStep] = useState<ScanStep>("idle");
-  const [showManual, setShowManual] = useState(true);
+  const [showManual, setShowManual] = useState(false);
   const [manualQuery, setManualQuery] = useState("");
 
   /* errors */
@@ -558,10 +558,10 @@ export default function ScanPage() {
           {showManual && (
             <motion.div
               variants={itemVariants}
-              className="bg-white rounded-2xl p-4 my-4"
+              className="bg-white rounded-2xl p-4 my-4 text-center"
             >
               <p className="text-xs font-body text-swansons-muted mb-2">
-                🛠 Manual entry (dev only)
+                Manual entry
               </p>
               <input
                 className="input w-full mb-3"
@@ -580,14 +580,13 @@ export default function ScanPage() {
             </motion.div>
           )}
 
-          {showManual && (
-            <motion.p
-              variants={itemVariants}
-              className="text-center font-body text-sm text-swansons-muted underline cursor-pointer"
-            >
-              Can&apos;t find tag or label?
-            </motion.p>
-          )}
+          <motion.p
+            variants={itemVariants}
+            className="text-center font-body text-sm text-swansons-muted underline cursor-pointer mt-8"
+            onClick={() => setShowManual(!showManual)}
+          >
+            Can&apos;t find tag or label?
+          </motion.p>
         </motion.div>
       )}
 
@@ -867,7 +866,7 @@ export default function ScanPage() {
       )}
 
       {/* Debug — dev only */}
-      {showManual && (
+      {/* {showManual && (
         <div className="px-4 pb-8">
           <details>
             <summary className="text-sm font-body text-swansons-muted cursor-pointer">
@@ -878,7 +877,7 @@ export default function ScanPage() {
             </div>
           </details>
         </div>
-      )}
+      )} */}
 
       <canvas ref={canvasRef} className="hidden" />
     </main>
