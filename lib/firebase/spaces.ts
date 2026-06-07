@@ -47,6 +47,8 @@ export interface Space {
   id: string;
   name: string;
   type: SpaceType;
+  lightLevel?: "full-sun" | "partial-sun" | "dappled-shade" | "full-shade";
+  containment?: "container" | "in-ground" | "raised-bed";
   createdAt: any;
 }
 
@@ -95,14 +97,17 @@ export async function createSpace(
   userId: string,
   name: string,
   type: SpaceType,
+  lightLevel?: string,
+  containment?: string,
 ) {
   const spaceRef = doc(collection(db, `users/${userId}/spaces`));
-  const space: Omit<Space, "id"> = {
+  await setDoc(spaceRef, {
     name,
     type,
+    ...(lightLevel ? { lightLevel } : {}),
+    ...(containment ? { containment } : {}),
     createdAt: serverTimestamp(),
-  };
-  await setDoc(spaceRef, space);
+  });
   return spaceRef.id;
 }
 

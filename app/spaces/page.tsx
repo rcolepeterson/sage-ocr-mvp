@@ -76,6 +76,23 @@ export default function MyPlantsPage() {
     const tags: string[] = [];
     if (space.type === "indoor") tags.push("Indoor");
     if (space.type === "outdoor") tags.push("Outdoor");
+    if (space.lightLevel) {
+      const lightMap: Record<string, string> = {
+        "full-sun": "Full Sun",
+        "partial-sun": "Partial Sun",
+        "dappled-shade": "Dappled Shade",
+        "full-shade": "Full Shade",
+      };
+      tags.push(lightMap[space.lightLevel] || space.lightLevel);
+    }
+    if (space.containment) {
+      const containMap: Record<string, string> = {
+        container: "Container",
+        "in-ground": "In-ground",
+        "raised-bed": "Raised Bed",
+      };
+      tags.push(containMap[space.containment] || space.containment);
+    }
     return tags;
   }
 

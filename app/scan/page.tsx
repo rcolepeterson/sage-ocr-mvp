@@ -444,6 +444,8 @@ export default function ScanPage() {
         user.uid,
         newSpaceName.trim(),
         spaceLocation,
+        spaceLight || undefined,
+        spaceContainment || undefined,
       );
       await saveToSpace(spaceId);
     } catch (e) {
