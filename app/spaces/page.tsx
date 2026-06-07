@@ -7,6 +7,7 @@ import {
   getSpaces,
   getPlantsInSpace,
   deletePlant,
+  deleteSpace,
 } from "@/lib/firebase/spaces";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
@@ -30,6 +31,9 @@ export default function MyPlantsPage() {
   const [plantsBySpace, setPlantsBySpace] = useState<Record<string, any[]>>({});
   const [spacesLoading, setSpacesLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteSpaceId, setDeleteSpaceId] = useState<string | null>(null);
+  const [deleteSpaceName, setDeleteSpaceName] = useState("");
+  const [deletingSpace, setDeletingSpace] = useState(false);
 
   const loadAll = useCallback(async (uid: string) => {
     const fetchedSpaces = await getSpaces(uid);
@@ -56,6 +60,16 @@ export default function MyPlantsPage() {
     await deletePlant(user.uid, spaceId, plantId);
     await loadAll(user.uid);
     setDeletingId(null);
+  }
+
+  async function handleDeleteSpace() {
+    if (!user || !deleteSpaceId) return;
+    setDeletingSpace(true);
+    await deleteSpace(user.uid, deleteSpaceId);
+    setDeleteSpaceId(null);
+    setDeleteSpaceName("");
+    setDeletingSpace(false);
+    await loadAll(user.uid);
   }
 
   function getSpaceTags(space: any): string[] {
@@ -128,7 +142,13 @@ export default function MyPlantsPage() {
                         </div>
                       )}
                     </div>
-                    <button className="w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shrink-0 ml-3">
+                    <button
+                      onClick={() => {
+                        setDeleteSpaceId(space.id);
+                        setDeleteSpaceName(space.name);
+                      }}
+                      className="w-8 h-8 bg-swansons-navy rounded-full flex items-center justify-center shrink-0 ml-3"
+                    >
                       <EditIcon width={16} height={16} />
                     </button>
                   </div>
@@ -223,6 +243,48 @@ export default function MyPlantsPage() {
           )}
         </motion.div>
       </main>
+
+      {deleteSpaceId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          onClick={() => setDeleteSpaceId(null)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-heading text-2xl font-bold text-swansons-navy mb-4">
+              Delete Space
+            </h2>
+            <p className="font-body text-swansons-black mb-2">
+              Are you sure you want to delete{" "}
+              <span className="font-bold">{deleteSpaceName}</span>?
+            </p>
+
+            <p className="font-body text-sm text-swansons-muted mb-6">
+              This will permanently delete the space and all plants inside it.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteSpace}
+                disabled={deletingSpace}
+                className="flex-1 bg-red-500 text-white font-body font-semibold py-3 rounded-full hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingSpace ? "Deleting..." : "Delete Space"}
+              </button>
+              <button
+                onClick={() => setDeleteSpaceId(null)}
+                className="flex-1 border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-3 rounded-full hover:bg-swansons-navy hover:text-white transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </ProtectedRoute>
   );
 }

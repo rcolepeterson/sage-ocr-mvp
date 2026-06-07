@@ -122,6 +122,21 @@ export async function getSpace(
   return { id: snap.id, ...snap.data() } as Space;
 }
 
+// Delete a space and all its plants
+export async function deleteSpace(
+  userId: string,
+  spaceId: string,
+): Promise<void> {
+  // Delete all plants in the space first
+  const plantsSnap = await getDocs(
+    collection(db, `users/${userId}/spaces/${spaceId}/plants`),
+  );
+  await Promise.all(plantsSnap.docs.map((p) => deleteDoc(p.ref)));
+
+  // Then delete the space
+  await deleteDoc(doc(db, `users/${userId}/spaces/${spaceId}`));
+}
+
 export async function savePlantToSpace(
   userId: string,
   spaceId: string,
