@@ -17,6 +17,8 @@ import { compressImage } from "@/lib/utils/imageCompression";
 import { Button } from "@/components/ui/Button";
 import { PhotoPicker } from "@/components/ui/PhotoPicker";
 import { motion, AnimatePresence } from "motion/react";
+import LottieAnimation from "@/components/ui/LottieAnimation";
+import scanAnimation from "@/lib/animations/Scanning.json";
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -72,22 +74,11 @@ function ErrorBanner({
 function ScanningOverlay() {
   return (
     <div className="flex flex-col items-center justify-center py-12">
-      <div className="relative w-48 h-32 border-2 border-swansons-navy rounded-lg overflow-hidden mb-8">
-        <div
-          className="absolute w-full h-0.5 bg-swansons-navy"
-          style={{ animation: "scanline 1.5s ease-in-out infinite" }}
-        />
-      </div>
+      <LottieAnimation animationData={scanAnimation} className="w-64 h-64" />
       <p className="font-heading text-2xl font-bold text-swansons-navy">
         Hold Still
       </p>
       <p className="font-body text-swansons-muted mt-2">Scanning in progress</p>
-      <style>{`
-      @keyframes scanline {
-        0%, 100% { top: 0; }
-        50% { top: calc(100% - 2px); }
-      }
-    `}</style>
     </div>
   );
 }
