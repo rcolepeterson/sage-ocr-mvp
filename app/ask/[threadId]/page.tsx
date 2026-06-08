@@ -136,7 +136,7 @@ export default function ThreadDetailPage() {
       >
         <div className="flex flex-col h-full max-w-lg mx-auto w-full">
           {/* ── Scrollable messages ── */}
-          <div className="flex-1 overflow-y-auto px-4 pt-14 pb-6 space-y-6">
+          <div className="flex-1 overflow-y-auto px-4 pt-20 pb-6 space-y-6">
             {/* Initial question */}
             <div>
               <div className="border-l-4 border-orange-400 pl-4">
