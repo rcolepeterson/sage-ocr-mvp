@@ -38,6 +38,7 @@ export default function LandingPage() {
 
   return (
     <main
+      data-lenis-prevent
       className="h-screen flex flex-col items-center justify-center px-6 overflow-hidden"
       style={{
         height: "100dvh",
