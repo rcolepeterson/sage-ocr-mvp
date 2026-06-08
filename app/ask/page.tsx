@@ -16,7 +16,7 @@ import {
 } from "@/lib/firebase/threads";
 import { uploadThreadPhoto } from "@/lib/firebase/storage";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { motion } from "motion/react";
 
@@ -30,7 +30,6 @@ const containerVariants = {
   show: { transition: { staggerChildren: 0.1 } },
 };
 
-/* ─── Helpers ────────────────────────────────────────────────────────────── */
 function formatDate(timestamp: any): string {
   if (!timestamp) return "";
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -60,13 +59,12 @@ function getStatusBadge(status: string): { label: string; className: string } {
   }
 }
 
-/* ─── Inner page (uses useSearchParams) ─────────────────────────────────── */
 function AskPageInner() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const [question, setQuestion] = useState("");
   const [threads, setThreads] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [selectedSpaceId, setSelectedSpaceId] = useState("");
   const [plants, setPlants] = useState<Plant[]>([]);
@@ -77,7 +75,6 @@ function AskPageInner() {
   const [uploading, setUploading] = useState(false);
 
   const searchParams = useSearchParams();
-
   const urlPlantId = searchParams.get("plantId") || "";
   const urlPlantName = searchParams.get("plantName") || "";
 
@@ -132,11 +129,7 @@ function AskPageInner() {
       );
       setUploading(false);
     }
-    setQuestion("");
-    setPhotoFile(null);
-    setPhotoPreview("");
-    setSubmitted(true);
-    setSubmitting(false);
+    router.push(`/ask/${threadId}`);
   };
 
   if (loading) {
@@ -150,14 +143,12 @@ function AskPageInner() {
   return (
     <ProtectedRoute>
       <main className="min-h-screen flex flex-col">
-        {/* ── Top section ── */}
         <motion.div
           className="px-4 pt-4 pb-6"
           variants={containerVariants}
           initial="hidden"
           animate="show"
         >
-          {/* Logo */}
           <motion.div
             variants={itemVariants}
             className="flex justify-center mb-6"
@@ -165,7 +156,6 @@ function AskPageInner() {
             <Logo width={100} height={50} />
           </motion.div>
 
-          {/* Heading */}
           <motion.div variants={itemVariants}>
             <h1 className="text-swansons-navy text-center mb-1">
               Ask an expert
@@ -175,14 +165,13 @@ function AskPageInner() {
             </p>
           </motion.div>
 
-          {/* Plant context banner */}
           <motion.div variants={itemVariants}>
             {urlPlantName ? (
               <div className="bg-swansons-green-muted border border-swansons-green rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
                 <img
                   src="/images/PlantProfileIcon.png"
                   alt="Plant"
-                  className="w-full h-full object-contain p-4"
+                  className="w-8 h-8 object-contain shrink-0"
                 />
                 <div>
                   <p className="font-body text-xs text-swansons-green font-semibold">
@@ -195,7 +184,6 @@ function AskPageInner() {
               </div>
             ) : (
               <>
-                {/* Space dropdown */}
                 <div className="relative mb-3">
                   <select
                     className="w-full border-2 border-swansons-navy text-swansons-navy font-body py-3 px-5 rounded-full bg-transparent appearance-none"
@@ -222,7 +210,6 @@ function AskPageInner() {
                   </span>
                 </div>
 
-                {/* Plant dropdown */}
                 <div className="relative mb-4">
                   <select
                     className="w-full border-2 border-swansons-navy text-swansons-navy font-body py-3 px-5 rounded-full bg-transparent appearance-none disabled:opacity-40"
@@ -263,7 +250,6 @@ function AskPageInner() {
             </p>
           )}
 
-          {/* Input area */}
           <motion.div variants={itemVariants}>
             <form onSubmit={handleSubmit}>
               <div className="bg-white p-4 shadow-sm rounded-2xl">
@@ -279,7 +265,6 @@ function AskPageInner() {
                   disabled={submitting || uploading}
                 />
 
-                {/* Photo preview */}
                 {photoPreview && (
                   <div className="mt-3">
                     <img
@@ -348,7 +333,6 @@ function AskPageInner() {
           </motion.div>
         </motion.div>
 
-        {/* ── Thread list — dark navy section ── */}
         <motion.div
           className="flex-1 bg-swansons-navy px-4 pt-6 pb-12"
           initial={{ opacity: 0 }}
@@ -385,11 +369,6 @@ function AskPageInner() {
                         <p className="font-body text-swansons-navy text-sm truncate underline">
                           {thread.question}
                         </p>
-                        {/* {thread.plantName && (
-                        <p className="font-body text-swansons-muted text-xs mt-1 truncate">
-                          🌱 {thread.plantName}
-                        </p>
-                      )} */}
                       </div>
                     </Link>
                   </motion.div>
@@ -403,7 +382,6 @@ function AskPageInner() {
   );
 }
 
-/* ─── Export with Suspense boundary ─────────────────────────────────────── */
 export default function AskPage() {
   return (
     <Suspense fallback={null}>
