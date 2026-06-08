@@ -132,7 +132,7 @@ export default function ThreadDetailPage() {
     <ProtectedRoute>
       <main
         className="flex flex-col bg-swansons-navy"
-        style={{ height: "calc(100vh - 56px)" }}
+        style={{ height: "100dvh" }}
       >
         <div className="flex flex-col h-full max-w-lg mx-auto w-full">
           {/* ── Scrollable messages ── */}
