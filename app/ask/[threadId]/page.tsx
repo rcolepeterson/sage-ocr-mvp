@@ -141,8 +141,7 @@ export default function ThreadDetailPage() {
     <ProtectedRoute>
       <main
         data-lenis-prevent
-        className="flex flex-col bg-swansons-navy"
-        style={{ height: "100svh" }}
+        className="fixed inset-0 flex flex-col bg-swansons-navy z-10"
       >
         <div className="flex flex-col h-full max-w-lg mx-auto w-full">
           {/* ── Scrollable messages ── */}
