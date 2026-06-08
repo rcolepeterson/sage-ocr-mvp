@@ -142,7 +142,7 @@ export default function ThreadDetailPage() {
       <main
         data-lenis-prevent
         className="flex flex-col bg-swansons-navy"
-        style={{ height: "100dvh" }}
+        style={{ height: "100svh" }}
       >
         <div className="flex flex-col h-full max-w-lg mx-auto w-full">
           {/* ── Scrollable messages ── */}
