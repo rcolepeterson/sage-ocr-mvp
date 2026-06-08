@@ -119,6 +119,10 @@ export default function ThreadDetailPage() {
         photoURL || undefined,
       );
       setReply("");
+      setReply("");
+      // reset textarea height
+      const textarea = document.querySelector("textarea");
+      if (textarea) textarea.style.height = "auto";
       setPhotoFile(null);
       setPhotoPreview("");
       setUploadProgress(0);
@@ -265,10 +269,16 @@ export default function ThreadDetailPage() {
             <form onSubmit={handleReply}>
               <div className="border border-gray-200 rounded-2xl p-4">
                 <textarea
-                  className="w-full font-body text-swansons-text placeholder:text-swansons-muted text-base resize-none focus:outline-none min-h-16 bg-transparent"
+                  className="w-full font-body text-swansons-text placeholder:text-swansons-muted text-base resize-none focus:outline-none bg-transparent"
                   placeholder="Send a reply"
                   value={reply}
-                  onChange={(e) => setReply(e.target.value)}
+                  rows={2}
+                  onChange={(e) => {
+                    setReply(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height =
+                      Math.min(e.target.scrollHeight, 160) + "px";
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();

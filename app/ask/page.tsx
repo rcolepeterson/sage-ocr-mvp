@@ -254,14 +254,19 @@ function AskPageInner() {
             <form onSubmit={handleSubmit}>
               <div className="bg-white p-4 shadow-sm rounded-2xl">
                 <textarea
-                  className="w-full font-body text-swansons-text placeholder:text-swansons-muted text-base resize-none focus:outline-none min-h-20 bg-transparent"
+                  className="w-full font-body text-swansons-text placeholder:text-swansons-muted text-base resize-none focus:outline-none bg-transparent"
                   placeholder={
                     urlPlantName
                       ? `What would you like to know about your ${urlPlantName}?`
                       : "Chat gardening"
                   }
                   value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
+                  rows={2}
+                  onChange={(e) => {
+                    setQuestion(e.target.value);
+                    e.target.style.height = "auto";
+                    e.target.style.height = e.target.scrollHeight + "px";
+                  }}
                   disabled={submitting || uploading}
                 />
 
