@@ -13,6 +13,11 @@ const HIDE_ON = [
   "/settings",
 ];
 
+const BACK_DESTINATIONS: { prefix: string; destination: string }[] = [
+  { prefix: "/ask/", destination: "/ask" },
+  { prefix: "/plant/", destination: "/spaces" },
+];
+
 export default function BackButton() {
   const router = useRouter();
   const pathname = usePathname();
@@ -29,10 +34,21 @@ export default function BackButton() {
   )
     return null;
 
+  const handleClick = () => {
+    const destination = BACK_DESTINATIONS.find((d) =>
+      pathname.startsWith(d.prefix),
+    );
+    if (destination) {
+      router.replace(destination.destination);
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <button
       aria-label="Back"
-      onClick={() => router.back()}
+      onClick={handleClick}
       className="fixed top-5 left-4 z-40 p-2 cursor-pointer bg-white/70 backdrop-blur-sm rounded-lg"
     >
       <svg
