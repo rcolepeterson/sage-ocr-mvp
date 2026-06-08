@@ -40,6 +40,7 @@ export default function LandingPage() {
     <main
       className="h-screen flex flex-col items-center justify-center px-6 overflow-hidden"
       style={{
+        height: "100dvh",
         backgroundImage: "url('/images/LandingPage_BG.png')",
         backgroundSize: "cover",
         backgroundPosition: "top",
