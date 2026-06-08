@@ -1084,13 +1084,6 @@ function ThreadQueueTab({
             No threads found.
           </div>
         )}
-        {filtered.length > 0 && (
-          <div className="flex justify-center py-4 border-t">
-            <button className="font-body text-sm text-swansons-navy underline underline-offset-2">
-              Load More
-            </button>
-          </div>
-        )}
       </div>
 
       {previewThread && (

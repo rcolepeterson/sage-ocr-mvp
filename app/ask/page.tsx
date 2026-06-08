@@ -384,9 +384,6 @@ function AskPageInner() {
                   </motion.div>
                 );
               })}
-              <button className="font-body text-white/50 text-sm text-center mt-2 underline underline-offset-2 cursor-pointer">
-                Load More
-              </button>
             </div>
           )}
         </motion.div>
