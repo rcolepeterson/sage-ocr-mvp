@@ -9,7 +9,6 @@ const HIDE_ON = [
   "/unauthorized",
   "/terms",
   "/onboarding",
-  "/ask",
   "/admin",
   "/settings",
 ];
@@ -18,10 +17,15 @@ export default function BackButton() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
+  const isDarkBg = pathname.startsWith("/ask/");
 
+  // Also hide on exact /ask (thread list) but NOT on /ask/[threadId]
   if (
     !user ||
-    HIDE_ON.some((path) => pathname === path || pathname.startsWith(path + "/"))
+    HIDE_ON.some(
+      (path) => pathname === path || pathname.startsWith(path + "/"),
+    ) ||
+    pathname === "/ask"
   )
     return null;
 
@@ -29,7 +33,9 @@ export default function BackButton() {
     <button
       aria-label="Back"
       onClick={() => router.back()}
-      className="fixed top-4 left-2 z-40 text-swansons-navy p-2 cursor-pointer"
+      className={`fixed top-4 left-2 z-40 p-2 cursor-pointer ${
+        isDarkBg ? "text-white" : "text-swansons-navy"
+      }`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
