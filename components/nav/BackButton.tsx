@@ -11,18 +11,13 @@ const HIDE_ON = [
   "/onboarding",
   "/admin",
   "/settings",
-];
-
-const BACK_DESTINATIONS: { prefix: string; destination: string }[] = [
-  { prefix: "/ask/", destination: "/ask" },
-  { prefix: "/plant/", destination: "/spaces" },
+  "/spaces",
 ];
 
 export default function BackButton() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
-  const isDarkBg = pathname.startsWith("/ask/");
 
   // Also hide on exact /ask (thread list) but NOT on /ask/[threadId]
   if (
@@ -34,21 +29,10 @@ export default function BackButton() {
   )
     return null;
 
-  const handleClick = () => {
-    const destination = BACK_DESTINATIONS.find((d) =>
-      pathname.startsWith(d.prefix),
-    );
-    if (destination) {
-      router.replace(destination.destination);
-    } else {
-      router.back();
-    }
-  };
-
   return (
     <button
       aria-label="Back"
-      onClick={handleClick}
+      onClick={() => router.back()}
       className="fixed top-5 left-4 z-40 p-2 cursor-pointer bg-white/70 backdrop-blur-sm rounded-lg"
     >
       <svg
