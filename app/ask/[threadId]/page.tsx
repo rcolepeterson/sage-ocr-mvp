@@ -87,6 +87,15 @@ export default function ThreadDetailPage() {
     fetchStaffData();
   }, [thread?.replies]);
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
+
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!reply.trim() && !photoFile) || !user) return;
@@ -131,6 +140,7 @@ export default function ThreadDetailPage() {
   return (
     <ProtectedRoute>
       <main
+        data-lenis-prevent
         className="flex flex-col bg-swansons-navy"
         style={{ height: "100dvh" }}
       >
