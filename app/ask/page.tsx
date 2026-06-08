@@ -171,7 +171,7 @@ function AskPageInner() {
               Ask an expert
             </h1>
             <p className="font-body text-swansons-muted text-center text-sm mb-5">
-              Choose a space & plant (optional)
+              Choose a space & plant to continue
             </p>
           </motion.div>
 
@@ -257,6 +257,12 @@ function AskPageInner() {
             )}
           </motion.div>
 
+          {!urlPlantId && !selectedPlantId && (
+            <p className="font-body text-swansons-muted text-sm text-center mb-4 italic">
+              Select a space and plant above to continue
+            </p>
+          )}
+
           {/* Input area */}
           <motion.div variants={itemVariants}>
             <form onSubmit={handleSubmit}>
@@ -318,7 +324,12 @@ function AskPageInner() {
                   </PhotoPicker>
                   <button
                     type="submit"
-                    disabled={submitting || uploading || !question.trim()}
+                    disabled={
+                      submitting ||
+                      uploading ||
+                      !question.trim() ||
+                      (!urlPlantId && !selectedPlantId)
+                    }
                     className="w-9 h-9 rounded-full bg-swansons-navy flex items-center justify-center text-white disabled:opacity-40 hover:opacity-90 transition cursor-pointer"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
