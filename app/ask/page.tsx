@@ -345,35 +345,50 @@ function AskPageInner() {
             </p>
           ) : (
             <div className="flex flex-col gap-3">
-              {threads.map((thread, index) => {
-                const badge = getStatusBadge(thread.status);
-                return (
-                  <motion.div
-                    key={thread.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
-                  >
-                    <Link href={`/ask/${thread.id}`}>
-                      <div className="bg-white hover:bg-gray-50 transition rounded-2xl px-4 py-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-body text-xs text-swansons-navy">
-                            {formatDate(thread.createdAt)}
-                          </span>
-                          <span
-                            className={`font-body text-xs px-3 py-1 rounded-full font-semibold ${badge.className}`}
-                          >
-                            {badge.label}
-                          </span>
+              {[...threads]
+                .sort((a, b) => {
+                  const priority = (t: any) =>
+                    t.status === "waiting-on-customer"
+                      ? 0
+                      : t.status === "closed"
+                        ? 2
+                        : 1;
+                  if (priority(a) !== priority(b))
+                    return priority(a) - priority(b);
+                  return (
+                    (b.createdAt?.toMillis?.() || 0) -
+                    (a.createdAt?.toMillis?.() || 0)
+                  );
+                })
+                .map((thread, index) => {
+                  const badge = getStatusBadge(thread.status);
+                  return (
+                    <motion.div
+                      key={thread.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.05 }}
+                    >
+                      <Link href={`/ask/${thread.id}`}>
+                        <div className="bg-white hover:bg-gray-50 transition rounded-2xl px-4 py-4">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-body text-xs text-swansons-navy">
+                              {formatDate(thread.createdAt)}
+                            </span>
+                            <span
+                              className={`font-body text-xs px-3 py-1 rounded-full font-semibold ${badge.className}`}
+                            >
+                              {badge.label}
+                            </span>
+                          </div>
+                          <p className="font-body text-swansons-navy text-sm truncate underline">
+                            {thread.question}
+                          </p>
                         </div>
-                        <p className="font-body text-swansons-navy text-sm truncate underline">
-                          {thread.question}
-                        </p>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
             </div>
           )}
         </motion.div>
