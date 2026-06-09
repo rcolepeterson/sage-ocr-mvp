@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 }
 
 const LoadingScreen = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-swansons-cream">
+  <div className="fixed inset-0 flex flex-col items-center justify-center gap-6 bg-swansons-cream z-50">
     <Logo width={120} height={60} />
     <div className="flex flex-col items-center gap-3">
       <div className="w-8 h-8 rounded-full border-2 border-swansons-green border-t-transparent animate-spin" />
