@@ -121,6 +121,48 @@ function ThinkingOverlay() {
   );
 }
 
+function ManualEntryModal({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (query: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading font-bold text-swansons-navy">Can&apos;t find your plant?</h2>
+          <button onClick={onClose} className="text-swansons-muted hover:text-swansons-navy transition">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M4 4l12 12M16 4L4 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <p className="font-body text-swansons-muted text-sm mb-4">
+          Enter the plant name manually and we&apos;ll look it up for you.
+        </p>
+        <input
+          className="input w-full mb-4"
+          placeholder="Enter plant name..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          autoFocus
+        />
+        <Button
+          onClick={() => { onSubmit(query); onClose(); }}
+          disabled={!query.trim()}
+          variant="primary"
+          className="w-full rounded-full"
+        >
+          Find Plant
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -131,7 +173,6 @@ export default function ScanPage() {
   /* step */
   const [step, setStep] = useState<ScanStep>("idle");
   const [showManual, setShowManual] = useState(false);
-  const [manualQuery, setManualQuery] = useState("");
 
   /* errors */
   const [error, setError] = useState<string | null>(null);
@@ -555,35 +596,10 @@ export default function ScanPage() {
             </Button>
           </motion.div>
 
-          {showManual && (
-            <motion.div
-              variants={itemVariants}
-              className="bg-white rounded-2xl p-4 my-4 text-center"
-            >
-              <p className="text-xs font-body text-swansons-muted mb-2">
-                Manual entry
-              </p>
-              <input
-                className="input w-full mb-3"
-                placeholder="Enter plant name manually..."
-                value={manualQuery}
-                onChange={(e) => setManualQuery(e.target.value)}
-              />
-              <Button
-                onClick={() => handleScan(manualQuery)}
-                disabled={!manualQuery.trim()}
-                variant="primary"
-                className="w-full rounded-full"
-              >
-                Submit Manual Query
-              </Button>
-            </motion.div>
-          )}
-
           <motion.p
             variants={itemVariants}
             className="text-center font-body text-sm text-swansons-muted underline cursor-pointer mt-8"
-            onClick={() => setShowManual(!showManual)}
+            onClick={() => setShowManual(true)}
           >
             Can&apos;t find tag or label?
           </motion.p>
@@ -878,6 +894,13 @@ export default function ScanPage() {
           </details>
         </div>
       )} */}
+
+      {showManual && (
+        <ManualEntryModal
+          onClose={() => setShowManual(false)}
+          onSubmit={(query) => handleScan(query)}
+        />
+      )}
 
       <canvas ref={canvasRef} className="hidden" />
     </main>
