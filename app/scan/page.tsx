@@ -242,7 +242,14 @@ export default function ScanPage() {
 
   /* init camera */
   useEffect(() => {
+    const video = videoRef.current; // ← capture here, outside return
     initCamera("environment");
+    return () => {
+      if (video?.srcObject) {
+        (video.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
+        video.srcObject = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -486,7 +493,7 @@ export default function ScanPage() {
       {/* Camera — only during idle + scanning */}
       {(step === "idle" || step === "scanning") && !cameraError && (
         <div className="px-4 pt-4 relative">
-          <div className="rounded-2xl overflow-hidden bg-black aspect-[4/5]">
+          <div className="rounded-2xl overflow-hidden bg-black aspect-4/5">
             <video
               ref={videoRef}
               autoPlay
