@@ -267,7 +267,9 @@ function AskPageInner() {
                     e.target.style.height = "auto";
                     e.target.style.height = e.target.scrollHeight + "px";
                   }}
-                  disabled={submitting || uploading}
+                  disabled={
+                    submitting || uploading || (!urlPlantId && !selectedPlantId)
+                  }
                 />
 
                 {photoPreview && (
