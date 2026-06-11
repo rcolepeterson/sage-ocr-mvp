@@ -171,20 +171,24 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
-    const emailPromises = [
-      resend.emails
+    const emailPromises = usersSnap.docs.map((userDoc) => {
+      const userData = userDoc.data();
+      if (!userData.email) return Promise.resolve();
+      return resend.emails
         .send({
           from: "Sage by Swansons <hello@sagebyswansons.com>",
-          // TODO: replace with actual recipient emails once
-          // Swansons domain is verified at resend.com/domains
-          to: "rcolepeterson@gmail.com",
+          to: userData.email,
           subject: safeTitle,
           html: emailHtml,
         })
         .catch((err) =>
-          console.warn("[broadcast] email failed:", err?.message),
-        ),
-    ];
+          console.warn(
+            "[broadcast] email failed for",
+            userData.email,
+            err?.message,
+          ),
+        );
+    });
 
     await Promise.all(emailPromises);
 
