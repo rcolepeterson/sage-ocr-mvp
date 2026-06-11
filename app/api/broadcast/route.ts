@@ -159,17 +159,26 @@ export async function POST(req: NextRequest) {
     const { Resend } = await import("resend");
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const ctaButtonHtml = ctaUrl
-      ? `<p style="margin-top:20px"><a href="${ctaUrl}" style="background:#1a2e44;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;font-family:sans-serif;font-size:14px;display:inline-block">${ctaLabel || "Learn more →"}</a></p>`
-      : "";
-
     const emailHtml = `
-      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px">
-        <h1 style="font-size:22px;color:#1a2e44;margin-bottom:12px">${safeTitle}</h1>
-        <p style="font-size:15px;color:#333;line-height:1.6;margin-bottom:0">${safeBody}</p>
-        ${ctaButtonHtml}
-      </div>
-    `;
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#333;">
+  <p style="font-size:15px;line-height:1.6;margin-bottom:24px;">${safeTitle}</p>
+  <p style="margin-bottom:32px;">
+    <a href="https://sagebyswansons.com/dashboard?notifications=open" style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-family:sans-serif;font-size:14px;display:inline-block;">
+      View notification →
+    </a>
+  </p>
+  <hr style="border:none;border-top:1px solid #eee;margin-bottom:24px;" />
+  <p style="font-size:12px;color:#999;line-height:1.6;margin-bottom:8px;">
+    You're receiving expert advice, seasonal plant tips and offers from Sage.
+  </p>
+  <p style="font-size:12px;color:#999;margin-bottom:8px;">
+    <a href="https://sagebyswansons.com/unsubscribe" style="color:#999;">Unsubscribe</a>
+  </p>
+  <p style="font-size:12px;color:#999;">
+    Swansons Nursery · 9701 15th Ave NW, Seattle, WA 98117
+  </p>
+</div>
+`;
 
     const emailPromises = usersSnap.docs.map((userDoc) => {
       const userData = userDoc.data();
