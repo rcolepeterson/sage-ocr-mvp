@@ -399,7 +399,9 @@ function AdminInboxPage() {
         await addDoc(collection(db, "notifications"), {
           userId: selectedThread.userId,
           title: "New reply from Swansons",
-          body: reply.trim() || "A staff member replied to your thread.",
+          body:
+            reply.trim().slice(0, 160) ||
+            "A staff member replied to your thread.",
           type: "reply",
           read: false,
           createdAt: serverTimestamp(),
