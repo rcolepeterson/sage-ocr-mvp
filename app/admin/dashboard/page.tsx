@@ -1005,7 +1005,7 @@ function ThreadQueueTab({
                   key={t.id}
                   className="bg-white text-sm font-body hover:opacity-90 transition"
                 >
-                  <td className="px-4 py-3 text-swansons-text font-medium rounded-l-xl">
+                  <td className="px-4 py-3 text-swansons-text font-medium rounded-l-xl ">
                     {customerName}
                   </td>
                   <td className="px-4 py-3 text-swansons-muted max-w-[140px] truncate">
