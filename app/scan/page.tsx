@@ -73,8 +73,8 @@ function ErrorBanner({
 /* ─── Scanning overlay — OCR phase ──────────────────────────────────────── */
 function ScanningOverlay() {
   return (
-    <div className="flex flex-col items-center justify-center py-12">
-      <LottieAnimation animationData={scanAnimation} className="w-64 h-64" />
+    <div className="flex flex-col items-center justify-center pt-6 pb-12">
+      <LottieAnimation animationData={scanAnimation} className="w-48 h-48" />
       <p className="font-heading text-2xl font-bold text-swansons-navy">
         Hold Still
       </p>
