@@ -942,10 +942,10 @@ function ThreadQueueTab({
         ))}
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-2xl shadow-sm">
-        <table className="min-w-full">
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-separate border-spacing-y-3">
           <thead>
-            <tr className="text-xs font-body uppercase tracking-wide text-swansons-muted border-b">
+            <tr className="text-xs font-body uppercase tracking-wide text-swansons-muted">
               <th className="px-4 py-3 text-left">Customer</th>
               <th className="px-4 py-3 text-left">Plant</th>
               <th className="px-4 py-3 text-left">Status</th>
@@ -995,9 +995,9 @@ function ThreadQueueTab({
               return (
                 <tr
                   key={t.id}
-                  className="border-b last:border-0 text-sm font-body hover:bg-swansons-cream/40 transition"
+                  className="bg-white shadow-sm text-sm font-body hover:opacity-90 transition"
                 >
-                  <td className="px-4 py-3 text-swansons-text font-medium">
+                  <td className="px-4 py-3 text-swansons-text font-medium rounded-l-xl">
                     {customerName}
                   </td>
                   <td className="px-4 py-3 text-swansons-muted max-w-[140px] truncate">
@@ -1046,7 +1046,7 @@ function ThreadQueueTab({
                   <td className="px-4 py-3 text-swansons-text">
                     {assigned ? assigned.displayName : "—"}
                   </td>
-                  <td className="px-4 py-3 pr-4 w-48">
+                  <td className="px-4 py-3 pr-4 w-48 rounded-r-xl">
                     <div className="flex items-center justify-between gap-2">
                       <AssignDropdown
                         thread={t}
