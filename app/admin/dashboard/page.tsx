@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -916,7 +917,7 @@ function ThreadQueueTab({
         {FILTERS.map((f) => (
           <button
             key={f.key}
-            className={`px-4 py-1.5 rounded-full border text-xs font-body font-medium transition-all ${
+            className={`px-4 py-1.5 rounded-full border-2 text-xs font-body font-bold transition-all ${
               filters.includes(f.key)
                 ? "bg-swansons-navy text-white border-swansons-navy"
                 : "bg-white text-swansons-navy border-swansons-navy"
