@@ -5,9 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/broadcast
- * Admin-only. Sends a broadcast notification to all matching customers.
- * Filters by plantTags (OR logic) or sends to all customers if sendToAll is true.
+ * Admin-only. Sends a broadcast notification to all matching users.
+ * Filters by plantTags (OR logic) or sends to all users if sendToAll is true.
  * Writes one /notifications doc per recipient + one /broadcasts record.
+ * Sends emails using Resend Batch API (max 100 per call) to avoid rate limiting.
  *
  * Body: {
  *   title: string
@@ -17,8 +18,6 @@ import { NextRequest, NextResponse } from "next/server";
  *   sentBy: string       // admin uid
  *   sentByName: string   // admin displayName
  * }
- *
- * Uses FIREBASE_ADMIN_CREDENTIALS_JSON (sage-swansons-e4677 Firebase Admin SDK).
  */
 export async function POST(req: NextRequest) {
   try {
@@ -83,19 +82,14 @@ export async function POST(req: NextRequest) {
     const safeTitle = title.slice(0, 50);
     const safeBody = body.slice(0, 160);
 
-    // ── 5. Query target customers ────────────────────────────────────────────
-    // All users receive broadcasts regardless of role
+    // ── 5. Query target users ────────────────────────────────────────────────
     let usersQuery;
-
     if (sendToAll) {
       usersQuery = adminDb.collection("users");
     } else {
-      // array-contains-any = OR logic across tags (Firestore limit: 30)
       const queryTags = tags.slice(0, 30);
       if (tags.length > 30) {
-        console.warn(
-          `[broadcast] tag count (${tags.length}) exceeds Firestore limit of 30 — truncated`,
-        );
+        console.warn(`[broadcast] tag count (${tags.length}) truncated to 30`);
       }
       usersQuery = adminDb
         .collection("users")
@@ -112,7 +106,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 6. Create broadcast record (status: "sending") ───────────────────────
+    // ── 6. Create broadcast record ───────────────────────────────────────────
     const broadcastRef = adminDb.collection("broadcasts").doc();
     await broadcastRef.set({
       title: safeTitle,
@@ -128,15 +122,13 @@ export async function POST(req: NextRequest) {
       ...(ctaLabel ? { ctaLabel: String(ctaLabel).slice(0, 35) } : {}),
     });
 
-    // ── 7. Write notifications in batches of 499 ─────────────────────────────
-    // Firestore batch limit is 500 ops — using 499 to leave room for broadcast update
+    // ── 7. Write notifications in Firestore batches of 499 ───────────────────
     const BATCH_SIZE = 499;
     const userDocs = usersSnap.docs;
 
     for (let i = 0; i < userDocs.length; i += BATCH_SIZE) {
       const batch = adminDb.batch();
       const chunk = userDocs.slice(i, i + BATCH_SIZE);
-
       chunk.forEach((userDoc) => {
         const notifRef = adminDb.collection("notifications").doc();
         batch.set(notifRef, {
@@ -151,61 +143,61 @@ export async function POST(req: NextRequest) {
           ...(ctaLabel ? { ctaLabel: String(ctaLabel).slice(0, 35) } : {}),
         });
       });
-
       await batch.commit();
     }
 
-    // ── 8. Send emails to each recipient ─────────────────────────────────────
+    // ── 8. Send emails using Resend Batch API ────────────────────────────────
+    // Resend batch API handles up to 100 emails per call — no rate limiting issues.
     const { Resend } = await import("resend");
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const emailHtml = `
 <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#333;">
-  <p style="font-size:15px;line-height:1.6;margin-bottom:24px;">${safeTitle}</p>
-  <p style="margin-bottom:32px;">
-    <a href="https://sagebyswansons.com/dashboard?notifications=open" style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-family:sans-serif;font-size:14px;display:inline-block;">
-      View notification →
-    </a>
-  </p>
-  <hr style="border:none;border-top:1px solid #eee;margin-bottom:24px;" />
-  <p style="font-size:12px;color:#999;line-height:1.6;margin-bottom:8px;">
-    You're receiving expert advice, seasonal plant tips and offers from Sage.
-  </p>
-  <p style="font-size:12px;color:#999;margin-bottom:8px;">
-    <a href="https://sagebyswansons.com/unsubscribe" style="color:#999;">Unsubscribe</a>
-  </p>
-  <p style="font-size:12px;color:#999;">
-    Swansons Nursery · 9701 15th Ave NW, Seattle, WA 98117
-  </p>
-</div>
-`;
+ <p style="font-size:15px;line-height:1.6;margin-bottom:24px;">${safeTitle}</p>
+ <p style="margin-bottom:32px;">
+   <a href="https://sagebyswansons.com/dashboard?notifications=open"
+      style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-family:sans-serif;font-size:14px;display:inline-block;">
+     View notification →
+   </a>
+ </p>
+ <hr style="border:none;border-top:1px solid #eee;margin-bottom:24px;" />
+ <p style="font-size:12px;color:#999;line-height:1.6;margin-bottom:8px;">
+   You're receiving expert advice, seasonal plant tips and offers from Sage.
+ </p>
+ <p style="font-size:12px;color:#999;margin-bottom:8px;">
+   <a href="https://sagebyswansons.com/unsubscribe" style="color:#999;">Unsubscribe</a>
+ </p>
+ <p style="font-size:12px;color:#999;">
+   Swansons Nursery · 9701 15th Ave NW, Seattle, WA 98117
+ </p>
+</div>`;
 
-    const emailPromises = usersSnap.docs.map((userDoc) => {
-      const userData = userDoc.data();
-      if (!userData.email) return Promise.resolve();
-      return resend.emails
-        .send({
-          from: "Sage by Swansons <hello@sagebyswansons.com>",
-          to: userData.email,
-          subject: safeTitle,
-          html: emailHtml,
-        })
-        .catch((err) =>
-          console.warn(
-            "[broadcast] email failed for",
-            userData.email,
-            err?.message,
-          ),
-        );
-    });
+    // Build email list — skip users with no email address
+    const emailList = userDocs
+      .map((doc) => doc.data())
+      .filter((userData) => !!userData.email)
+      .map((userData) => ({
+        from: "Sage by Swansons <hello@sagebyswansons.com>",
+        to: userData.email as string,
+        subject: "You received a new notification from Sage by Swansons",
+        html: emailHtml,
+      }));
 
-    await Promise.all(emailPromises);
+    // Send in chunks of 100 (Resend batch limit per call)
+    const EMAIL_BATCH_SIZE = 100;
+    for (let i = 0; i < emailList.length; i += EMAIL_BATCH_SIZE) {
+      const chunk = emailList.slice(i, i + EMAIL_BATCH_SIZE);
+      await resend.batch.send(chunk);
+      console.log(
+        `[broadcast] emails sent: ${Math.min(i + EMAIL_BATCH_SIZE, emailList.length)}/${emailList.length}`,
+      );
+    }
 
     // ── 9. Mark broadcast as sent ─────────────────────────────────────────────
     await broadcastRef.update({ status: "sent" });
 
     console.log(
-      `[broadcast] sent to ${recipientCount} users, broadcastId: ${broadcastRef.id}`,
+      `[broadcast] complete — ${recipientCount} notifications, ${emailList.length} emails, broadcastId: ${broadcastRef.id}`,
     );
 
     return NextResponse.json({
