@@ -19,7 +19,7 @@ const PAGE_IMAGES: Record<string, string> = {
   "/dashboard": "/images/BG_HomeDashboard.png",
   "/spaces": "/images/BG_YourSpaces.png",
   "/ask": "/images/BG_Rubeckia_LowerRight.png",
-  "/scan": "/images/FullWidthTest.png",
+  "/scan": "/images/BG_Rubeckia_LowerRight.png",
   "/onboarding": "/images/BG_LowerFlowerStem.png",
   "/signin": "/images/BG_SignIn.png",
   "/settings": "/images/FullWidthTest.png",
