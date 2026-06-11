@@ -173,3 +173,27 @@
 - Audit log
 - Search & Export
 - SMS notifications via Twilio
+
+## Test Data & Seeding
+
+### Broadcast Notification Test Users
+
+100 fake test users were created to test the admin broadcast notification feature.
+
+**To seed 100 test users:**
+
+```bash
+npm run seed
+To delete all test users:
+
+bash
+npm run delete-seed
+What the test users have:
+
+Emails: testuser1@fake.com through testuser100@fake.com
+Role: customer
+Each has 3–6 randomly selected plantTags for testing tag-based broadcast filtering
+Scripts location: /scripts/seed-users.ts and /scripts/delete-seed-users.ts
+
+Note: Scripts read FIREBASE_ADMIN_CREDENTIALS_JSON directly from .env.local using { } bounds extraction — dotenv cannot be used here because the value is stored as multi-line JSON wrapped in single quotes.
+```
