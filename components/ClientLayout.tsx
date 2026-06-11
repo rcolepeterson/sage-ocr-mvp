@@ -15,6 +15,16 @@ const NO_TOP_PADDING = [
 ];
 const NO_MAX_WIDTH = ["/admin"];
 
+const PAGE_IMAGES: Record<string, string> = {
+  "/dashboard": "/images/FullWidthTest.png",
+  "/spaces": "/images/BG_YourSpaces.png",
+  "/ask": "/images/FullWidthTest.png",
+  "/scan": "/images/FullWidthTest.png",
+  "/onboarding": "/images/BG_LowerFlowerStem.png",
+  "/signin": "/images/FullWidthTest.png",
+  "/settings": "/images/FullWidthTest.png",
+};
+
 export default function ClientLayout({
   children,
 }: {
@@ -29,6 +39,7 @@ export default function ClientLayout({
   );
   const isAdmin = pathname.startsWith("/admin");
   const isLanding = pathname === "/";
+  const bgImage = PAGE_IMAGES[pathname] || "/images/FullWidthTest.png";
 
   return (
     <div
@@ -40,14 +51,10 @@ export default function ClientLayout({
     >
       {!isAdmin && !isLanding && (
         <div
-          className="fixed top-0 w-full max-w-lg pointer-events-none select-none overflow-hidden"
-          style={{ left: "max(0px, calc(50vw - 256px))" }}
+          className="absolute top-0 w-full max-w-lg pointer-events-none select-none overflow-hidden"
+          // style={{ left: "max(0px, calc(50vw - 256px))" }}
         >
-          <img
-            src="/images/FullWidthTest.png"
-            alt=""
-            className="w-full h-auto"
-          />
+          <img src={bgImage} alt="" className="w-full h-auto" />
         </div>
       )}
       <div
