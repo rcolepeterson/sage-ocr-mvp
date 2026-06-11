@@ -413,8 +413,29 @@ function AdminInboxPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               to: customerData.email,
-              subject: "You have a new reply from Swansons Nursery",
-              html: `<div style="font-family:sans-serif;padding:32px"><h2 style="color:#141f62">New reply from Swansons</h2><p>${reply.trim() || "A staff member replied."}</p><a href="https://sagebyswansons.com//ask/${selectedThread.id}" style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;display:inline-block;margin-top:20px">View reply →</a></div>`,
+              subject: "New reply from Swansons Staff",
+              html: `
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#333;">
+<p style="font-size:15px;line-height:1.6;margin-bottom:24px;">
+  ${(reply.trim() || "A staff member replied to your thread.").slice(0, 160)}
+</p>
+<p style="margin-bottom:32px;">
+  <a href="https://sagebyswansons.com/ask/${selectedThread.id}"
+     style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-family:sans-serif;font-size:14px;display:inline-block;">
+    View and reply →
+  </a>
+</p>
+<hr style="border:none;border-top:1px solid #eee;margin-bottom:24px;" />
+<p style="font-size:12px;color:#999;line-height:1.6;margin-bottom:8px;">
+  You're receiving expert advice, seasonal plant tips and offers from Sage.
+</p>
+<p style="font-size:12px;color:#999;margin-bottom:8px;">
+  <a href="https://sagebyswansons.com/unsubscribe" style="color:#999;">Unsubscribe</a>
+</p>
+<p style="font-size:12px;color:#999;">
+  Swansons Nursery · 9701 15th Ave NW, Seattle, WA 98117
+</p>
+</div>`,
             }),
           }).catch(() => {});
         }
