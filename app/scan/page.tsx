@@ -765,7 +765,7 @@ export default function ScanPage() {
       {/* ── CREATE SPACE ─────────────────────────────────────────────────── */}
       {step === "create-space" && (
         <motion.div
-          className="px-4 pt-2 pb-36 max-w-lg mx-auto"
+          className="px-4 pt-2  max-w-lg mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="show"
@@ -880,7 +880,7 @@ export default function ScanPage() {
             </div>
           </motion.div>
 
-          <div className="fixed bottom-0 left-0 right-0 bg-swansons-navy px-6 py-5 flex flex-col items-center gap-3">
+          <div className="bg-swansons-navy -mx-4 px-6 py-5 flex flex-col items-center gap-3 mt-8">
             <Button
               onClick={handleCreateAndSave}
               disabled={saving || !newSpaceName.trim()}
