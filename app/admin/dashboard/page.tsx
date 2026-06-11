@@ -1003,7 +1003,7 @@ function ThreadQueueTab({
               return (
                 <tr
                   key={t.id}
-                  className="bg-white shadow-sm text-sm font-body hover:opacity-90 transition"
+                  className="bg-white text-sm font-body hover:opacity-90 transition"
                 >
                   <td className="px-4 py-3 text-swansons-text font-medium rounded-l-xl">
                     {customerName}
