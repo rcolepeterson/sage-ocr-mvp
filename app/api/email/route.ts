@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const { Resend } = await import("resend");
     const resend = new Resend(process.env.RESEND_API_KEY);
     const data = await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: "Sage by Swansons <hello@sagebyswansons.com>",
       to,
       subject,
       html,

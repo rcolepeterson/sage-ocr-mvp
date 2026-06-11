@@ -414,7 +414,7 @@ function AdminInboxPage() {
             body: JSON.stringify({
               to: customerData.email,
               subject: "You have a new reply from Swansons Nursery",
-              html: `<div style="font-family:sans-serif;padding:32px"><h2 style="color:#141f62">New reply from Swansons</h2><p>${reply.trim() || "A staff member replied."}</p><a href="https://sage-ocr-mvp-one.vercel.app/ask/${selectedThread.id}" style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;display:inline-block;margin-top:20px">View reply →</a></div>`,
+              html: `<div style="font-family:sans-serif;padding:32px"><h2 style="color:#141f62">New reply from Swansons</h2><p>${reply.trim() || "A staff member replied."}</p><a href="https://sagebyswansons.com//ask/${selectedThread.id}" style="background:#141f62;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;display:inline-block;margin-top:20px">View reply →</a></div>`,
             }),
           }).catch(() => {});
         }

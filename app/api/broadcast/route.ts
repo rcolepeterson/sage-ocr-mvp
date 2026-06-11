@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
     const emailPromises = [
       resend.emails
         .send({
-          from: "onboarding@resend.dev",
+          from: "Sage by Swansons <hello@sagebyswansons.com>",
           // TODO: replace with actual recipient emails once
           // Swansons domain is verified at resend.com/domains
           to: "rcolepeterson@gmail.com",
