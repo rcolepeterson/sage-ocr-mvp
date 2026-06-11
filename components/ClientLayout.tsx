@@ -16,7 +16,7 @@ const NO_TOP_PADDING = [
 const NO_MAX_WIDTH = ["/admin"];
 
 const PAGE_IMAGES: Record<string, string> = {
-  "/dashboard": "/images/FullWidthTest.png",
+  "/dashboard": "/images/BG_HomeDashboard.png",
   "/spaces": "/images/BG_YourSpaces.png",
   "/ask": "/images/FullWidthTest.png",
   "/scan": "/images/FullWidthTest.png",
@@ -39,7 +39,11 @@ export default function ClientLayout({
   );
   const isAdmin = pathname.startsWith("/admin");
   const isLanding = pathname === "/";
-  const bgImage = PAGE_IMAGES[pathname] || "/images/FullWidthTest.png";
+  const bgImage =
+    PAGE_IMAGES[pathname] ||
+    (pathname.startsWith("/plant/")
+      ? "/images/BG_PlantProfile.png"
+      : "/images/FullWidthTest.png");
 
   return (
     <div
