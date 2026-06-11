@@ -51,8 +51,8 @@ export default function ClientLayout({
     >
       {!isAdmin && !isLanding && (
         <div
-          className="absolute top-0 w-full max-w-lg pointer-events-none select-none overflow-hidden"
-          // style={{ left: "max(0px, calc(50vw - 256px))" }}
+          className="fixed top-0 w-full max-w-lg pointer-events-none select-none overflow-hidden"
+          style={{ left: "max(0px, calc(50vw - 256px))" }}
         >
           <img src={bgImage} alt="" className="w-full h-auto" />
         </div>
