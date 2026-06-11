@@ -18,7 +18,7 @@ const NO_MAX_WIDTH = ["/admin"];
 const PAGE_IMAGES: Record<string, string> = {
   "/dashboard": "/images/BG_HomeDashboard.png",
   "/spaces": "/images/BG_YourSpaces.png",
-  "/ask": "/images/FullWidthTest.png",
+  "/ask": "/images/BG_Rubeckia_LowerRight.png",
   "/scan": "/images/FullWidthTest.png",
   "/onboarding": "/images/BG_LowerFlowerStem.png",
   "/signin": "/images/BG_SignIn.png",
