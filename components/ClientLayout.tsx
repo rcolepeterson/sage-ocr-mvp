@@ -21,7 +21,7 @@ const PAGE_IMAGES: Record<string, string> = {
   "/ask": "/images/FullWidthTest.png",
   "/scan": "/images/FullWidthTest.png",
   "/onboarding": "/images/BG_LowerFlowerStem.png",
-  "/signin": "/images/FullWidthTest.png",
+  "/signin": "/images/BG_SignIn.png",
   "/settings": "/images/FullWidthTest.png",
 };
 
