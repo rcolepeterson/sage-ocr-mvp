@@ -130,13 +130,29 @@ function ManualEntryModal({
 }) {
   const [query, setQuery] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-heading font-bold text-swansons-navy">Can&apos;t find your plant?</h2>
-          <button onClick={onClose} className="text-swansons-muted hover:text-swansons-navy transition">
+          <h2 className="font-heading font-bold text-swansons-navy">
+            Can&apos;t find your plant?
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-swansons-muted hover:text-swansons-navy transition"
+          >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M4 4l12 12M16 4L4 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M4 4l12 12M16 4L4 16"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -151,7 +167,10 @@ function ManualEntryModal({
           autoFocus
         />
         <Button
-          onClick={() => { onSubmit(query); onClose(); }}
+          onClick={() => {
+            onSubmit(query);
+            onClose();
+          }}
           disabled={!query.trim()}
           variant="primary"
           className="w-full rounded-full"
@@ -534,7 +553,7 @@ export default function ScanPage() {
       {/* Camera — only during idle + scanning */}
       {(step === "idle" || step === "scanning") && !cameraError && (
         <div className="px-4 pt-4 relative">
-          <div className="rounded-2xl overflow-hidden bg-black aspect-4/5">
+          <div className="rounded-2xl overflow-hidden bg-black aspect-4/4">
             <video
               ref={videoRef}
               autoPlay
