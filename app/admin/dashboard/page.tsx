@@ -945,14 +945,18 @@ function ThreadQueueTab({
       <div className="overflow-x-auto">
         <table className="min-w-full border-separate border-spacing-y-3">
           <thead>
-            <tr className="text-xs font-body uppercase tracking-wide text-swansons-muted">
-              <th className="px-4 py-3 text-left">Customer</th>
-              <th className="px-4 py-3 text-left">Plant</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">
+            <tr className="text-xs font-body uppercase tracking-wide text-swansons-black">
+              <th className="px-4 py-3 text-left text-swansons-black">
+                Customer
+              </th>
+              <th className="px-4 py-3 text-left text-swansons-black">Plant</th>
+              <th className="px-4 py-3 text-left text-swansons-black">
+                Status
+              </th>
+              <th className="px-4 py-3 text-left text-swansons-black">
                 <button
                   onClick={() => handleSort("urgent")}
-                  className="flex items-center gap-1 font-body text-xs uppercase tracking-wide text-swansons-muted hover:text-swansons-navy transition"
+                  className="flex items-center gap-1 font-body text-xs uppercase tracking-wide text-swansons-black hover:text-swansons-navy transition"
                 >
                   Urgent
                   <span className="text-swansons-muted">
@@ -964,11 +968,13 @@ function ThreadQueueTab({
                   </span>
                 </button>
               </th>
-              <th className="px-4 py-3 text-left">Wait (hrs)</th>
+              <th className="px-4 py-3 text-left text-swansons-black">
+                Wait (hrs)
+              </th>
               <th className="px-4 py-3 text-left">
                 <button
                   onClick={() => handleSort("assigned")}
-                  className="flex items-center gap-1 font-body text-xs uppercase tracking-wide text-swansons-muted hover:text-swansons-navy transition"
+                  className="flex items-center gap-1 font-body text-xs uppercase tracking-wide text-swansons-black hover:text-swansons-navy transition"
                 >
                   Assigned
                   <span className="text-swansons-muted">
@@ -980,7 +986,9 @@ function ThreadQueueTab({
                   </span>
                 </button>
               </th>
-              <th className="px-4 py-3 text-left">Action</th>
+              <th className="px-4 py-3 text-left text-swansons-black ">
+                Action
+              </th>
             </tr>
           </thead>
           <tbody>
