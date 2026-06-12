@@ -30,6 +30,9 @@ import { Button } from "@/components/ui/Button";
 import type { User as FirebaseUser } from "firebase/auth";
 import Link from "next/link";
 import React from "react";
+/* ✅ Add these two lines */
+import { usePagination } from "@/app/hooks/usePagination";
+import { Pagination } from "@/components/ui/Pagination";
 
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
 function formatCustomerName(displayName?: string | null): string {
@@ -382,6 +385,9 @@ function StaffManagementTab({
       u.email?.toLowerCase().includes(search.toLowerCase()),
   );
 
+  // ✅ Pagination — resets to page 1 when search changes
+  const pagination = usePagination(filtered, [search]);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -430,7 +436,8 @@ function StaffManagementTab({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((u) => {
+            {/* ✅ pagination.paged instead of filtered */}
+            {pagination.paged.map((u) => {
               const activeCount = threads.filter(
                 (t) => t.assignedTo === u.uid && t.status !== "closed",
               ).length;
@@ -441,7 +448,6 @@ function StaffManagementTab({
                 <tr
                   key={u.uid}
                   className="bg-white text-sm font-body hover:opacity-90 transition"
-                  // className="border-b last:border-0 hover:bg-swansons-cream/30 transition"
                 >
                   <td className="px-6 py-4 rounded-l-xl">
                     <div className="w-10 h-10 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-base overflow-hidden shrink-0">
@@ -501,7 +507,26 @@ function StaffManagementTab({
             })}
           </tbody>
         </table>
+
+        {/* ✅ Empty state */}
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-swansons-muted font-body">
+            No staff members found.
+          </div>
+        )}
       </div>
+
+      {/* ✅ Pagination sits between the table and the Add Staff button */}
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.totalItems}
+        hasPrev={pagination.hasPrev}
+        hasNext={pagination.hasNext}
+        onPrev={pagination.prev}
+        onNext={pagination.next}
+        onPage={pagination.setPage}
+      />
 
       <div className="flex flex-col items-center mt-8 gap-2">
         <button
@@ -763,9 +788,11 @@ function ThreadQueueTab({
   const [sortBy, setSortBy] = useState<"assigned" | "urgent" | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
-  // ✅ FIX: Date.now() moved out of render body — initialized via useState,
-  //         refreshed via useEffect whenever threads change
-  const [now] = useState(Date.now);
+  // ✅ FIXED: now properly updates when threads change
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    setNow(Date.now());
+  }, [threads]);
 
   const handleSort = (col: "assigned" | "urgent") => {
     if (sortBy === col) {
@@ -832,6 +859,9 @@ function ThreadQueueTab({
       return (a.urgent ? 1 : 0) - (b.urgent ? 1 : 0);
     });
   }
+
+  // ✅ Pagination — resets when filter or sort changes
+  const pagination = usePagination(sorted, [filters, sortBy, sortDir]);
 
   return (
     <div>
@@ -926,7 +956,8 @@ function ThreadQueueTab({
             </tr>
           </thead>
           <tbody>
-            {sorted.map((t) => {
+            {/* ✅ pagination.paged instead of sorted */}
+            {pagination.paged.map((t) => {
               const waitHrs = Math.round(
                 (now - ((t.createdAt as any)?.toMillis?.() || 0)) / 3600000,
               );
@@ -1022,12 +1053,26 @@ function ThreadQueueTab({
             })}
           </tbody>
         </table>
-        {filtered.length === 0 && (
+
+        {/* ✅ Empty state checks total filtered count, not the paged slice */}
+        {sorted.length === 0 && (
           <div className="text-center py-12 text-swansons-muted font-body">
             No threads found.
           </div>
         )}
       </div>
+
+      {/* ✅ Pagination controls */}
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.totalItems}
+        hasPrev={pagination.hasPrev}
+        hasNext={pagination.hasNext}
+        onPrev={pagination.prev}
+        onNext={pagination.next}
+        onPage={pagination.setPage}
+      />
 
       {previewThread && (
         <ThreadPreviewModal
@@ -1209,6 +1254,9 @@ function SendNotificationsTab() {
       .catch(() => setRecipientCount(null))
       .finally(() => setIsLoadingCount(false));
   }, [selectedTags, sendToAll]);
+
+  // ✅ Pagination for broadcasts list
+  const broadcastPagination = usePagination(broadcasts, []);
 
   const toggleTag = (tag: string) => {
     if (sendToAll) return;
@@ -1532,91 +1580,109 @@ function SendNotificationsTab() {
         </div>
       </div>
 
+      {/* ✅ Broadcasts list — now paginated */}
       {broadcasts.length === 0 ? (
         <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-swansons-muted font-body text-sm">
           No broadcasts sent yet.
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-6 px-5">
-            <span className="w-28 shrink-0 text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
-              Date
-            </span>
-            <span className="w-[30rem] shrink-0 text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
-              Notification
-            </span>
-            <span className="flex-1 text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
-              Tags
-            </span>
-            <div className="w-32 shrink-0 flex justify-start">
-              <span className="text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
-                Audience
+        <>
+          <div className="flex flex-col gap-3">
+            {/* Column headers — unchanged */}
+            <div className="flex items-center gap-6 px-5">
+              <span className="w-28 shrink-0 text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
+                Date
               </span>
-            </div>
-          </div>
-          {broadcasts.map((b) => (
-            <div
-              key={b.id}
-              className="bg-white rounded-2xl p-5 shadow-sm flex items-start gap-6"
-            >
-              <div className="w-28 shrink-0">
-                <p className="font-body text-swansons-muted text-sm">
-                  {b.createdAt
-                    ? new Date(b.createdAt.toMillis())
-                        .toLocaleDateString("en-US", {
-                          month: "2-digit",
-                          day: "2-digit",
-                          year: "numeric",
-                        })
-                        .replace(/\//g, ".")
-                    : "—"}
-                </p>
-              </div>
-
-              <div className="w-[30rem] shrink-0 min-w-0">
-                <p className="font-body font-semibold text-swansons-navy text-sm">
-                  {b.title}
-                </p>
-                <p className="font-body text-swansons-muted text-sm mt-1 line-clamp-2">
-                  {b.body}
-                </p>
-                {b.ctaUrl && (
-                  <a
-                    href={b.ctaUrl}
-                    className="font-body text-sm text-swansons-navy underline underline-offset-2 mt-1 inline-block"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {b.ctaLabel || b.ctaUrl}
-                  </a>
-                )}
-              </div>
-
-              <div className="flex-1 flex flex-wrap gap-1">
-                {b.sendToAll || b.tags.length === 0 ? (
-                  <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-3 py-1 text-xs font-body font-medium">
-                    All customers
-                  </span>
-                ) : (
-                  b.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-3 py-1 text-xs font-body font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))
-                )}
-              </div>
-
-              <div className="w-32 shrink-0 flex justify-start items-start">
-                <span className="font-heading font-bold text-swansons-navy text-4xl leading-none">
-                  {(b.recipientCount ?? 0).toLocaleString()}
+              <span className="w-[30rem] shrink-0 text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
+                Notification
+              </span>
+              <span className="flex-1 text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
+                Tags
+              </span>
+              <div className="w-32 shrink-0 flex justify-start">
+                <span className="text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
+                  Audience
                 </span>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* ✅ broadcastPagination.paged instead of broadcasts */}
+            {broadcastPagination.paged.map((b) => (
+              <div
+                key={b.id}
+                className="bg-white rounded-2xl p-5 shadow-sm flex items-start gap-6"
+              >
+                <div className="w-28 shrink-0">
+                  <p className="font-body text-swansons-muted text-sm">
+                    {b.createdAt
+                      ? new Date(b.createdAt.toMillis())
+                          .toLocaleDateString("en-US", {
+                            month: "2-digit",
+                            day: "2-digit",
+                            year: "numeric",
+                          })
+                          .replace(/\//g, ".")
+                      : "—"}
+                  </p>
+                </div>
+
+                <div className="w-[30rem] shrink-0 min-w-0">
+                  <p className="font-body font-semibold text-swansons-navy text-sm">
+                    {b.title}
+                  </p>
+                  <p className="font-body text-swansons-muted text-sm mt-1 line-clamp-2">
+                    {b.body}
+                  </p>
+                  {b.ctaUrl && (
+                    <a
+                      href={b.ctaUrl}
+                      className="font-body text-sm text-swansons-navy underline underline-offset-2 mt-1 inline-block"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {b.ctaLabel || b.ctaUrl}
+                    </a>
+                  )}
+                </div>
+
+                <div className="flex-1 flex flex-wrap gap-1">
+                  {b.sendToAll || b.tags.length === 0 ? (
+                    <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-3 py-1 text-xs font-body font-medium">
+                      All customers
+                    </span>
+                  ) : (
+                    b.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="bg-swansons-green-muted text-swansons-green-dark rounded-full px-3 py-1 text-xs font-body font-medium"
+                      >
+                        {tag}
+                      </span>
+                    ))
+                  )}
+                </div>
+
+                <div className="w-32 shrink-0 flex justify-start items-start">
+                  <span className="font-heading font-bold text-swansons-navy text-4xl leading-none">
+                    {(b.recipientCount ?? 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ✅ Pagination controls below the list */}
+          <Pagination
+            page={broadcastPagination.page}
+            totalPages={broadcastPagination.totalPages}
+            totalItems={broadcastPagination.totalItems}
+            hasPrev={broadcastPagination.hasPrev}
+            hasNext={broadcastPagination.hasNext}
+            onPrev={broadcastPagination.prev}
+            onNext={broadcastPagination.next}
+            onPage={broadcastPagination.setPage}
+          />
+        </>
       )}
 
       {showConfirm && (
