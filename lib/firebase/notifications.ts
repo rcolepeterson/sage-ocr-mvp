@@ -8,6 +8,7 @@ import {
   updateDoc,
   onSnapshot,
   Timestamp,
+  limit,
 } from "firebase/firestore";
 import { db } from "./firestore";
 
@@ -25,19 +26,20 @@ export interface Notification {
   ctaLabel?: string;
 }
 
-function thirtyDaysAgo(): Date {
-  return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+function sevenDaysAgo(): Date {
+  return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 }
 
-// Get all notifications for a user (last 30 days, newest first)
+// Get all notifications for a user (last 7 days, newest first, max 10)
 export async function getNotificationsForUser(
   userId: string,
 ): Promise<Notification[]> {
   const q = query(
     collection(db, "notifications"),
     where("userId", "==", userId),
-    where("createdAt", ">=", Timestamp.fromDate(thirtyDaysAgo())),
+    where("createdAt", ">=", Timestamp.fromDate(sevenDaysAgo())),
     orderBy("createdAt", "desc"),
+    limit(10),
   );
   const snap = await getDocs(q);
   return snap.docs.map(
@@ -45,7 +47,7 @@ export async function getNotificationsForUser(
   );
 }
 
-// Real-time listener for the home page notification carousel
+// Real-time listener for the home page notification carousel (last 7 days, max 10)
 export function onNotificationsSnapshot(
   userId: string,
   callback: (notifications: Notification[]) => void,
@@ -53,8 +55,9 @@ export function onNotificationsSnapshot(
   const q = query(
     collection(db, "notifications"),
     where("userId", "==", userId),
-    where("createdAt", ">=", Timestamp.fromDate(thirtyDaysAgo())),
+    where("createdAt", ">=", Timestamp.fromDate(sevenDaysAgo())),
     orderBy("createdAt", "desc"),
+    limit(10),
   );
   return onSnapshot(q, (snap) => {
     const notifications = snap.docs.map(
