@@ -567,12 +567,7 @@ type SidebarProps = {
   tab: number;
 };
 
-/* ─── Sidebar — icon only ───────────────────────────────────────────────── */
-type SidebarProps = {
-  user: AppUser | FirebaseUser | null;
-  onTab: (tab: number) => void;
-  tab: number;
-};
+
 
 const NAV_ICONS = [
   {
@@ -676,77 +671,68 @@ function StatCard({ label, value, barColor }: StatCardProps) {
   );
 }
 
-/* ─── AssignDropdown ────────────────────────────────────────────────────── */
-type AssignDropdownProps = {
+/* ─── AssignModal ───────────────────────────────────────────────────────── */
+function AssignModal({
+  thread,
+  staffUsers,
+  onAssign,
+  onClose,
+}: {
   thread: Thread;
   staffUsers: AppUser[];
   onAssign: (threadId: string, staffUid: string | null) => Promise<void>;
-};
-
-function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
-  const ref = React.useRef<HTMLDivElement>(null);
-  const buttonRef = React.useRef<HTMLButtonElement>(null);
-
-  const handleToggle = () => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setOpenUpward(spaceBelow < 150);
-    }
-    setOpen((v) => !v);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
+  onClose: () => void;
+}) {
   return (
-    <div className="relative" ref={ref}>
-      <button
-        ref={buttonRef}
-        className="px-3 py-1.5 rounded-full border border-swansons-navy text-xs font-body text-swansons-navy hover:bg-swansons-navy hover:text-white transition"
-        onClick={handleToggle}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4"
+        onClick={(e) => e.stopPropagation()}
       >
-        {thread.assignedTo ? "Reassign" : "Assign"}
-      </button>
-      {open && (
-        <div
-          className={`absolute z-50 bg-white border rounded-xl shadow-lg w-48 overflow-hidden ${
-            openUpward ? "bottom-full mb-1" : "top-full mt-1"
-          }`}
-        >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading font-bold text-swansons-navy text-lg">
+            Assign Thread
+          </h2>
+          <button
+            onClick={onClose}
+            className="font-body text-sm text-swansons-navy underline underline-offset-2"
+          >
+            Close
+          </button>
+        </div>
+        <p className="font-body text-swansons-muted text-sm mb-4">
+          Select a staff member to assign this thread:
+        </p>
+        <div className="flex flex-col border rounded-xl overflow-hidden mb-4 max-h-60 overflow-y-auto">
           {staffUsers.map((u) => (
             <button
               key={u.uid}
-              className="block w-full text-left px-4 py-2.5 hover:bg-swansons-green-muted text-xs font-body text-swansons-text"
+              className="block w-full text-left px-4 py-3 hover:bg-swansons-green-muted text-sm font-body text-swansons-text border-b last:border-0 cursor-pointer"
               onClick={() => {
                 onAssign(thread.id, u.uid);
-                setOpen(false);
+                onClose();
               }}
             >
-              {u.displayName} {u.specialty ? `(${u.specialty})` : ""}
+              <div className="font-semibold text-swansons-navy">{u.displayName}</div>
+              {u.specialty && (
+                <div className="text-xs text-swansons-muted mt-0.5">{u.specialty}</div>
+              )}
             </button>
           ))}
-          <button
-            className="block w-full text-left px-4 py-2.5 hover:bg-red-50 text-xs font-body text-red-500 border-t"
-            onClick={() => {
-              onAssign(thread.id, null);
-              setOpen(false);
-            }}
-          >
-            Unassign
-          </button>
         </div>
-      )}
+        <button
+          className="w-full text-center py-2.5 hover:bg-red-50 text-sm font-body font-semibold text-red-500 border rounded-xl cursor-pointer"
+          onClick={() => {
+            onAssign(thread.id, null);
+            onClose();
+          }}
+        >
+          Unassign
+        </button>
+      </div>
     </div>
   );
 }
@@ -782,6 +768,7 @@ function ThreadQueueTab({
   setFilters,
 }: ThreadQueueTabProps) {
   const [previewThread, setPreviewThread] = useState<Thread | null>(null);
+  const [assignThread, setAssignThread] = useState<Thread | null>(null);
   const [sortBy, setSortBy] = useState<"assigned" | "urgent" | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -1021,11 +1008,12 @@ function ThreadQueueTab({
                   </td>
                   <td className="px-4 py-3 pr-4 w-48 rounded-r-xl">
                     <div className="flex items-center justify-between gap-2">
-                      <AssignDropdown
-                        thread={t}
-                        staffUsers={staffUsers}
-                        onAssign={onAssign}
-                      />
+                      <button
+                        className="px-3 py-1.5 rounded-full border border-swansons-navy text-xs font-body text-swansons-navy hover:bg-swansons-navy hover:text-white transition cursor-pointer"
+                        onClick={() => setAssignThread(t)}
+                      >
+                        {t.assignedTo ? "Reassign" : "Assign"}
+                      </button>
                       <button
                         onClick={() => setPreviewThread(t)}
                         className="w-9 h-9 bg-swansons-navy rounded-full flex items-center justify-center text-white hover:opacity-90 transition shrink-0"
@@ -1064,6 +1052,15 @@ function ThreadQueueTab({
           thread={previewThread}
           allUsers={allUsers}
           onClose={() => setPreviewThread(null)}
+        />
+      )}
+
+      {assignThread && (
+        <AssignModal
+          thread={assignThread}
+          staffUsers={staffUsers}
+          onAssign={onAssign}
+          onClose={() => setAssignThread(null)}
         />
       )}
     </div>
