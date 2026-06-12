@@ -793,7 +793,9 @@ function ThreadQueueTab({
       ).toString()
     : "0";
 
-  let filtered = threads;
+  let filtered = filters.includes("all")
+    ? threads.filter((t) => t.status !== "closed")
+    : threads;
   if (!filters.includes("all")) {
     filtered = filtered.filter((t) => {
       let match = false;
@@ -864,15 +866,7 @@ function ThreadQueueTab({
               if (f.key === "all") {
                 setFilters(["all"]);
               } else {
-                setFilters((prev) => {
-                  let next = prev.filter((k) => k !== "all");
-                  if (prev.includes(f.key)) {
-                    next = next.filter((k) => k !== f.key);
-                  } else {
-                    next = [...next, f.key];
-                  }
-                  return next.length === 0 ? ["all"] : next;
-                });
+                setFilters([f.key]);
               }
             }}
           >
