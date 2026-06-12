@@ -416,10 +416,10 @@ function StaffManagementTab({
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <table className="min-w-full">
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-separate border-spacing-y-3">
           <thead>
-            <tr className="text-xs font-body uppercase tracking-wide text-swansons-muted border-b">
+            <tr className="text-xs font-body uppercase tracking-wide text-swansons-black">
               <th className="px-6 py-4 text-left">Avatar</th>
               <th className="px-6 py-4 text-left">Name</th>
               <th className="px-6 py-4 text-left">Email</th>
@@ -440,9 +440,10 @@ function StaffManagementTab({
               return (
                 <tr
                   key={u.uid}
-                  className="border-b last:border-0 hover:bg-swansons-cream/30 transition"
+                  className="bg-white text-sm font-body hover:opacity-90 transition"
+                  // className="border-b last:border-0 hover:bg-swansons-cream/30 transition"
                 >
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 rounded-l-xl">
                     <div className="w-10 h-10 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-base overflow-hidden shrink-0">
                       {u.displayName?.[0]?.toUpperCase() || "?"}
                     </div>
@@ -474,7 +475,7 @@ function StaffManagementTab({
                   <td className="px-6 py-4 font-heading font-bold text-swansons-navy text-xl">
                     {closedCount}
                   </td>
-                  <td className="px-6 py-4 pr-6 text-right">
+                  <td className="px-6 py-4 pr-6 text-right rounded-r-xl">
                     <button
                       onClick={() => setEditUser(u)}
                       className="w-9 h-9 bg-swansons-navy rounded-full flex items-center justify-center text-white hover:opacity-90 transition ml-auto"
