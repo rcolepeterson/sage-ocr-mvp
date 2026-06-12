@@ -1,6 +1,7 @@
+"use client";
+import { Logo } from "@/components/ui/Logo";
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import {
@@ -106,15 +107,22 @@ export default function MyPlantsPage() {
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen px-4 pt-8 pb-28">
+      <main className="min-h-screen px-4 pt-2 pb-28">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="show"
         >
+          <motion.div
+            variants={itemVariants}
+            className="flex justify-center mb-6"
+          >
+            <Logo width={100} height={50} />
+          </motion.div>
+
           <motion.h1
             variants={itemVariants}
-            className="mb-8 pb-10 border-b border-swansons-navy"
+            className="text-center mb-8 pb-10 border-b border-swansons-navy"
           >
             Your spaces
           </motion.h1>

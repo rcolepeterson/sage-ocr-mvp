@@ -12,6 +12,7 @@ const NO_TOP_PADDING = [
   "/onboarding",
   "/admin",
   "/settings",
+  "/spaces",
 ];
 const NO_MAX_WIDTH = ["/admin"];
 

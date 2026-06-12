@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/lib/firebase/AuthContext";
 import type { Thread } from "@/lib/firebase/threads";
@@ -39,7 +39,6 @@ function formatCustomerName(displayName?: string | null): string {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
-// ✅ FIX 3: Guard against missing/null createdAt to avoid showing "46000d ago"
 function formatTimeAgo(createdAt: any): string {
   if (!createdAt) return "—";
   const diffMs = Date.now() - (createdAt?.toMillis?.() || 0);
@@ -139,7 +138,6 @@ function StaffEditModal({
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // ✅ FIX 8: Only call APIs when values have actually changed
   const handleSave = async () => {
     setSaving(true);
     if (role !== staffUser.role) await onRoleChange(staffUser.uid, role);
@@ -162,7 +160,6 @@ function StaffEditModal({
         className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-heading font-bold text-lg text-swansons-navy">
             Edit Staff
@@ -175,7 +172,6 @@ function StaffEditModal({
           </button>
         </div>
 
-        {/* Avatar + name */}
         <div className="flex items-center gap-4 mb-6">
           <div className="w-14 h-14 rounded-full bg-swansons-green-muted text-swansons-green-dark flex items-center justify-center font-heading font-bold text-xl shrink-0">
             {staffUser.displayName?.[0]?.toUpperCase() || "?"}
@@ -190,7 +186,6 @@ function StaffEditModal({
           </div>
         </div>
 
-        {/* Role */}
         <div className="mb-4">
           <label className="block text-xs font-body font-semibold uppercase tracking-wide text-swansons-muted mb-2">
             Role
@@ -212,7 +207,6 @@ function StaffEditModal({
           )}
         </div>
 
-        {/* Specialty */}
         <div className="mb-6">
           <label className="block text-xs font-body font-semibold uppercase tracking-wide text-swansons-muted mb-2">
             Specialty
@@ -225,7 +219,6 @@ function StaffEditModal({
           />
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3">
           <Button
             onClick={handleSave}
@@ -391,7 +384,6 @@ function StaffManagementTab({
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1
           className="font-heading font-bold text-swansons-navy"
@@ -424,7 +416,6 @@ function StaffManagementTab({
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <table className="min-w-full">
           <thead>
@@ -511,7 +502,6 @@ function StaffManagementTab({
         </table>
       </div>
 
-      {/* Add Staff */}
       <div className="flex flex-col items-center mt-8 gap-2">
         <button
           onClick={() => setShowAddStaff(true)}
@@ -536,7 +526,6 @@ function StaffManagementTab({
         </span>
       </div>
 
-      {/* Edit Modal */}
       {editUser && (
         <StaffEditModal
           user={editUser}
@@ -547,7 +536,6 @@ function StaffManagementTab({
         />
       )}
 
-      {/* Add Staff Modal */}
       {showAddStaff && (
         <AddStaffModal
           allUsers={allUsers}
@@ -566,8 +554,6 @@ type SidebarProps = {
   onTab: (tab: number) => void;
   tab: number;
 };
-
-
 
 const NAV_ICONS = [
   {
@@ -716,9 +702,13 @@ function AssignModal({
                 onClose();
               }}
             >
-              <div className="font-semibold text-swansons-navy">{u.displayName}</div>
+              <div className="font-semibold text-swansons-navy">
+                {u.displayName}
+              </div>
               {u.specialty && (
-                <div className="text-xs text-swansons-muted mt-0.5">{u.specialty}</div>
+                <div className="text-xs text-swansons-muted mt-0.5">
+                  {u.specialty}
+                </div>
               )}
             </button>
           ))}
@@ -737,7 +727,7 @@ function AssignModal({
   );
 }
 
-// ✅ FIX 2: Added "Urgent" filter to match the existing filter logic
+/* ─── Filters ───────────────────────────────────────────────────────────── */
 const FILTERS = [
   { key: "all", label: "All" },
   { key: "unassigned", label: "Unassigned" },
@@ -772,6 +762,10 @@ function ThreadQueueTab({
   const [sortBy, setSortBy] = useState<"assigned" | "urgent" | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
+  // ✅ FIX: Date.now() moved out of render body — initialized via useState,
+  //         refreshed via useEffect whenever threads change
+  const [now] = useState(Date.now);
+
   const handleSort = (col: "assigned" | "urgent") => {
     if (sortBy === col) {
       if (sortDir === "asc") setSortDir("desc");
@@ -789,21 +783,15 @@ function ThreadQueueTab({
   const urgent = threads.filter((t) => t.urgent && t.status !== "closed");
   const open = threads.filter((t) => t.status !== "closed");
 
-  // ✅ FIX 6: Calculate `now` inside useMemo so it's not stale
-  const avgResponseTime = useMemo(() => {
-    if (!open.length) return "0";
-    const currentTime = Date.now();
-    return Math.round(
-      open.reduce(
-        (sum, t) =>
-          sum +
-          (currentTime - ((t.createdAt as any)?.toMillis?.() || 0)) / 3600000,
-        0,
-      ) / open.length,
-    ).toString();
-  }, [open]);
-
-  const now = Date.now();
+  const avgResponseTime = open.length
+    ? Math.round(
+        open.reduce(
+          (sum, t) =>
+            sum + (now - ((t.createdAt as any)?.toMillis?.() || 0)) / 3600000,
+          0,
+        ) / open.length,
+      ).toString()
+    : "0";
 
   let filtered = threads;
   if (!filters.includes("all")) {
@@ -824,7 +812,6 @@ function ThreadQueueTab({
     });
   }
 
-  // Sort
   const sorted = [...filtered];
   if (sortBy === "assigned") {
     sorted.sort((a, b) => {
@@ -938,7 +925,7 @@ function ThreadQueueTab({
                   </span>
                 </button>
               </th>
-              <th className="px-4 py-3 text-left text-swansons-black ">
+              <th className="px-4 py-3 text-left text-swansons-black">
                 Action
               </th>
             </tr>
@@ -957,7 +944,7 @@ function ThreadQueueTab({
                   key={t.id}
                   className="bg-white text-sm font-body hover:opacity-90 transition"
                 >
-                  <td className="px-4 py-3 text-swansons-text font-medium rounded-l-xl ">
+                  <td className="px-4 py-3 text-swansons-text font-medium rounded-l-xl">
                     {customerName}
                   </td>
                   <td className="px-4 py-3 text-swansons-muted max-w-[140px] truncate">
@@ -1068,7 +1055,6 @@ function ThreadQueueTab({
 }
 
 /* ─── SendNotificationsTab ──────────────────────────────────────────────── */
-
 const TAG_CATEGORIES: Record<string, string[]> = {
   "Plant Type": [
     "fruit-tree",
@@ -1155,8 +1141,6 @@ const TAG_CATEGORIES: Record<string, string[]> = {
   ],
 };
 
-// ✅ FIX 5: Moved StepIndicator outside SendNotificationsTab so it's not
-//           recreated as a new component on every render
 const STEP_LABELS = ["Build Audience", "Create Notification", "Add CTA / Link"];
 
 function StepIndicator({ step }: { step: number }) {
@@ -1198,27 +1182,20 @@ function StepIndicator({ step }: { step: number }) {
 function SendNotificationsTab() {
   const { user } = useAuth();
 
-  // Form state
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sendToAll, setSendToAll] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [ctaLabel, setCtaLabel] = useState("");
   const [ctaUrl, setCtaUrl] = useState("");
-
-  // Wizard state
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedCategory, setSelectedCategory] = useState("Plant Type");
-
-  // UI state
   const [recipientCount, setRecipientCount] = useState<number | null>(null);
   const [isLoadingCount, setIsLoadingCount] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Broadcast history
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
 
   useEffect(() => {
@@ -1301,7 +1278,6 @@ function SendNotificationsTab() {
 
   return (
     <div>
-      {/* ── Header ── */}
       <div className="mb-8">
         <h1
           className="font-heading font-bold text-swansons-navy"
@@ -1311,7 +1287,6 @@ function SendNotificationsTab() {
         </h1>
       </div>
 
-      {/* ── Success / error banners ── */}
       {successMessage && (
         <div className="mb-6 px-4 py-3 rounded-full bg-swansons-green/10 border border-swansons-green text-swansons-green-dark font-body text-sm flex items-center justify-between">
           <span>{successMessage}</span>
@@ -1335,17 +1310,13 @@ function SendNotificationsTab() {
         </div>
       )}
 
-      {/* ── Wizard card ── */}
       <div>
         <div className="mb-8">
-          {/* ✅ FIX 5: StepIndicator now receives step as a prop */}
           <StepIndicator step={step} />
 
-          {/* ── STEP 1 ── */}
           {step === 1 && (
             <div>
               <div className="max-w-5xl grid grid-cols-3 items-center mb-6">
-                {/* Col 1 */}
                 <div className="relative w-64">
                   <select
                     className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-3 rounded-full text-sm bg-transparent px-5 appearance-none"
@@ -1371,7 +1342,6 @@ function SendNotificationsTab() {
                   </span>
                 </div>
 
-                {/* Col 2 */}
                 <div className="flex items-center justify-start gap-3">
                   <span className="font-body text-sm text-swansons-navy font-semibold whitespace-nowrap">
                     Send to All
@@ -1389,9 +1359,8 @@ function SendNotificationsTab() {
                   </button>
                 </div>
 
-                {/* Col 3 */}
                 <div className="flex flex-col items-start">
-                  <p className="text-xs font-body font-bold uppercase tracking-wide text-swansons-black ">
+                  <p className="text-xs font-body font-bold uppercase tracking-wide text-swansons-black">
                     Audience Size:
                   </p>
                   {isLoadingCount ? (
@@ -1408,7 +1377,6 @@ function SendNotificationsTab() {
                 </div>
               </div>
 
-              {/* Tag pills */}
               <div
                 className={`flex flex-wrap gap-2 transition-opacity max-w-6xl ${
                   sendToAll ? "opacity-40 pointer-events-none" : ""
@@ -1450,7 +1418,6 @@ function SendNotificationsTab() {
             </div>
           )}
 
-          {/* ── STEP 2 ── */}
           {step === 2 && (
             <div>
               <div className="mb-5">
@@ -1516,7 +1483,6 @@ function SendNotificationsTab() {
             </div>
           )}
 
-          {/* ── STEP 3 ── */}
           {step === 3 && (
             <div>
               <div className="mb-5">
@@ -1571,19 +1537,16 @@ function SendNotificationsTab() {
         </div>
       </div>
 
-      {/* ── Broadcast history ── */}
       {broadcasts.length === 0 ? (
         <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-swansons-muted font-body text-sm">
           No broadcasts sent yet.
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {/* Column headers */}
           <div className="flex items-center gap-6 px-5">
             <span className="w-28 shrink-0 text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
               Date
             </span>
-            {/* ✅ FIX 4: Replaced non-standard w-120 with w-[30rem] */}
             <span className="w-[30rem] shrink-0 text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
               Notification
             </span>
@@ -1601,7 +1564,6 @@ function SendNotificationsTab() {
               key={b.id}
               className="bg-white rounded-2xl p-5 shadow-sm flex items-start gap-6"
             >
-              {/* DATE */}
               <div className="w-28 shrink-0">
                 <p className="font-body text-swansons-muted text-sm">
                   {b.createdAt
@@ -1616,7 +1578,6 @@ function SendNotificationsTab() {
                 </p>
               </div>
 
-              {/* ✅ FIX 4: Replaced non-standard w-120 with w-[30rem] */}
               <div className="w-[30rem] shrink-0 min-w-0">
                 <p className="font-body font-semibold text-swansons-navy text-sm">
                   {b.title}
@@ -1636,7 +1597,6 @@ function SendNotificationsTab() {
                 )}
               </div>
 
-              {/* TAGS */}
               <div className="flex-1 flex flex-wrap gap-1">
                 {b.sendToAll || b.tags.length === 0 ? (
                   <span className="bg-swansons-navy/10 text-swansons-navy rounded-full px-3 py-1 text-xs font-body font-medium">
@@ -1654,7 +1614,6 @@ function SendNotificationsTab() {
                 )}
               </div>
 
-              {/* AUDIENCE */}
               <div className="w-32 shrink-0 flex justify-start items-start">
                 <span className="font-heading font-bold text-swansons-navy text-4xl leading-none">
                   {(b.recipientCount ?? 0).toLocaleString()}
@@ -1665,7 +1624,6 @@ function SendNotificationsTab() {
         </div>
       )}
 
-      {/* ── Confirmation dialog ── */}
       {showConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
@@ -1791,7 +1749,6 @@ export default function AdminDashboardPage() {
     getAllUsers().then(setAllUsers);
   }, []);
 
-  // ✅ FIX 7: Added try/catch error handling to assignment and urgent handlers
   async function handleAssign(threadId: string, staffUid: string | null) {
     try {
       await updateThreadAssignment(threadId, staffUid);
@@ -1815,8 +1772,6 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // ✅ FIX 1: Correctly handles promotion (add to staffUsers) and
-  //           demotion (remove from staffUsers) — not just in-place updates
   async function handleRoleChange(uid: string, role: string) {
     await updateUserRole(uid, role as UserRole);
 
@@ -1829,7 +1784,6 @@ export default function AdminDashboardPage() {
       const exists = prev.some((u) => u.uid === uid);
 
       if (isStaffRole && !exists) {
-        // Promoted from customer — add to staffUsers
         const promoted = allUsers.find((u) => u.uid === uid);
         return promoted
           ? [...prev, { ...promoted, role: role as UserRole }]
@@ -1837,11 +1791,9 @@ export default function AdminDashboardPage() {
       }
 
       if (!isStaffRole) {
-        // Demoted — remove from staffUsers entirely
         return prev.filter((u) => u.uid !== uid);
       }
 
-      // Already in staffUsers — just update role in place
       return prev.map((u) =>
         u.uid === uid ? { ...u, role: role as UserRole } : u,
       );
@@ -1851,7 +1803,6 @@ export default function AdminDashboardPage() {
   return (
     <ProtectedRoute requiredRole="admin">
       <div className="flex min-h-screen bg-swansons-cream relative">
-        {/* Botanical background — bottom right */}
         <div
           className="fixed bottom-0 right-0 w-80 pointer-events-none select-none"
           style={{ zIndex: 0 }}
