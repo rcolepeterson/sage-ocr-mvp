@@ -39,7 +39,9 @@ function formatCustomerName(displayName?: string | null): string {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
+// ✅ FIX 3: Guard against missing/null createdAt to avoid showing "46000d ago"
 function formatTimeAgo(createdAt: any): string {
+  if (!createdAt) return "—";
   const diffMs = Date.now() - (createdAt?.toMillis?.() || 0);
   const mins = Math.floor(diffMs / 60000);
   const hours = Math.floor(diffMs / 3600000);
@@ -137,10 +139,12 @@ function StaffEditModal({
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // ✅ FIX 8: Only call APIs when values have actually changed
   const handleSave = async () => {
     setSaving(true);
-    await onRoleChange(staffUser.uid, role);
-    await onSpecialty(staffUser.uid, specialty);
+    if (role !== staffUser.role) await onRoleChange(staffUser.uid, role);
+    if (specialty !== (staffUser.specialty || ""))
+      await onSpecialty(staffUser.uid, specialty);
     setSaving(false);
     setSuccess(true);
     setTimeout(() => {
@@ -563,80 +567,30 @@ type SidebarProps = {
   tab: number;
 };
 
+/* ─── Sidebar — icon only ───────────────────────────────────────────────── */
+type SidebarProps = {
+  user: AppUser | FirebaseUser | null;
+  onTab: (tab: number) => void;
+  tab: number;
+};
+
 const NAV_ICONS = [
   {
     label: "Thread Queue",
-    svg: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
+    iconSrc: "/images/Dashboard_Icon.svg",
   },
   {
     label: "Staff Management",
-    svg: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
+    iconSrc: "/images/Staff_Icon.svg",
   },
   {
     label: "Send Notifications",
-    svg: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-      </svg>
-    ),
+    iconSrc: "/images/Notifications_Icon.svg",
   },
   {
     label: "Settings",
+    iconSrc: "/images/Settings_Icon.svg",
     disabled: true,
-    svg: (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-      </svg>
-    ),
   },
 ];
 
@@ -667,7 +621,7 @@ function Sidebar({ user, onTab, tab }: SidebarProps) {
         <span className="absolute bottom-0 right-0 w-4 h-4 bg-swansons-green rounded-full border-2 border-swansons-navy" />
       </div>
       <nav className="flex flex-col items-center gap-2 flex-1">
-        {NAV_ICONS.map(({ label, svg, disabled }, i) => (
+        {NAV_ICONS.map(({ label, iconSrc, disabled }, i) => (
           <button
             key={label}
             onClick={() => !disabled && onTab(i)}
@@ -675,13 +629,19 @@ function Sidebar({ user, onTab, tab }: SidebarProps) {
             title={label}
             className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
               disabled
-                ? "opacity-30 cursor-not-allowed text-white/50"
+                ? "opacity-30 cursor-not-allowed"
                 : tab === i
-                  ? "bg-white/20 text-white"
-                  : "text-white/60 hover:bg-white/10 hover:text-white"
+                  ? "bg-white/20 opacity-100"
+                  : "opacity-60 hover:bg-white/10 hover:opacity-100"
             }`}
           >
-            {svg}
+            <img
+              src={iconSrc}
+              alt={label}
+              width={22}
+              height={22}
+              className="w-[22px] h-[22px] brightness-0 invert"
+            />
           </button>
         ))}
       </nav>
@@ -791,10 +751,11 @@ function AssignDropdown({ thread, staffUsers, onAssign }: AssignDropdownProps) {
   );
 }
 
-/* ─── FILTERS ───────────────────────────────────────────────────────────── */
+// ✅ FIX 2: Added "Urgent" filter to match the existing filter logic
 const FILTERS = [
   { key: "all", label: "All" },
   { key: "unassigned", label: "Unassigned" },
+  { key: "urgent", label: "Urgent" },
   { key: "needs-followup", label: "Needs Followup" },
   { key: "waiting-on-customer", label: "Waiting on Customer" },
   { key: "closed", label: "Closed" },
@@ -840,19 +801,22 @@ function ThreadQueueTab({
   const unassigned = threads.filter((t) => !t.assignedTo && t.status === "new");
   const urgent = threads.filter((t) => t.urgent && t.status !== "closed");
   const open = threads.filter((t) => t.status !== "closed");
-  const now = Date.now();
 
+  // ✅ FIX 6: Calculate `now` inside useMemo so it's not stale
   const avgResponseTime = useMemo(() => {
     if (!open.length) return "0";
+    const currentTime = Date.now();
     return Math.round(
       open.reduce(
         (sum, t) =>
-          sum + (now - ((t.createdAt as any)?.toMillis?.() || 0)) / 3600000,
+          sum +
+          (currentTime - ((t.createdAt as any)?.toMillis?.() || 0)) / 3600000,
         0,
       ) / open.length,
     ).toString();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const now = Date.now();
 
   let filtered = threads;
   if (!filters.includes("all")) {
@@ -1194,6 +1158,46 @@ const TAG_CATEGORIES: Record<string, string[]> = {
   ],
 };
 
+// ✅ FIX 5: Moved StepIndicator outside SendNotificationsTab so it's not
+//           recreated as a new component on every render
+const STEP_LABELS = ["Build Audience", "Create Notification", "Add CTA / Link"];
+
+function StepIndicator({ step }: { step: number }) {
+  return (
+    <div className="max-w-5xl mb-10">
+      <div className="relative">
+        <div className="absolute top-4 left-0 right-0 border-t border-swansons-muted/30" />
+        <div className="grid grid-cols-3">
+          {STEP_LABELS.map((label, i) => {
+            const num = i + 1;
+            const isActive = step >= num;
+            return (
+              <div key={num} className="flex flex-col items-start">
+                <div className="relative z-10 bg-swansons-cream">
+                  <div
+                    className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white ${
+                      isActive ? "bg-swansons-navy" : "bg-swansons-muted"
+                    }`}
+                  >
+                    STEP {num}
+                  </div>
+                </div>
+                <span
+                  className={`text-sm font-body font-semibold mt-2 ${
+                    isActive ? "text-swansons-navy" : "text-swansons-muted"
+                  }`}
+                >
+                  {label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SendNotificationsTab() {
   const { user } = useAuth();
 
@@ -1220,13 +1224,11 @@ function SendNotificationsTab() {
   // Broadcast history
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
 
-  // Subscribe to broadcast history log
   useEffect(() => {
     const unsub = onBroadcastsSnapshot(setBroadcasts);
     return () => unsub();
   }, []);
 
-  // Live recipient count — refetch whenever tags or sendToAll changes
   useEffect(() => {
     if (!sendToAll && selectedTags.length === 0) {
       setRecipientCount(null);
@@ -1300,51 +1302,6 @@ function SendNotificationsTab() {
     }
   };
 
-  /* ── Step indicator ── */
-  const STEP_LABELS = [
-    "Build Audience",
-    "Create Notification",
-    "Add CTA / Link",
-  ];
-  function StepIndicator() {
-    return (
-      <div className="max-w-5xl mb-10">
-        <div className="relative">
-          {/* Line behind pills — masked by pill background */}
-          <div className="absolute top-4 left-0 right-0 border-t border-swansons-muted/30" />
-          <div className="grid grid-cols-3">
-            {STEP_LABELS.map((label, i) => {
-              const num = i + 1;
-              const isActive = step >= num;
-
-              return (
-                <div key={num} className={`flex flex-col items-start`}>
-                  {/* bg-swansons-cream masks the line behind the pill */}
-                  <div className="relative z-10 bg-swansons-cream">
-                    <div
-                      className={`px-5 py-2 rounded-full text-xs font-body font-bold tracking-wide whitespace-nowrap text-white ${
-                        isActive ? "bg-swansons-navy" : "bg-swansons-muted"
-                      }`}
-                    >
-                      STEP {num}
-                    </div>
-                  </div>
-                  <span
-                    className={`text-sm font-body font-semibold mt-2 ${
-                      isActive ? "text-swansons-navy" : "text-swansons-muted"
-                    }`}
-                  >
-                    {label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
       {/* ── Header ── */}
@@ -1384,15 +1341,14 @@ function SendNotificationsTab() {
       {/* ── Wizard card ── */}
       <div>
         <div className="mb-8">
-          <StepIndicator />
+          {/* ✅ FIX 5: StepIndicator now receives step as a prop */}
+          <StepIndicator step={step} />
 
           {/* ── STEP 1 ── */}
           {step === 1 && (
             <div>
-              {/* Controls row — category under STEP 1, toggle under STEP 2, audience under STEP 3 */}
-              {/* Controls row — aligned to step columns */}
               <div className="max-w-5xl grid grid-cols-3 items-center mb-6">
-                {/* Col 1 — under STEP 1 */}
+                {/* Col 1 */}
                 <div className="relative w-64">
                   <select
                     className="w-full border-2 border-swansons-navy text-swansons-navy font-body font-semibold py-3 rounded-full text-sm bg-transparent px-5 appearance-none"
@@ -1418,7 +1374,7 @@ function SendNotificationsTab() {
                   </span>
                 </div>
 
-                {/* Col 2 — under STEP 2 */}
+                {/* Col 2 */}
                 <div className="flex items-center justify-start gap-3">
                   <span className="font-body text-sm text-swansons-navy font-semibold whitespace-nowrap">
                     Send to All
@@ -1436,7 +1392,7 @@ function SendNotificationsTab() {
                   </button>
                 </div>
 
-                {/* Col 3 — under STEP 3 */}
+                {/* Col 3 */}
                 <div className="flex flex-col items-start">
                   <p className="text-xs font-body font-bold uppercase tracking-wide text-swansons-black ">
                     Audience Size:
@@ -1500,7 +1456,6 @@ function SendNotificationsTab() {
           {/* ── STEP 2 ── */}
           {step === 2 && (
             <div>
-              {/* Headline */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide">
@@ -1522,7 +1477,6 @@ function SendNotificationsTab() {
                 </p>
               </div>
 
-              {/* Description */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide">
@@ -1568,7 +1522,6 @@ function SendNotificationsTab() {
           {/* ── STEP 3 ── */}
           {step === 3 && (
             <div>
-              {/* CTA copy */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide">
@@ -1587,7 +1540,6 @@ function SendNotificationsTab() {
                 />
               </div>
 
-              {/* URL */}
               <div className="mb-6">
                 <label className="block text-xs text-swansons-muted font-body uppercase tracking-wide mb-1.5">
                   URL / Link (optional)
@@ -1623,9 +1575,6 @@ function SendNotificationsTab() {
       </div>
 
       {/* ── Broadcast history ── */}
-      {/* <h2 className="font-heading font-bold text-swansons-navy text-2xl mb-4 mt-10">
-          Past Broadcasts
-        </h2> */}
       {broadcasts.length === 0 ? (
         <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-swansons-muted font-body text-sm">
           No broadcasts sent yet.
@@ -1637,10 +1586,11 @@ function SendNotificationsTab() {
             <span className="w-28 shrink-0 text-xs font-bold font-body uppercase tracking-widest text-swansons-black">
               Date
             </span>
-            <span className="w-120 shrink-0 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
+            {/* ✅ FIX 4: Replaced non-standard w-120 with w-[30rem] */}
+            <span className="w-[30rem] shrink-0 text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
               Notification
             </span>
-            <span className="flex-1 text-xs font-body font-bold  uppercase tracking-widest text-swansons-black">
+            <span className="flex-1 text-xs font-body font-bold uppercase tracking-widest text-swansons-black">
               Tags
             </span>
             <div className="w-32 shrink-0 flex justify-start">
@@ -1669,8 +1619,8 @@ function SendNotificationsTab() {
                 </p>
               </div>
 
-              {/* NOTIFICATION */}
-              <div className="w-120 shrink-0 min-w-0">
+              {/* ✅ FIX 4: Replaced non-standard w-120 with w-[30rem] */}
+              <div className="w-[30rem] shrink-0 min-w-0">
                 <p className="font-body font-semibold text-swansons-navy text-sm">
                   {b.title}
                 </p>
@@ -1844,12 +1794,21 @@ export default function AdminDashboardPage() {
     getAllUsers().then(setAllUsers);
   }, []);
 
+  // ✅ FIX 7: Added try/catch error handling to assignment and urgent handlers
   async function handleAssign(threadId: string, staffUid: string | null) {
-    await updateThreadAssignment(threadId, staffUid);
+    try {
+      await updateThreadAssignment(threadId, staffUid);
+    } catch (err) {
+      console.error("Failed to assign thread:", err);
+    }
   }
 
   async function handleUrgent(threadId: string, urgent: boolean) {
-    await updateThreadUrgent(threadId, urgent);
+    try {
+      await updateThreadUrgent(threadId, urgent);
+    } catch (err) {
+      console.error("Failed to update urgent status:", err);
+    }
   }
 
   async function handleSpecialty(uid: string, specialty: string) {
@@ -1859,14 +1818,37 @@ export default function AdminDashboardPage() {
     );
   }
 
+  // ✅ FIX 1: Correctly handles promotion (add to staffUsers) and
+  //           demotion (remove from staffUsers) — not just in-place updates
   async function handleRoleChange(uid: string, role: string) {
     await updateUserRole(uid, role as UserRole);
+
     setAllUsers((prev) =>
       prev.map((u) => (u.uid === uid ? { ...u, role: role as UserRole } : u)),
     );
-    setStaffUsers((prev) =>
-      prev.map((u) => (u.uid === uid ? { ...u, role: role as UserRole } : u)),
-    );
+
+    setStaffUsers((prev) => {
+      const isStaffRole = role === "staff" || role === "admin";
+      const exists = prev.some((u) => u.uid === uid);
+
+      if (isStaffRole && !exists) {
+        // Promoted from customer — add to staffUsers
+        const promoted = allUsers.find((u) => u.uid === uid);
+        return promoted
+          ? [...prev, { ...promoted, role: role as UserRole }]
+          : prev;
+      }
+
+      if (!isStaffRole) {
+        // Demoted — remove from staffUsers entirely
+        return prev.filter((u) => u.uid !== uid);
+      }
+
+      // Already in staffUsers — just update role in place
+      return prev.map((u) =>
+        u.uid === uid ? { ...u, role: role as UserRole } : u,
+      );
+    });
   }
 
   return (
