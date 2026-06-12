@@ -346,7 +346,7 @@ export default function Home() {
   return (
     <ProtectedRoute>
       <OnboardingModal />
-      <main className="min-h-screen px-4 pt-6 pb-28 max-w-lg mx-auto">
+      <main className="min-h-screen px-4 pt-4 pb-28 max-w-lg mx-auto">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -358,7 +358,7 @@ export default function Home() {
             variants={itemVariants}
             className="flex items-center justify-center mb-8"
           >
-            <Logo />
+            <Logo width={100} height={50} />
           </motion.div>
 
           {/* Welcome */}

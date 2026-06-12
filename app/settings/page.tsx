@@ -123,10 +123,10 @@ function SettingsPageContent() {
   const isStaffOrAdmin = role === "staff" || role === "admin";
 
   return (
-    <div className="min-h-screen bg-swansons-cream px-4 py-8">
+    <div className="min-h-screen bg-swansons-cream px-4 py-4">
       {/* Logo at top */}
       <div className="flex justify-center mb-8">
-        <Logo width={120} height={60} />
+        <Logo width={100} height={50} />
       </div>
 
       <motion.div

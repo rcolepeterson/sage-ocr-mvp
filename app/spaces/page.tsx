@@ -107,7 +107,7 @@ export default function MyPlantsPage() {
 
   return (
     <ProtectedRoute>
-      <main className="min-h-screen px-4 pt-2 pb-28">
+      <main className="min-h-screen px-4 pt-4 pb-28">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -122,7 +122,7 @@ export default function MyPlantsPage() {
 
           <motion.h1
             variants={itemVariants}
-            className="text-center mb-8 pb-10 border-b border-swansons-navy"
+            className="text-center mb-8 pb-6 border-b border-swansons-navy"
           >
             Your spaces
           </motion.h1>
