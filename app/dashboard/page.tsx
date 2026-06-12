@@ -11,7 +11,6 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import type { PanInfo } from "motion/react";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
 
 import {
   onNotificationsSnapshot,
@@ -62,13 +61,11 @@ function LatestPlantCard() {
 }
 
 // ─── Notifications card ────────────────────────────────────────────────────
-function NotificationsCard() {
+// ✅ initialOpen is now passed as a prop — no useSearchParams needed here,
+//    which means no Suspense boundary needed, which eliminates the layout shift
+function NotificationsCard({ initialOpen = false }: { initialOpen?: boolean }) {
   const { user } = useAuth();
-  const searchParams = useSearchParams();
-  const [open, setOpen] = useState(
-    searchParams.get("notifications") === "open",
-  );
-
+  const [open, setOpen] = useState(initialOpen);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -297,7 +294,7 @@ function SpacesList() {
                       ),
                     )}
                   {count > 3 && (
-                    <div className="w-10 h-10 rounded-full  bg-swansons-navy text-white text-sm flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-swansons-navy text-white text-sm flex items-center justify-center shrink-0">
                       <span
                         style={{
                           marginRight: 4,
@@ -339,9 +336,13 @@ const itemVariants = {
 };
 
 // ─── Home page ─────────────────────────────────────────────────────────────
+// ✅ useSearchParams lives here — this IS the page component so no Suspense
+//    boundary is needed, eliminating the layout shift that caused the scroll
 export default function Home() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const firstName = user?.displayName?.split(" ")[0] ?? "there";
+  const notificationsInitialOpen = searchParams.get("notifications") === "open";
 
   return (
     <ProtectedRoute>
@@ -371,11 +372,9 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {/* Notifications */}
+          {/* ✅ No Suspense needed — initialOpen passed as a prop */}
           <motion.div variants={itemVariants} className="mb-4">
-            <Suspense fallback={null}>
-              <NotificationsCard />
-            </Suspense>
+            <NotificationsCard initialOpen={notificationsInitialOpen} />
           </motion.div>
 
           {/* Latest Plant */}
@@ -383,7 +382,6 @@ export default function Home() {
             <LatestPlantCard />
           </motion.div>
 
-          {/* Action Buttons */}
           {/* Action Buttons */}
           <motion.div variants={itemVariants} className="flex gap-3 mb-8">
             <motion.div
