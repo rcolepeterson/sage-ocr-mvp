@@ -729,7 +729,7 @@ function AssignModal({
 
 /* ─── Filters ───────────────────────────────────────────────────────────── */
 const FILTERS = [
-  { key: "all", label: "All" },
+  { key: "all", label: "Active" },
   { key: "unassigned", label: "Unassigned" },
   { key: "urgent", label: "Urgent" },
   { key: "needs-followup", label: "Needs Followup" },
