@@ -739,7 +739,7 @@ function AssignModal({
             </button>
           ))}
         </div>
-        <button
+        {/* <button
           className="w-full text-center py-2.5 hover:bg-red-50 text-sm font-body font-semibold text-red-500 border rounded-xl cursor-pointer"
           onClick={() => {
             onAssign(thread.id, null);
@@ -747,7 +747,7 @@ function AssignModal({
           }}
         >
           Unassign
-        </button>
+        </button> */}
       </div>
     </div>
   );
