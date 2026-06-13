@@ -2,6 +2,7 @@
 // /lib/firebase/threads.ts
 import {
   collection,
+  deleteField,
   doc,
   addDoc,
   getDoc,
@@ -141,14 +142,18 @@ export async function updateThreadAssignment(
   threadId: string,
   staffUid: string | null,
 ) {
-  // If assigning to staff, set status to assigned
   if (staffUid) {
+    // Assign — set assignedTo and move status to "assigned"
     await updateDoc(doc(db, "threads", threadId), {
       assignedTo: staffUid,
       status: "assigned",
     });
   } else {
-    await updateDoc(doc(db, "threads", threadId), { assignedTo: null });
+    // ✅ Unassign — properly remove the field AND reset status
+    await updateDoc(doc(db, "threads", threadId), {
+      assignedTo: deleteField(),
+      status: "new",
+    });
   }
 }
 
