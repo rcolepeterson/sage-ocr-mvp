@@ -400,7 +400,7 @@ export default function Home() {
                 <Button
                   variant="primary"
                   size="md"
-                  className="w-full rounded-full text-base whitespace-nowrap"
+                  className="w-full rounded-full text-sm whitespace-nowrap"
                 >
                   Add A Plant
                 </Button>
@@ -410,7 +410,7 @@ export default function Home() {
               <Button
                 variant="primary"
                 size="md"
-                className="w-full rounded-full text-base whitespace-nowrap"
+                className="w-full rounded-full text-sm whitespace-nowrap"
               >
                 Ask An Expert
               </Button>
