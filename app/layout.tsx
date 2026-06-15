@@ -67,17 +67,16 @@ export default function RootLayout({
         <AuthProvider>
           <div className="min-h-screen relative">
             <InviteGate>
-              <ClientLayout>
-                <ScrollToTop />
-                <HamburgerMenu />
-                <BackButton />
+              <LenisProvider>
+                <ClientLayout>
+                  <ScrollToTop />
+                  <HamburgerMenu />
+                  <BackButton />
 
-                <ProtectedRoute>
-                  <LenisProvider>{children}</LenisProvider>
-                </ProtectedRoute>
-              </ClientLayout>
+                  <ProtectedRoute>{children}</ProtectedRoute>
+                </ClientLayout>
+              </LenisProvider>
             </InviteGate>
-            {/* <BottomNav /> */}
           </div>
         </AuthProvider>
       </body>
