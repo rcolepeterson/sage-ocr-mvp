@@ -383,7 +383,7 @@ export default function Home() {
           </motion.div>
 
           {/* Action Buttons */}
-          <motion.div variants={itemVariants} className="flex gap-3 mb-8">
+          <motion.div variants={itemVariants} className="flex gap-2 mb-8">
             <motion.div
               className="flex-1"
               style={{ borderRadius: "9999px" }}
